@@ -9,7 +9,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Cube System
 
-- [ ] **CUBE-01**: Shared type definitions exist in both Python (Pydantic) and TypeScript with matching ParamType enum, CubeCategory enum, ParamDefinition, and CubeDefinition models
+- [ ] **CUBE-01**: Shared type definitions exist in both Python (Pydantic) and TypeScript with matching ParamType enum, CubeCategory enum (data_source, filter, analysis, aggregation, output), ParamDefinition (with accepts_full_result flag), and CubeDefinition models
 - [ ] **CUBE-02**: BaseCube abstract class with async execute() method, cube_id, name, description, category, inputs, outputs properties, and automatic Full Result output port
 - [ ] **CUBE-03**: Workflow data model types (WorkflowNode, WorkflowEdge, WorkflowGraph) defined in both Python and TypeScript
 
@@ -23,7 +23,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **BACK-06**: GET /api/cubes/catalog returns all registered cube definitions as JSON array
 - [ ] **BACK-07**: Workflow CRUD API — POST /api/workflows (create), GET /api/workflows (list), GET /api/workflows/{id} (get), PUT /api/workflows/{id} (update), DELETE /api/workflows/{id} (delete)
 - [ ] **BACK-08**: POST /api/workflows/{id}/run executes workflow graph and returns results
-- [ ] **BACK-09**: WorkflowExecutor performs topological sort of nodes, detects cycles (returns 400), resolves input values from connections
+- [ ] **BACK-09**: WorkflowExecutor performs topological sort of nodes, detects cycles (returns 400), resolves input values from connections, validates connection type compatibility (warn on mismatch), validates Full Result connections only attach to params with accepts_full_result=true
 - [ ] **BACK-10**: Full Result port (__full_result__) bundles all cube outputs into one JSON object, available as connection source
 - [ ] **BACK-11**: Result rows capped at 100 per cube with truncation flag in response
 - [ ] **BACK-12**: Connection values override manually entered param values at execution time
@@ -38,10 +38,11 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **FRONT-05**: Parameter handles color-coded by ParamType (string=blue, number=green, boolean=orange, flight_ids=purple, json=gray, arrays=teal)
 - [ ] **FRONT-06**: Inline parameter editors on each CubeNode — text inputs, number inputs, checkboxes — hidden when a connection provides the value
 - [ ] **FRONT-07**: Compact results preview panel on each CubeNode showing row count and first few values
-- [ ] **FRONT-08**: Cube catalog sidebar grouped by CubeCategory, each cube draggable onto canvas, with search/filter input
+- [ ] **FRONT-08**: Collapsible cube catalog sidebar grouped by CubeCategory (data_source, filter, analysis, aggregation, output), each cube draggable onto canvas, with search/filter input, toggle button to collapse/expand
 - [ ] **FRONT-09**: Zustand store managing nodes, edges, cube catalog, execution status, results, with JSON serialization for save/load
 - [ ] **FRONT-10**: Toolbar with Run button, Save button, editable workflow name field, and link back to dashboard
 - [ ] **FRONT-11**: API client module (fetch wrapper) for all backend endpoints with error handling
+- [ ] **FRONT-12**: Connection validation on canvas — type mismatch shown as dashed orange edge with warning, Full Result handle only connectable to inputs with accepts_full_result=true, incompatible connections prevented
 
 ### Workflow Management
 
@@ -52,6 +53,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **WFLOW-05**: Each CubeNode shows execution status indicator: gray (pending), blue spinner (running), green check (done), red X (error with message)
 - [ ] **WFLOW-06**: Error messages from failed cubes display inline on the CubeNode with the error text
 - [ ] **WFLOW-07**: Keyboard shortcuts — Delete removes selected nodes/edges, Ctrl+S saves workflow, Ctrl+Enter runs workflow
+- [ ] **WFLOW-08**: Overall pipeline progress indicator during execution showing "X/Y cubes completed" with progress bar in toolbar area
 
 ### Results Display
 
@@ -126,6 +128,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | FRONT-09 | Phase 4 | Pending |
 | FRONT-10 | Phase 4 | Pending |
 | FRONT-11 | Phase 4 | Pending |
+| FRONT-12 | Phase 4 | Pending |
 | WFLOW-01 | Phase 5 | Pending |
 | WFLOW-02 | Phase 5 | Pending |
 | WFLOW-03 | Phase 5 | Pending |
@@ -133,6 +136,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | WFLOW-05 | Phase 5 | Pending |
 | WFLOW-06 | Phase 5 | Pending |
 | WFLOW-07 | Phase 5 | Pending |
+| WFLOW-08 | Phase 5 | Pending |
 | RSLT-01 | Phase 6 | Pending |
 | RSLT-02 | Phase 6 | Pending |
 | RSLT-03 | Phase 6 | Pending |
@@ -146,8 +150,8 @@ Requirements for initial release. Each maps to roadmap phases.
 | DEPL-03 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 46 total
-- Mapped to phases: 46
+- v1 requirements: 48 total
+- Mapped to phases: 48
 - Unmapped: 0
 
 ---

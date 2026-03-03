@@ -2,7 +2,7 @@
 
 **Created:** 2026-03-03
 **Phases:** 7
-**Requirements covered:** 46/46
+**Requirements covered:** 48/48
 
 ## Phase Overview
 
@@ -11,8 +11,8 @@
 | 1 | Types, Schemas & Project Scaffolding | Foundational data contracts + both projects bootable | CUBE-01, CUBE-02, CUBE-03, BACK-01, BACK-02, FRONT-01 | 3 |
 | 2 | Backend Core — Registry, DB, CRUD, Executor | Full backend API functional via curl | BACK-03 to BACK-12 | 4 |
 | 3 | Async Execution with SSE Progress | Background execution with real-time streaming | BACK-13 | 2 |
-| 4 | Frontend Canvas, Nodes, Sidebar & Dark Theme | Full visual editor with drag, configure, connect | FRONT-02 to FRONT-11 | 5 |
-| 5 | Workflow Management & Execution Integration | Full loop — dashboard, save/load, run with live status | WFLOW-01 to WFLOW-07 | 4 |
+| 4 | Frontend Canvas, Nodes, Sidebar & Dark Theme | Full visual editor with drag, configure, connect | FRONT-02 to FRONT-12 | 5 |
+| 5 | Workflow Management & Execution Integration | Full loop — dashboard, save/load, run with live status | WFLOW-01 to WFLOW-08 | 4 |
 | 6 | Results Display — Tables, Map, Bidirectional | Rich results with tables + map for geo data | RSLT-01, RSLT-02, RSLT-03 | 5 |
 | 7 | Real DB Cubes, End-to-End & Docker | Working pipeline with real data + deployable containers | DATA-01 to DATA-05, DEPL-01 to DEPL-03 | 5 |
 
@@ -89,7 +89,7 @@
 
 **Goal:** Full visual editor — drag cubes, configure params, connect nodes
 
-**Requirements:** FRONT-02, FRONT-03, FRONT-04, FRONT-05, FRONT-06, FRONT-07, FRONT-08, FRONT-09, FRONT-10, FRONT-11
+**Requirements:** FRONT-02, FRONT-03, FRONT-04, FRONT-05, FRONT-06, FRONT-07, FRONT-08, FRONT-09, FRONT-10, FRONT-11, FRONT-12
 
 **Key files:**
 - `frontend/src/styles/theme.css` — Dark theme CSS variables
@@ -111,6 +111,8 @@
 3. Input handles on left (color-coded), output handles + Full Result on right
 4. Typing param values persists in Zustand store
 5. Connecting nodes creates styled edges; type mismatch shown as dashed orange edge
+6. Full Result handle only connects to inputs with accepts_full_result=true; incompatible connections prevented
+7. Sidebar collapses/expands via toggle button
 
 ---
 
@@ -118,7 +120,7 @@
 
 **Goal:** Full loop — dashboard, save/load, run with live status
 
-**Requirements:** WFLOW-01, WFLOW-02, WFLOW-03, WFLOW-04, WFLOW-05, WFLOW-06, WFLOW-07
+**Requirements:** WFLOW-01, WFLOW-02, WFLOW-03, WFLOW-04, WFLOW-05, WFLOW-06, WFLOW-07, WFLOW-08
 
 **Key files:**
 - `frontend/src/App.tsx` — React Router with /, /workflow/:id, /workflow/new routes
@@ -133,6 +135,7 @@
 2. Build flow → Save → appears on dashboard → reopen → same state restored
 3. Run shows real-time status (pending → running → done/error) on each CubeNode
 4. Ctrl+S saves, Ctrl+Enter runs, Delete removes selected nodes/edges
+5. Overall pipeline progress bar shows "X/Y cubes completed" in toolbar during execution
 
 ---
 
@@ -194,13 +197,13 @@
 
 ## Requirement Coverage Validation
 
-All 46 v1 requirements mapped:
+All 48 v1 requirements mapped:
 
 - **Phase 1 (6):** CUBE-01, CUBE-02, CUBE-03, BACK-01, BACK-02, FRONT-01
 - **Phase 2 (10):** BACK-03 through BACK-12
 - **Phase 3 (1):** BACK-13
-- **Phase 4 (10):** FRONT-02 through FRONT-11
-- **Phase 5 (7):** WFLOW-01 through WFLOW-07
+- **Phase 4 (11):** FRONT-02 through FRONT-12
+- **Phase 5 (8):** WFLOW-01 through WFLOW-08
 - **Phase 6 (3):** RSLT-01, RSLT-02, RSLT-03
 - **Phase 7 (8):** DATA-01 through DATA-05, DEPL-01 through DEPL-03
 
