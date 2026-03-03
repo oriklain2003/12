@@ -22,11 +22,11 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **BACK-05**: Alembic migration creating public.workflows table
 - [x] **BACK-06**: GET /api/cubes/catalog returns all registered cube definitions as JSON array
 - [x] **BACK-07**: Workflow CRUD API — POST /api/workflows (create), GET /api/workflows (list), GET /api/workflows/{id} (get), PUT /api/workflows/{id} (update), DELETE /api/workflows/{id} (delete)
-- [ ] **BACK-08**: POST /api/workflows/{id}/run executes workflow graph and returns results
-- [ ] **BACK-09**: WorkflowExecutor performs topological sort of nodes, detects cycles (returns 400), resolves input values from connections, validates connection type compatibility (warn on mismatch), validates Full Result connections only attach to params with accepts_full_result=true
-- [ ] **BACK-10**: Full Result port (__full_result__) bundles all cube outputs into one JSON object, available as connection source
-- [ ] **BACK-11**: Result rows capped at 100 per cube with truncation flag in response
-- [ ] **BACK-12**: Connection values override manually entered param values at execution time
+- [x] **BACK-08**: POST /api/workflows/{id}/run executes workflow graph and returns results
+- [x] **BACK-09**: WorkflowExecutor performs topological sort of nodes, detects cycles (returns 400), resolves input values from connections, validates connection type compatibility (warn on mismatch), validates Full Result connections only attach to params with accepts_full_result=true
+- [x] **BACK-10**: Full Result port (__full_result__) bundles all cube outputs into one JSON object, available as connection source
+- [x] **BACK-11**: Result rows capped at 100 per cube with truncation flag in response
+- [x] **BACK-12**: Connection values override manually entered param values at execution time
 - [ ] **BACK-13**: SSE endpoint (GET /api/workflows/{id}/run/stream) streams per-cube status events (pending, running, done, error) via sse-starlette EventSourceResponse
 
 ### Frontend Infrastructure
@@ -111,11 +111,11 @@ Requirements for initial release. Each maps to roadmap phases.
 | BACK-05 | Phase 2 | Complete |
 | BACK-06 | Phase 2 | Complete |
 | BACK-07 | Phase 2 | Complete |
-| BACK-08 | Phase 2 | Pending |
-| BACK-09 | Phase 2 | Pending |
-| BACK-10 | Phase 2 | Pending |
-| BACK-11 | Phase 2 | Pending |
-| BACK-12 | Phase 2 | Pending |
+| BACK-08 | Phase 2 | Complete |
+| BACK-09 | Phase 2 | Complete |
+| BACK-10 | Phase 2 | Complete |
+| BACK-11 | Phase 2 | Complete |
+| BACK-12 | Phase 2 | Complete |
 | BACK-13 | Phase 3 | Pending |
 | FRONT-01 | Phase 1 | Complete |
 | FRONT-02 | Phase 4 | Pending |

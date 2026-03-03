@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-03T20:43:39.211Z"
+last_updated: "2026-03-03T20:50:06.438Z"
 progress:
   total_phases: 7
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State: Project 12
@@ -55,6 +55,10 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 02]: graph_json JSONB round-trips via model_dump() on write and WorkflowGraph.model_validate() on read — from_attributes=True alone does not handle dict-to-model coercion for JSONB
 - [Phase 02]: Alembic migration written manually (not autogenerate) to avoid asyncpg reflection complexity
 - [Phase 02]: CubeRegistry uses BaseCube.__subclasses__() after pkgutil.iter_modules import — zero-registration auto-discovery pattern
+- [Phase 02]: pytest-asyncio asyncio_mode=auto set in pyproject.toml to avoid per-test decorator
+- [Phase 02]: execute_graph uses patch('app.engine.executor.registry') mock pattern in tests for isolation
+- [Phase 02]: AllFlights cube uses engine.connect() directly (not FastAPI DI) to keep BaseCube.execute(**inputs) signature clean
+- [Phase 02]: Polygon geofence filter uses Python ray-casting against research.normal_tracks (PostGIS not on Tracer 42 RDS)
 
 ## Notes
 
@@ -75,4 +79,5 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 ---
 *Last session: 2026-03-03 — Completed 01-01-PLAN.md (cube type system + BaseCube + FastAPI app)*
 | Phase 02 P01 | 2 | 2 tasks | 11 files |
+| Phase 02 P02 | 6min | 2 tasks | 6 files |
 

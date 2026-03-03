@@ -9,7 +9,7 @@
 | # | Phase | Goal | Requirements | Success Criteria |
 |---|-------|------|--------------|------------------|
 | 1 | Types, Schemas & Project Scaffolding | Foundational data contracts + both projects bootable | CUBE-01, CUBE-02, CUBE-03, BACK-01, BACK-02, FRONT-01 | 3 |
-| 2 | 1/2 | In Progress|  | 4 |
+| 2 | 2/2 | Complete   | 2026-03-03 | 4 |
 | 3 | Async Execution with SSE Progress | Background execution with real-time streaming | BACK-13 | 2 |
 | 4 | Frontend Canvas, Nodes, Sidebar & Dark Theme | Full visual editor with drag, configure, connect | FRONT-02 to FRONT-12 | 5 |
 | 5 | Workflow Management & Execution Integration | Full loop — dashboard, save/load, run with live status | WFLOW-01 to WFLOW-08 | 4 |
@@ -56,7 +56,7 @@ Plans:
 
 **Requirements:** BACK-03, BACK-04, BACK-05, BACK-06, BACK-07, BACK-08, BACK-09, BACK-10, BACK-11, BACK-12
 
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 02-01-PLAN.md — CubeRegistry, stub cubes, Workflow model, Alembic migration, catalog + CRUD API
