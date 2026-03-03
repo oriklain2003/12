@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-03T22:56:15.354Z"
+last_updated: "2026-03-03T23:02:02.009Z"
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State: Project 12
@@ -67,6 +67,10 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 04-02]: CubeNodeData/CubeFlowNode types collocated in flowStore.ts to avoid circular dependency
 - [Phase 04-02]: Full Result handle uses id='__full_result__' and ParamType.JSON_OBJECT color — rendered separately from outputs loop
 - [Phase 04-02]: ParamField reads current value via Zustand selector — no prop drilling from CubeNode
+- [Phase 04-03]: Full Result rejection blocks connection entirely and shows toast.error (isValidConnection returns false)
+- [Phase 04-03]: Type mismatches allowed — custom onConnect assigns edge.type='mismatch' for dashed orange MismatchEdge rendering
+- [Phase 04-03]: cube.ts enums converted to const+type alias pattern (erasableSyntaxOnly tsconfig compliance)
+- [Phase 04-03]: nodeTypes and edgeTypes defined at module level (React Flow v12 requirement — prevents re-registration)
 
 ## Notes
 
@@ -91,4 +95,5 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 | Phase 03 P01 | 3min | 2 tasks | 5 files |
 | Phase 04 P01 | 2min | 2 tasks | 8 files |
 | Phase 04 P02 | 3min | 2 tasks | 8 files |
+| Phase 04 P03 | 10min | 2 tasks | 11 files |
 
