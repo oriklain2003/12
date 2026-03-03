@@ -10,13 +10,13 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Cube System
 
 - [x] **CUBE-01**: Shared type definitions exist in both Python (Pydantic) and TypeScript with matching ParamType enum, CubeCategory enum (data_source, filter, analysis, aggregation, output), ParamDefinition (with accepts_full_result flag), and CubeDefinition models
-- [ ] **CUBE-02**: BaseCube abstract class with async execute() method, cube_id, name, description, category, inputs, outputs properties, and automatic Full Result output port
+- [x] **CUBE-02**: BaseCube abstract class with async execute() method, cube_id, name, description, category, inputs, outputs properties, and automatic Full Result output port
 - [x] **CUBE-03**: Workflow data model types (WorkflowNode, WorkflowEdge, WorkflowGraph) defined in both Python and TypeScript
 
 ### Backend Infrastructure
 
-- [ ] **BACK-01**: FastAPI application with CORS middleware allowing frontend origin, health endpoint returning 200, config loaded from .env via pydantic-settings
-- [ ] **BACK-02**: Async PostgreSQL connection pool via SQLAlchemy async engine + asyncpg, with session dependency injection
+- [x] **BACK-01**: FastAPI application with CORS middleware allowing frontend origin, health endpoint returning 200, config loaded from .env via pydantic-settings
+- [x] **BACK-02**: Async PostgreSQL connection pool via SQLAlchemy async engine + asyncpg, with session dependency injection
 - [ ] **BACK-03**: CubeRegistry that auto-discovers all BaseCube subclasses from the cubes package and exposes them by cube_id
 - [ ] **BACK-04**: SQLAlchemy Workflow model (UUID pk, name, graph_json JSONB, created_at, updated_at) in public schema
 - [ ] **BACK-05**: Alembic migration creating public.workflows table
@@ -101,11 +101,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CUBE-01 | Phase 1 | Pending |
-| CUBE-02 | Phase 1 | Pending |
-| CUBE-03 | Phase 1 | Pending |
-| BACK-01 | Phase 1 | Pending |
-| BACK-02 | Phase 1 | Pending |
+| CUBE-01 | Phase 1 | Complete |
+| CUBE-02 | Phase 1 | Complete |
+| CUBE-03 | Phase 1 | Complete |
+| BACK-01 | Phase 1 | Complete |
+| BACK-02 | Phase 1 | Complete |
 | BACK-03 | Phase 2 | Pending |
 | BACK-04 | Phase 2 | Pending |
 | BACK-05 | Phase 2 | Pending |
@@ -117,7 +117,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | BACK-11 | Phase 2 | Pending |
 | BACK-12 | Phase 2 | Pending |
 | BACK-13 | Phase 3 | Pending |
-| FRONT-01 | Phase 1 | Pending |
+| FRONT-01 | Phase 1 | Complete |
 | FRONT-02 | Phase 4 | Pending |
 | FRONT-03 | Phase 4 | Pending |
 | FRONT-04 | Phase 4 | Pending |
@@ -156,4 +156,4 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ---
 *Requirements defined: 2026-03-03*
-*Last updated: 2026-03-03 after initial definition*
+*Last updated: 2026-03-03 — CUBE-01, CUBE-02, CUBE-03, BACK-01, BACK-02, FRONT-01 marked complete after 01-01 and 01-02 execution*

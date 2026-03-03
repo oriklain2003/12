@@ -15,7 +15,7 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
-| 1 | Types, Schemas & Project Scaffolding | In Progress | 2/? |
+| 1 | Types, Schemas & Project Scaffolding | In Progress | 1/2+ |
 | 2 | Backend Core — Registry, DB, CRUD, Executor | Not Started | 0/0 |
 | 3 | Async Execution with SSE Progress | Not Started | 0/0 |
 | 4 | Frontend Canvas, Nodes, Sidebar & Dark Theme | Not Started | 0/0 |
@@ -32,8 +32,11 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 
 ## Decisions
 
-- Python cube.py uses STRING_ARRAY/NUMBER_ARRAY/FLIGHT_IDS/JSON enum values (not list_of_strings etc as in plan spec) — TypeScript mirrors actual implementation
-- CubeDefinition uses `id` field (not `cube_id`) — matches actual backend/app/schemas/cube.py
+- ParamType uses list_of_strings/list_of_numbers/json_object per spec (old STRING_ARRAY/NUMBER_ARRAY/FLIGHT_IDS/JSON values replaced)
+- CubeDefinition uses `cube_id` field (not `id`) per spec — old implementation corrected
+- BaseCube.definition is an instance property that auto-appends __full_result__ output (ParamType.JSON_OBJECT)
+- hatch wheel packages config added to pyproject.toml to resolve editable install discovery
+- httpx added as dev dependency for FastAPI TestClient support
 - WorkflowResponse.id typed as `string` in TypeScript (UUID serializes as string over JSON)
 
 ## Notes
@@ -43,13 +46,14 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - uv and pnpm both available on the system
 - Frontend scaffold completed: `cd frontend && pnpm dev` starts on port 5173
 - TypeScript type contracts established for cube and workflow data models
+- Plan 01-01 re-executed to align implementation with plan spec (corrected enum values and field names)
 
 ## Performance Metrics
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
-| 01 | 01 | ~5 min | 3 | 5 |
+| 01 | 01 | 12 min | 2 | 4 |
 | 01 | 02 | 2 min | 2 | 18 |
 
 ---
-*Last session: 2026-03-03T19:52:56Z — Completed 01-02-PLAN.md (frontend scaffold + TypeScript types)*
+*Last session: 2026-03-03 — Completed 01-01-PLAN.md (cube type system + BaseCube + FastAPI app)*

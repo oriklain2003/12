@@ -217,4 +217,4 @@ All 48 v1 requirements mapped:
 
 ---
 *Roadmap created: 2026-03-03*
-*Last updated: 2026-03-03 — Phase 1 complete (01-01 and 01-02 both done)*
+*Last updated: 2026-03-03 — 01-01 re-executed to align cube schemas with plan spec (ParamType values, cube_id field, BaseCube abstract class)*
