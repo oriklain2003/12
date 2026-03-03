@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-03T19:57:14.691Z"
+last_updated: "2026-03-03T20:43:39.211Z"
 progress:
   total_phases: 7
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
 ---
 
 # Project State: Project 12
@@ -51,6 +51,10 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - hatch wheel packages config added to pyproject.toml to resolve editable install discovery
 - httpx added as dev dependency for FastAPI TestClient support
 - WorkflowResponse.id typed as `string` in TypeScript (UUID serializes as string over JSON)
+- [Phase 02]: Route paths use empty string '' not '/' in FastAPI routers to avoid 307 redirect when callers omit trailing slash
+- [Phase 02]: graph_json JSONB round-trips via model_dump() on write and WorkflowGraph.model_validate() on read — from_attributes=True alone does not handle dict-to-model coercion for JSONB
+- [Phase 02]: Alembic migration written manually (not autogenerate) to avoid asyncpg reflection complexity
+- [Phase 02]: CubeRegistry uses BaseCube.__subclasses__() after pkgutil.iter_modules import — zero-registration auto-discovery pattern
 
 ## Notes
 
@@ -70,3 +74,5 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 
 ---
 *Last session: 2026-03-03 — Completed 01-01-PLAN.md (cube type system + BaseCube + FastAPI app)*
+| Phase 02 P01 | 2 | 2 tasks | 11 files |
+

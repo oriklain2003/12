@@ -17,11 +17,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **BACK-01**: FastAPI application with CORS middleware allowing frontend origin, health endpoint returning 200, config loaded from .env via pydantic-settings
 - [x] **BACK-02**: Async PostgreSQL connection pool via SQLAlchemy async engine + asyncpg, with session dependency injection
-- [ ] **BACK-03**: CubeRegistry that auto-discovers all BaseCube subclasses from the cubes package and exposes them by cube_id
-- [ ] **BACK-04**: SQLAlchemy Workflow model (UUID pk, name, graph_json JSONB, created_at, updated_at) in public schema
-- [ ] **BACK-05**: Alembic migration creating public.workflows table
-- [ ] **BACK-06**: GET /api/cubes/catalog returns all registered cube definitions as JSON array
-- [ ] **BACK-07**: Workflow CRUD API — POST /api/workflows (create), GET /api/workflows (list), GET /api/workflows/{id} (get), PUT /api/workflows/{id} (update), DELETE /api/workflows/{id} (delete)
+- [x] **BACK-03**: CubeRegistry that auto-discovers all BaseCube subclasses from the cubes package and exposes them by cube_id
+- [x] **BACK-04**: SQLAlchemy Workflow model (UUID pk, name, graph_json JSONB, created_at, updated_at) in public schema
+- [x] **BACK-05**: Alembic migration creating public.workflows table
+- [x] **BACK-06**: GET /api/cubes/catalog returns all registered cube definitions as JSON array
+- [x] **BACK-07**: Workflow CRUD API — POST /api/workflows (create), GET /api/workflows (list), GET /api/workflows/{id} (get), PUT /api/workflows/{id} (update), DELETE /api/workflows/{id} (delete)
 - [ ] **BACK-08**: POST /api/workflows/{id}/run executes workflow graph and returns results
 - [ ] **BACK-09**: WorkflowExecutor performs topological sort of nodes, detects cycles (returns 400), resolves input values from connections, validates connection type compatibility (warn on mismatch), validates Full Result connections only attach to params with accepts_full_result=true
 - [ ] **BACK-10**: Full Result port (__full_result__) bundles all cube outputs into one JSON object, available as connection source
@@ -106,11 +106,11 @@ Requirements for initial release. Each maps to roadmap phases.
 | CUBE-03 | Phase 1 | Complete |
 | BACK-01 | Phase 1 | Complete |
 | BACK-02 | Phase 1 | Complete |
-| BACK-03 | Phase 2 | Pending |
-| BACK-04 | Phase 2 | Pending |
-| BACK-05 | Phase 2 | Pending |
-| BACK-06 | Phase 2 | Pending |
-| BACK-07 | Phase 2 | Pending |
+| BACK-03 | Phase 2 | Complete |
+| BACK-04 | Phase 2 | Complete |
+| BACK-05 | Phase 2 | Complete |
+| BACK-06 | Phase 2 | Complete |
+| BACK-07 | Phase 2 | Complete |
 | BACK-08 | Phase 2 | Pending |
 | BACK-09 | Phase 2 | Pending |
 | BACK-10 | Phase 2 | Pending |
