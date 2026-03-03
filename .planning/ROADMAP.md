@@ -1,0 +1,211 @@
+# Roadmap: Project 12 — Visual Dataflow Workflow Builder
+
+**Created:** 2026-03-03
+**Phases:** 7
+**Requirements covered:** 46/46
+
+## Phase Overview
+
+| # | Phase | Goal | Requirements | Success Criteria |
+|---|-------|------|--------------|------------------|
+| 1 | Types, Schemas & Project Scaffolding | Foundational data contracts + both projects bootable | CUBE-01, CUBE-02, CUBE-03, BACK-01, BACK-02, FRONT-01 | 3 |
+| 2 | Backend Core — Registry, DB, CRUD, Executor | Full backend API functional via curl | BACK-03 to BACK-12 | 4 |
+| 3 | Async Execution with SSE Progress | Background execution with real-time streaming | BACK-13 | 2 |
+| 4 | Frontend Canvas, Nodes, Sidebar & Dark Theme | Full visual editor with drag, configure, connect | FRONT-02 to FRONT-11 | 5 |
+| 5 | Workflow Management & Execution Integration | Full loop — dashboard, save/load, run with live status | WFLOW-01 to WFLOW-07 | 4 |
+| 6 | Results Display — Tables, Map, Bidirectional | Rich results with tables + map for geo data | RSLT-01, RSLT-02, RSLT-03 | 5 |
+| 7 | Real DB Cubes, End-to-End & Docker | Working pipeline with real data + deployable containers | DATA-01 to DATA-05, DEPL-01 to DEPL-03 | 5 |
+
+---
+
+## Phase 1: Types, Schemas & Project Scaffolding
+
+**Goal:** Foundational data contracts + both projects bootable
+
+**Requirements:** CUBE-01, CUBE-02, CUBE-03, BACK-01, BACK-02, FRONT-01
+
+**Key files:**
+- `backend/pyproject.toml` — Python project with FastAPI, SQLAlchemy, asyncpg dependencies
+- `backend/app/main.py` — FastAPI app with CORS, health endpoint
+- `backend/app/config.py` — Settings from .env via pydantic-settings
+- `backend/app/database.py` — Async SQLAlchemy engine + session factory
+- `backend/app/schemas/cube.py` — ParamType, CubeCategory, ParamDefinition, CubeDefinition
+- `backend/app/schemas/workflow.py` — WorkflowNode, WorkflowEdge, WorkflowGraph, CRUD schemas
+- `backend/app/cubes/base.py` — BaseCube abstract class
+- `frontend/package.json` — React 18, @xyflow/react, Zustand, Leaflet, Vite
+- `frontend/vite.config.ts` — API proxy to backend
+- `frontend/src/main.tsx`, `frontend/src/App.tsx` — Entry point
+- `frontend/src/types/cube.ts`, `frontend/src/types/workflow.ts` — TypeScript type mirrors
+
+**Success criteria:**
+1. `cd backend && uv run uvicorn app.main:app` starts and GET /health returns 200
+2. `cd frontend && pnpm dev` starts and browser shows "Project 12" page
+3. TypeScript compiles clean with `pnpm tsc --noEmit`
+
+---
+
+## Phase 2: Backend Core — Registry, DB, CRUD, Executor
+
+**Goal:** Full backend API functional via curl/Postman
+
+**Requirements:** BACK-03, BACK-04, BACK-05, BACK-06, BACK-07, BACK-08, BACK-09, BACK-10, BACK-11, BACK-12
+
+**Key files:**
+- `backend/app/engine/registry.py` — CubeRegistry with auto-discovery of BaseCube subclasses
+- `backend/app/engine/executor.py` — WorkflowExecutor: topo sort, cycle detection, input resolution, Full Result, row limiting
+- `backend/app/models/workflow.py` — SQLAlchemy Workflow model (UUID, name, graph_json JSONB)
+- `backend/alembic.ini`, `backend/alembic/env.py`, `backend/alembic/versions/001_create_workflows.py`
+- `backend/app/routers/cubes.py` — GET /api/cubes/catalog
+- `backend/app/routers/workflows.py` — Full CRUD + run endpoint
+- `backend/app/cubes/echo_cube.py` — Stub cube echoing input
+- `backend/app/cubes/add_numbers.py` — Stub cube adding two numbers
+
+**Success criteria:**
+1. GET /api/cubes/catalog returns echo + add_numbers cube definitions
+2. Workflow CRUD works (create → list → get → update → delete)
+3. POST /api/workflows/{id}/run with echo→echo graph returns correct chained results
+4. Workflow graph containing a cycle returns 400 error
+
+---
+
+## Phase 3: Async Execution with SSE Progress
+
+**Goal:** Background execution with real-time per-cube status streaming
+
+**Requirements:** BACK-13
+
+**Key files:**
+- `backend/app/engine/executor.py` — Refactor execute() to async generator yielding CubeStatusEvent
+- `backend/app/schemas/execution.py` — CubeStatusEvent model (node_id, status, outputs, error)
+- `backend/app/routers/workflows.py` — GET /api/workflows/{id}/run/stream SSE endpoint via sse-starlette
+
+**Success criteria:**
+1. curl to SSE endpoint shows streaming events: `data: {"node_id":"...", "status":"running"}` then `data: {"node_id":"...", "status":"done", "outputs":{...}}`
+2. Events arrive in real-time as each cube executes, not buffered until completion
+
+---
+
+## Phase 4: Frontend Canvas, Nodes, Sidebar & Dark Theme
+
+**Goal:** Full visual editor — drag cubes, configure params, connect nodes
+
+**Requirements:** FRONT-02, FRONT-03, FRONT-04, FRONT-05, FRONT-06, FRONT-07, FRONT-08, FRONT-09, FRONT-10, FRONT-11
+
+**Key files:**
+- `frontend/src/styles/theme.css` — Dark theme CSS variables
+- `frontend/src/styles/glass.css` — Liquid glass utility classes (backdrop-filter: blur(12px) saturate(150%))
+- `frontend/src/api/client.ts` — Fetch wrapper with base URL
+- `frontend/src/api/cubes.ts`, `frontend/src/api/workflows.ts` — API functions
+- `frontend/src/store/flowStore.ts` — Zustand store (nodes, edges, catalog, results, status)
+- `frontend/src/components/Canvas/FlowCanvas.tsx` — React Flow wrapper with drop handler
+- `frontend/src/components/CubeNode/CubeNode.tsx` — Custom node with handles, fields, status indicator
+- `frontend/src/components/CubeNode/ParamHandle.tsx` — Color-coded handle by ParamType
+- `frontend/src/components/CubeNode/ParamField.tsx` — Inline editor (hidden when connected)
+- `frontend/src/components/CubeNode/ResultsPanel.tsx` — Compact results preview
+- `frontend/src/components/Sidebar/CubeCatalog.tsx` — Grouped, draggable, searchable catalog
+- `frontend/src/components/Toolbar/Toolbar.tsx` — Run, Save, name, dashboard link
+
+**Success criteria:**
+1. Dark canvas with grid background, sidebar with cube catalog grouped by category
+2. Drag cube from sidebar → styled glass node appears on canvas at drop position
+3. Input handles on left (color-coded), output handles + Full Result on right
+4. Typing param values persists in Zustand store
+5. Connecting nodes creates styled edges; type mismatch shown as dashed orange edge
+
+---
+
+## Phase 5: Workflow Management & Execution Integration
+
+**Goal:** Full loop — dashboard, save/load, run with live status
+
+**Requirements:** WFLOW-01, WFLOW-02, WFLOW-03, WFLOW-04, WFLOW-05, WFLOW-06, WFLOW-07
+
+**Key files:**
+- `frontend/src/App.tsx` — React Router with /, /workflow/:id, /workflow/new routes
+- `frontend/src/pages/DashboardPage.tsx` — Dashboard with workflow list
+- `frontend/src/pages/EditorPage.tsx` — Canvas editor page
+- `frontend/src/components/Dashboard/WorkflowList.tsx` — List with rename/delete/open actions
+- `frontend/src/hooks/useWorkflowSSE.ts` — EventSource hook parsing SSE events
+- Modify: `flowStore.ts` (save/load/run actions), `Toolbar.tsx` (keyboard shortcuts), `CubeNode.tsx` (live status)
+
+**Success criteria:**
+1. Dashboard lists workflows with create/rename/delete functionality
+2. Build flow → Save → appears on dashboard → reopen → same state restored
+3. Run shows real-time status (pending → running → done/error) on each CubeNode
+4. Ctrl+S saves, Ctrl+Enter runs, Delete removes selected nodes/edges
+
+---
+
+## Phase 6: Results Display — Tables, Map, Bidirectional Interaction
+
+**Goal:** Rich results with tables from JSON + map for geo data
+
+**Requirements:** RSLT-01, RSLT-02, RSLT-03
+
+**Key files:**
+- `frontend/src/components/Results/ResultsTable.tsx` — Auto-detect columns from JSON, sortable headers, row highlighting
+- `frontend/src/components/Results/ResultsMap.tsx` — Leaflet map with CartoDB dark tiles, markers, flyTo
+- `frontend/src/components/Results/ResultsDrawer.tsx` — Slide-up panel with table + map side by side
+- `frontend/src/utils/geoDetect.ts` — Detect lat/lon column pairs in result data
+- Modify: `CubeNode/ResultsPanel.tsx` — "View Results" button opens drawer
+
+**Success criteria:**
+1. Results render as scrollable table with auto-detected columns and sortable headers
+2. Rows with lat/lon coordinate pairs show Leaflet map panel alongside table
+3. Click map marker → highlight + scroll to corresponding table row
+4. Click table row → map flies to that location with marker popup
+5. Truncation warning displayed when results exceed 100 rows
+
+---
+
+## Phase 7: Real DB Cubes, End-to-End & Docker
+
+**Goal:** Working pipeline with real Tracer 42 data + deployable containers
+
+**Requirements:** DATA-01, DATA-02, DATA-03, DATA-04, DATA-05, DEPL-01, DEPL-02, DEPL-03
+
+**Key files:**
+- `backend/app/cubes/get_flights.py` — Queries research.flight_metadata with time/airport/region filters
+- `backend/app/cubes/filter_flights.py` — Filters flight_ids by country, days_back, altitude
+- `backend/app/cubes/get_anomalies.py` — Queries research.anomaly_reports for flight_ids
+- `backend/app/cubes/count_by_field.py` — Pure Python groupby aggregation
+- `backend/Dockerfile` — Multi-stage: uv sync → slim Python runtime
+- `frontend/Dockerfile` — Multi-stage: pnpm build → nginx serving SPA
+- `frontend/nginx.conf` — Serves SPA, proxies /api to backend
+- `docker-compose.yml` — Backend + frontend services with .env
+
+**Success criteria:**
+1. Get Flights (168h) → Filter (country) → Get Anomalies pipeline returns real data
+2. Results table shows real flight_ids, callsigns, airlines from database
+3. Map shows markers at flight origin/destination lat/lon positions
+4. Count By Field groups by airline and shows counts table
+5. `docker-compose up --build` → full app accessible at localhost:3000
+
+**End-to-end verification:**
+1. Open /workflow/new
+2. Drag Get Flights → set time_range_hours=168
+3. Drag Filter Flights → connect flight_ids, set country filter
+4. Drag Get Anomalies → connect filtered_flight_ids
+5. Drag Count By Field → connect Full Result, set group_by_field=airline
+6. Run → watch live status → see real results in tables + map
+7. Save → dashboard → reopen → verify state preserved
+
+---
+
+## Requirement Coverage Validation
+
+All 46 v1 requirements mapped:
+
+- **Phase 1 (6):** CUBE-01, CUBE-02, CUBE-03, BACK-01, BACK-02, FRONT-01
+- **Phase 2 (10):** BACK-03 through BACK-12
+- **Phase 3 (1):** BACK-13
+- **Phase 4 (10):** FRONT-02 through FRONT-11
+- **Phase 5 (7):** WFLOW-01 through WFLOW-07
+- **Phase 6 (3):** RSLT-01, RSLT-02, RSLT-03
+- **Phase 7 (8):** DATA-01 through DATA-05, DEPL-01 through DEPL-03
+
+**Unmapped:** 0
+
+---
+*Roadmap created: 2026-03-03*
+*Last updated: 2026-03-03 after initial creation*
