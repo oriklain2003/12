@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-03T21:35:42.832Z"
+last_updated: "2026-03-03T22:52:04.283Z"
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 8
+  completed_plans: 6
 ---
 
 # Project State: Project 12
@@ -62,6 +62,8 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 03-01]: stream_graph assumes pre-validated graph — callers validate and raise HTTPException before streaming
 - [Phase 03-01]: execute_graph delegates to stream_graph internally to eliminate sync/streaming code duplication
 - [Phase 03-01]: SSE cycle validation happens pre-stream so HTTP 400 can be returned before SSE headers are committed
+- [Phase 04-01]: ParamType enum corrected: list_of_strings/list_of_numbers/json_object; FLIGHT_IDS removed to match backend exactly
+- [Phase 04-01]: API client uses /api base path matching Vite proxy — apiFetch<T> generic wrapper with ApiError for typed error handling
 
 ## Notes
 
@@ -84,4 +86,5 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 | Phase 02 P01 | 2 | 2 tasks | 11 files |
 | Phase 02 P02 | 6min | 2 tasks | 6 files |
 | Phase 03 P01 | 3min | 2 tasks | 5 files |
+| Phase 04 P01 | 2min | 2 tasks | 8 files |
 
