@@ -27,8 +27,8 @@
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Backend cube schemas, BaseCube abstract class, and FastAPI app entry point
-- [ ] 01-02-PLAN.md — Frontend Vite+React scaffold and TypeScript type mirrors
+- [x] 01-01-PLAN.md — Backend cube schemas, BaseCube abstract class, and FastAPI app entry point
+- [x] 01-02-PLAN.md — Frontend Vite+React scaffold and TypeScript type mirrors
 
 **Key files:**
 - `backend/pyproject.toml` — Python project with FastAPI, SQLAlchemy, asyncpg dependencies
@@ -217,4 +217,4 @@ All 48 v1 requirements mapped:
 
 ---
 *Roadmap created: 2026-03-03*
-*Last updated: 2026-03-03 after Phase 1 planning*
+*Last updated: 2026-03-03 — Phase 1 complete (01-01 and 01-02 both done)*

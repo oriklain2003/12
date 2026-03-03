@@ -9,9 +9,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Cube System
 
-- [ ] **CUBE-01**: Shared type definitions exist in both Python (Pydantic) and TypeScript with matching ParamType enum, CubeCategory enum (data_source, filter, analysis, aggregation, output), ParamDefinition (with accepts_full_result flag), and CubeDefinition models
+- [x] **CUBE-01**: Shared type definitions exist in both Python (Pydantic) and TypeScript with matching ParamType enum, CubeCategory enum (data_source, filter, analysis, aggregation, output), ParamDefinition (with accepts_full_result flag), and CubeDefinition models
 - [ ] **CUBE-02**: BaseCube abstract class with async execute() method, cube_id, name, description, category, inputs, outputs properties, and automatic Full Result output port
-- [ ] **CUBE-03**: Workflow data model types (WorkflowNode, WorkflowEdge, WorkflowGraph) defined in both Python and TypeScript
+- [x] **CUBE-03**: Workflow data model types (WorkflowNode, WorkflowEdge, WorkflowGraph) defined in both Python and TypeScript
 
 ### Backend Infrastructure
 
@@ -31,7 +31,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Frontend Infrastructure
 
-- [ ] **FRONT-01**: Vite + React 18 + TypeScript project with pnpm, dev server on port 5173 proxying /api to backend port 8000
+- [x] **FRONT-01**: Vite + React 18 + TypeScript project with pnpm, dev server on port 5173 proxying /api to backend port 8000
 - [ ] **FRONT-02**: Dark theme CSS with CSS custom properties and liquid glass effects (backdrop-filter: blur(12px) saturate(150%))
 - [ ] **FRONT-03**: React Flow canvas (@xyflow/react v12+) with dark background, grid, pan/zoom, and drop handler for adding cubes
 - [ ] **FRONT-04**: Custom CubeNode component rendering cube name, category icon, input handles (left), output handles + Full Result (right)
