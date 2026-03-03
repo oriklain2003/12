@@ -1,0 +1,115 @@
+/* Toolbar — top bar for workflow editor */
+
+.toolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 48px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  border-radius: 0;
+  gap: 12px;
+}
+
+/* Left section: dashboard link */
+.toolbar__left {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.toolbar__dashboard-link {
+  color: var(--color-text-dim);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.toolbar__dashboard-link:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+/* Center section: editable workflow name */
+.toolbar__center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.toolbar__name-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+  outline: none;
+  padding: 2px 8px;
+  min-width: 160px;
+  max-width: 320px;
+  width: 100%;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+
+.toolbar__name-input:hover {
+  border-bottom-color: var(--color-border-hover);
+}
+
+.toolbar__name-input:focus {
+  border-bottom-color: var(--color-accent);
+}
+
+/* Right section: action buttons */
+.toolbar__actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+/* Base button styles */
+.toolbar__btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s, border-color 0.15s;
+  font-family: inherit;
+  line-height: 1;
+}
+
+/* Save — outline style */
+.toolbar__btn--save {
+  background: transparent;
+  border: 1px solid var(--color-border-hover);
+  color: var(--color-text-dim);
+}
+
+.toolbar__btn--save:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+  border-color: var(--color-accent);
+}
+
+/* Run — accent filled */
+.toolbar__btn--run {
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  color: #fff;
+}
+
+.toolbar__btn--run:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}

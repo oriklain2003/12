@@ -17,6 +17,7 @@ import {
   useReactFlow,
   type Connection,
   type Edge,
+  type IsValidConnection,
 } from '@xyflow/react';
 import { toast } from 'sonner';
 import { CubeNode } from '../CubeNode/CubeNode';
@@ -62,26 +63,31 @@ export function FlowCanvas() {
 
   // ── Connection validation: block Full Result → non-accepting inputs ─────────
 
-  const isValidConnection = useCallback((connection: Connection): boolean => {
-    const { sourceHandle, target, targetHandle } = connection;
-    const state = useFlowStore.getState();
-    const targetNode = state.nodes.find((n) => n.id === target);
-    if (!targetNode) return false;
+  const isValidConnection = useCallback<IsValidConnection<Edge>>(
+    (connection) => {
+      const sourceHandle = connection.sourceHandle;
+      const target = connection.target;
+      const targetHandle = connection.targetHandle;
+      const state = useFlowStore.getState();
+      const targetNode = state.nodes.find((n) => n.id === target);
+      if (!targetNode) return false;
 
-    const targetParam = targetNode.data.cubeDef.inputs.find(
-      (p) => p.name === targetHandle
-    );
-    if (!targetParam) return false;
+      const targetParam = targetNode.data.cubeDef.inputs.find(
+        (p) => p.name === targetHandle
+      );
+      if (!targetParam) return false;
 
-    // Full Result rejection: show error toast and prevent the connection
-    if (sourceHandle === '__full_result__' && !targetParam.accepts_full_result) {
-      toast.error('This input does not accept Full Result');
-      return false;
-    }
+      // Full Result rejection: show error toast and prevent the connection
+      if (sourceHandle === '__full_result__' && !targetParam.accepts_full_result) {
+        toast.error('This input does not accept Full Result');
+        return false;
+      }
 
-    // Type mismatches are allowed — edge styling handles the visual warning
-    return true;
-  }, []);
+      // Type mismatches are allowed — edge styling handles the visual warning
+      return true;
+    },
+    []
+  );
 
   // ── Custom onConnect: detect type mismatches and assign edge type ───────────
 

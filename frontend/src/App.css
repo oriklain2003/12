@@ -1,1 +1,17 @@
-/* App styles — will be replaced with dark theme in Phase 4 */
+/* App root layout — full-viewport dark canvas editor */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+.app__body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}

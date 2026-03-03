@@ -1,24 +1,28 @@
 /**
  * TypeScript type definitions for cube schemas.
  * Mirrors backend/app/schemas/cube.py
+ *
+ * Uses const objects + type aliases instead of enum to satisfy erasableSyntaxOnly.
  */
 
-export enum ParamType {
-  STRING = 'string',
-  NUMBER = 'number',
-  BOOLEAN = 'boolean',
-  LIST_OF_STRINGS = 'list_of_strings',
-  LIST_OF_NUMBERS = 'list_of_numbers',
-  JSON_OBJECT = 'json_object',
-}
+export const ParamType = {
+  STRING: 'string',
+  NUMBER: 'number',
+  BOOLEAN: 'boolean',
+  LIST_OF_STRINGS: 'list_of_strings',
+  LIST_OF_NUMBERS: 'list_of_numbers',
+  JSON_OBJECT: 'json_object',
+} as const;
+export type ParamType = (typeof ParamType)[keyof typeof ParamType];
 
-export enum CubeCategory {
-  DATA_SOURCE = 'data_source',
-  FILTER = 'filter',
-  ANALYSIS = 'analysis',
-  AGGREGATION = 'aggregation',
-  OUTPUT = 'output',
-}
+export const CubeCategory = {
+  DATA_SOURCE: 'data_source',
+  FILTER: 'filter',
+  ANALYSIS: 'analysis',
+  AGGREGATION: 'aggregation',
+  OUTPUT: 'output',
+} as const;
+export type CubeCategory = (typeof CubeCategory)[keyof typeof CubeCategory];
 
 export interface ParamDefinition {
   name: string;
