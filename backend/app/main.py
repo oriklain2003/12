@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.routers.cubes import router as cubes_router
+from app.routers.workflows import router as workflows_router
 
 app = FastAPI(
     title="Project 12 — Flow",
@@ -15,6 +17,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(cubes_router)
+app.include_router(workflows_router)
 
 
 @app.get("/health")
