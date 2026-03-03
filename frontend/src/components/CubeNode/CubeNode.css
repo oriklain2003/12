@@ -1,0 +1,98 @@
+.cube-node {
+  width: 280px;
+  padding: 0;
+  background: var(--color-surface);
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: inherit;
+}
+
+/* Category color accent — set via inline style on the header border-left */
+.cube-node__header {
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--color-border);
+  /* Left border color supplied inline per-node via style prop */
+  border-left: 3px solid transparent;
+}
+
+.cube-node__header-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-text);
+}
+
+.cube-node__body {
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── Section labels ────────────────────────────────────────── */
+.cube-node__section-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+
+/* ── Param rows ────────────────────────────────────────────── */
+.cube-node__param-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  position: relative;
+}
+
+/* Input side — handle extends outside the node on the left */
+.cube-node__param-row--input {
+  padding-left: 0;
+}
+
+/* Output side — handle extends outside on the right */
+.cube-node__param-row--output {
+  flex-direction: row-reverse;
+  padding-right: 0;
+}
+
+.cube-node__param-label {
+  font-size: 11px;
+  color: var(--color-text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+/* Output label aligned right */
+.cube-node__param-row--output .cube-node__param-label {
+  text-align: right;
+}
+
+/* ── Full Result handle row ────────────────────────────────── */
+.cube-node__full-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.06);
+  margin-top: 2px;
+  position: relative;
+}
+
+.cube-node__full-result-label {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  font-style: italic;
+}

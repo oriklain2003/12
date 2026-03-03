@@ -1,0 +1,113 @@
+.param-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.param-field__label {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.param-field__connected {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--color-text-dim);
+  font-style: italic;
+  padding: 3px 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+}
+
+.param-field__connected-icon {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.param-field input[type='text'],
+.param-field input[type='number'] {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  padding: 3px 6px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.param-field input[type='text']:focus,
+.param-field input[type='number']:focus {
+  border-color: var(--color-border-hover);
+}
+
+.param-field input[type='checkbox'] {
+  cursor: pointer;
+  accent-color: var(--color-accent);
+  width: 14px;
+  height: 14px;
+}
+
+.param-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  padding: 3px 6px;
+  outline: none;
+  resize: none;
+  transition: border-color 0.15s;
+}
+
+.param-field textarea:focus {
+  border-color: var(--color-border-hover);
+}
+
+/* react-tag-input-component overrides for dark theme */
+.param-field .rti--container {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 4px !important;
+  padding: 2px 4px !important;
+  font-size: 11px !important;
+  min-height: unset !important;
+  gap: 2px !important;
+}
+
+.param-field .rti--container:focus-within {
+  border-color: var(--color-border-hover) !important;
+}
+
+.param-field .rti--tag {
+  background: rgba(99, 102, 241, 0.2) !important;
+  color: var(--color-text) !important;
+  border-radius: 3px !important;
+  font-size: 10px !important;
+  padding: 1px 5px !important;
+}
+
+.param-field .rti--tag button {
+  color: var(--color-text-dim) !important;
+}
+
+.param-field .rti--input {
+  background: transparent !important;
+  color: var(--color-text) !important;
+  font-size: 11px !important;
+}
