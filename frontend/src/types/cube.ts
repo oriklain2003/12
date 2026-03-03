@@ -7,10 +7,9 @@ export enum ParamType {
   STRING = 'string',
   NUMBER = 'number',
   BOOLEAN = 'boolean',
-  STRING_ARRAY = 'string_array',
-  NUMBER_ARRAY = 'number_array',
-  FLIGHT_IDS = 'flight_ids',
-  JSON = 'json',
+  LIST_OF_STRINGS = 'list_of_strings',
+  LIST_OF_NUMBERS = 'list_of_numbers',
+  JSON_OBJECT = 'json_object',
 }
 
 export enum CubeCategory {
@@ -24,16 +23,14 @@ export enum CubeCategory {
 export interface ParamDefinition {
   name: string;
   type: ParamType;
-  label: string;
   description: string;
   required: boolean;
   default: string | number | boolean | unknown[] | null;
-  is_output: boolean;
   accepts_full_result: boolean;
 }
 
 export interface CubeDefinition {
-  id: string;
+  cube_id: string;
   name: string;
   description: string;
   category: CubeCategory;
