@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-03T20:50:55.525Z"
+last_updated: "2026-03-03T21:17:39.375Z"
 progress:
   total_phases: 7
-  completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 3
+  total_plans: 5
+  completed_plans: 5
 ---
 
 # Project State: Project 12
@@ -59,6 +59,9 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 02]: execute_graph uses patch('app.engine.executor.registry') mock pattern in tests for isolation
 - [Phase 02]: AllFlights cube uses engine.connect() directly (not FastAPI DI) to keep BaseCube.execute(**inputs) signature clean
 - [Phase 02]: Polygon geofence filter uses Python ray-casting against research.normal_tracks (PostGIS not on Tracer 42 RDS)
+- [Phase 03-01]: stream_graph assumes pre-validated graph — callers validate and raise HTTPException before streaming
+- [Phase 03-01]: execute_graph delegates to stream_graph internally to eliminate sync/streaming code duplication
+- [Phase 03-01]: SSE cycle validation happens pre-stream so HTTP 400 can be returned before SSE headers are committed
 
 ## Notes
 
@@ -80,4 +83,5 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 *Last session: 2026-03-03 — Completed 01-01-PLAN.md (cube type system + BaseCube + FastAPI app)*
 | Phase 02 P01 | 2 | 2 tasks | 11 files |
 | Phase 02 P02 | 6min | 2 tasks | 6 files |
+| Phase 03 P01 | 3min | 2 tasks | 5 files |
 

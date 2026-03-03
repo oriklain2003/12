@@ -27,7 +27,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **BACK-10**: Full Result port (__full_result__) bundles all cube outputs into one JSON object, available as connection source
 - [x] **BACK-11**: Result rows capped at 100 per cube with truncation flag in response
 - [x] **BACK-12**: Connection values override manually entered param values at execution time
-- [ ] **BACK-13**: SSE endpoint (GET /api/workflows/{id}/run/stream) streams per-cube status events (pending, running, done, error) via sse-starlette EventSourceResponse
+- [x] **BACK-13**: SSE endpoint (GET /api/workflows/{id}/run/stream) streams per-cube status events (pending, running, done, error) via sse-starlette EventSourceResponse
 
 ### Frontend Infrastructure
 
@@ -116,7 +116,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | BACK-10 | Phase 2 | Complete |
 | BACK-11 | Phase 2 | Complete |
 | BACK-12 | Phase 2 | Complete |
-| BACK-13 | Phase 3 | Pending |
+| BACK-13 | Phase 3 | Complete |
 | FRONT-01 | Phase 1 | Complete |
 | FRONT-02 | Phase 4 | Pending |
 | FRONT-03 | Phase 4 | Pending |
