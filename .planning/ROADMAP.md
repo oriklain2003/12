@@ -56,6 +56,12 @@ Plans:
 
 **Requirements:** BACK-03, BACK-04, BACK-05, BACK-06, BACK-07, BACK-08, BACK-09, BACK-10, BACK-11, BACK-12
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — CubeRegistry, stub cubes, Workflow model, Alembic migration, catalog + CRUD API
+- [ ] 02-02-PLAN.md — WorkflowExecutor engine, run endpoint, all_flights production cube
+
 **Key files:**
 - `backend/app/engine/registry.py` — CubeRegistry with auto-discovery of BaseCube subclasses
 - `backend/app/engine/executor.py` — WorkflowExecutor: topo sort, cycle detection, input resolution, Full Result, row limiting
@@ -65,11 +71,12 @@ Plans:
 - `backend/app/routers/workflows.py` — Full CRUD + run endpoint
 - `backend/app/cubes/echo_cube.py` — Stub cube echoing input
 - `backend/app/cubes/add_numbers.py` — Stub cube adding two numbers
+- `backend/app/cubes/all_flights.py` — Production cube querying Tracer 42 flight metadata
 
 **Success criteria:**
-1. GET /api/cubes/catalog returns echo + add_numbers cube definitions
-2. Workflow CRUD works (create → list → get → update → delete)
-3. POST /api/workflows/{id}/run with echo→echo graph returns correct chained results
+1. GET /api/cubes/catalog returns echo + add_numbers + all_flights cube definitions
+2. Workflow CRUD works (create -> list -> get -> update -> delete)
+3. POST /api/workflows/{id}/run with echo->echo graph returns correct chained results
 4. Workflow graph containing a cycle returns 400 error
 
 ---
@@ -217,4 +224,4 @@ All 48 v1 requirements mapped:
 
 ---
 *Roadmap created: 2026-03-03*
-*Last updated: 2026-03-03 — 01-01 re-executed to align cube schemas with plan spec (ParamType values, cube_id field, BaseCube abstract class)*
+*Last updated: 2026-03-03 — Phase 2 plans created (02-01 foundation + API, 02-02 executor + run + all_flights)*
