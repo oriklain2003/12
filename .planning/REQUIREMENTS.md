@@ -34,12 +34,12 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **FRONT-01**: Vite + React 18 + TypeScript project with pnpm, dev server on port 5173 proxying /api to backend port 8000
 - [x] **FRONT-02**: Dark theme CSS with CSS custom properties and liquid glass effects (backdrop-filter: blur(12px) saturate(150%))
 - [ ] **FRONT-03**: React Flow canvas (@xyflow/react v12+) with dark background, grid, pan/zoom, and drop handler for adding cubes
-- [ ] **FRONT-04**: Custom CubeNode component rendering cube name, category icon, input handles (left), output handles + Full Result (right)
-- [ ] **FRONT-05**: Parameter handles color-coded by ParamType (string=blue, number=green, boolean=orange, flight_ids=purple, json=gray, arrays=teal)
-- [ ] **FRONT-06**: Inline parameter editors on each CubeNode — text inputs, number inputs, checkboxes — hidden when a connection provides the value
-- [ ] **FRONT-07**: Compact results preview panel on each CubeNode showing row count and first few values
+- [x] **FRONT-04**: Custom CubeNode component rendering cube name, category icon, input handles (left), output handles + Full Result (right)
+- [x] **FRONT-05**: Parameter handles color-coded by ParamType (string=blue, number=green, boolean=orange, flight_ids=purple, json=gray, arrays=teal)
+- [x] **FRONT-06**: Inline parameter editors on each CubeNode — text inputs, number inputs, checkboxes — hidden when a connection provides the value
+- [x] **FRONT-07**: Compact results preview panel on each CubeNode showing row count and first few values
 - [ ] **FRONT-08**: Collapsible cube catalog sidebar grouped by CubeCategory (data_source, filter, analysis, aggregation, output), each cube draggable onto canvas, with search/filter input, toggle button to collapse/expand
-- [ ] **FRONT-09**: Zustand store managing nodes, edges, cube catalog, execution status, results, with JSON serialization for save/load
+- [x] **FRONT-09**: Zustand store managing nodes, edges, cube catalog, execution status, results, with JSON serialization for save/load
 - [ ] **FRONT-10**: Toolbar with Run button, Save button, editable workflow name field, and link back to dashboard
 - [x] **FRONT-11**: API client module (fetch wrapper) for all backend endpoints with error handling
 - [ ] **FRONT-12**: Connection validation on canvas — type mismatch shown as dashed orange edge with warning, Full Result handle only connectable to inputs with accepts_full_result=true, incompatible connections prevented
@@ -120,12 +120,12 @@ Requirements for initial release. Each maps to roadmap phases.
 | FRONT-01 | Phase 1 | Complete |
 | FRONT-02 | Phase 4 | Complete |
 | FRONT-03 | Phase 4 | Pending |
-| FRONT-04 | Phase 4 | Pending |
-| FRONT-05 | Phase 4 | Pending |
-| FRONT-06 | Phase 4 | Pending |
-| FRONT-07 | Phase 4 | Pending |
+| FRONT-04 | Phase 4 | Complete |
+| FRONT-05 | Phase 4 | Complete |
+| FRONT-06 | Phase 4 | Complete |
+| FRONT-07 | Phase 4 | Complete |
 | FRONT-08 | Phase 4 | Pending |
-| FRONT-09 | Phase 4 | Pending |
+| FRONT-09 | Phase 4 | Complete |
 | FRONT-10 | Phase 4 | Pending |
 | FRONT-11 | Phase 4 | Complete |
 | FRONT-12 | Phase 4 | Pending |

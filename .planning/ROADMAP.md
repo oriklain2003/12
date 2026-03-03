@@ -8,7 +8,7 @@
 
 | # | Phase | Goal | Requirements | Success Criteria |
 |---|-------|------|--------------|------------------|
-| 1 | Types, Schemas & Project Scaffolding | Foundational data contracts + both projects bootable | CUBE-01, CUBE-02, CUBE-03, BACK-01, BACK-02, FRONT-01 | 3 | 1/1 | Complete   | 2026-03-03 | Complete   | 2026-03-03 | 4 | 1/3 | In Progress|  | Background execution with real-time streaming | BACK-13 | 2 |
+| 1 | Types, Schemas & Project Scaffolding | Foundational data contracts + both projects bootable | CUBE-01, CUBE-02, CUBE-03, BACK-01, BACK-02, FRONT-01 | 3 | 1/1 | Complete   | 2026-03-03 | Complete   | 2026-03-03 | 4 | 2/3 | In Progress|  | Background execution with real-time streaming | BACK-13 | 2 |
 | 4 | Frontend Canvas, Nodes, Sidebar & Dark Theme | Full visual editor with drag, configure, connect | FRONT-02 to FRONT-12 | 5 |
 | 5 | Workflow Management & Execution Integration | Full loop — dashboard, save/load, run with live status | WFLOW-01 to WFLOW-08 | 4 |
 | 6 | Results Display — Tables, Map, Bidirectional | Rich results with tables + map for geo data | RSLT-01, RSLT-02, RSLT-03 | 5 |
@@ -107,7 +107,7 @@ Plans:
 
 **Requirements:** FRONT-02, FRONT-03, FRONT-04, FRONT-05, FRONT-06, FRONT-07, FRONT-08, FRONT-09, FRONT-10, FRONT-11, FRONT-12
 
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 04-01-PLAN.md — Fix TypeScript types, dark theme CSS, glass effects, API client layer

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-03T22:52:04.283Z"
+last_updated: "2026-03-03T22:56:15.354Z"
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 # Project State: Project 12
@@ -64,6 +64,9 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 03-01]: SSE cycle validation happens pre-stream so HTTP 400 can be returned before SSE headers are committed
 - [Phase 04-01]: ParamType enum corrected: list_of_strings/list_of_numbers/json_object; FLIGHT_IDS removed to match backend exactly
 - [Phase 04-01]: API client uses /api base path matching Vite proxy — apiFetch<T> generic wrapper with ApiError for typed error handling
+- [Phase 04-02]: CubeNodeData/CubeFlowNode types collocated in flowStore.ts to avoid circular dependency
+- [Phase 04-02]: Full Result handle uses id='__full_result__' and ParamType.JSON_OBJECT color — rendered separately from outputs loop
+- [Phase 04-02]: ParamField reads current value via Zustand selector — no prop drilling from CubeNode
 
 ## Notes
 
@@ -87,4 +90,5 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 | Phase 02 P02 | 6min | 2 tasks | 6 files |
 | Phase 03 P01 | 3min | 2 tasks | 5 files |
 | Phase 04 P01 | 2min | 2 tasks | 8 files |
+| Phase 04 P02 | 3min | 2 tasks | 8 files |
 
