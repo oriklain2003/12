@@ -1,12 +1,15 @@
 """WorkflowExecutor: topological sort, input resolution, Full Result bundling, row limiting, failure isolation."""
 
+import asyncio
 from collections import deque
-from typing import Any
+from typing import Any, AsyncGenerator
 
 from fastapi import HTTPException
+from starlette.requests import Request
 
 from app.config import settings
 from app.engine.registry import registry
+from app.schemas.execution import CubeStatusEvent
 from app.schemas.workflow import WorkflowEdge, WorkflowGraph, WorkflowNode
 
 
@@ -110,12 +113,125 @@ def apply_row_limit(
     return capped, truncated
 
 
+async def stream_graph(
+    graph: WorkflowGraph,
+    request: Request | None = None,
+) -> AsyncGenerator[CubeStatusEvent, None]:
+    """Async generator that yields per-cube status events during workflow execution.
+
+    Assumes the graph has already been validated (no cycles). Callers are
+    responsible for calling topological_sort and handling ValueError before
+    invoking this generator.
+
+    Args:
+        graph: The WorkflowGraph containing nodes and edges (already validated).
+        request: Optional HTTP request for client-disconnect detection. Pass None
+                 when calling from execute_graph or tests without an HTTP context.
+
+    Yields:
+        CubeStatusEvent for each status transition:
+        - "pending" for all nodes (emitted up-front before execution begins)
+        - "running" when a cube starts executing
+        - "done" with outputs and truncated flag on success
+        - "error" with error message on failure
+        - "skipped" for nodes downstream of a failed cube
+    """
+    order = topological_sort(graph.nodes, graph.edges)
+    node_map: dict[str, WorkflowNode] = {node.id: node for node in graph.nodes}
+    results: dict[str, dict[str, Any]] = {}
+    failed_or_skipped: set[str] = set()
+
+    try:
+        # Phase 1: emit pending for ALL nodes before any execution begins
+        for node_id in order:
+            yield CubeStatusEvent(node_id=node_id, status="pending")
+
+        # Phase 2: execute in topological order, yielding running/done/error/skipped
+        for node_id in order:
+            # Check for client disconnect between cubes
+            if request is not None and await request.is_disconnected():
+                break
+
+            node = node_map[node_id]
+
+            # a. Check if any direct upstream node failed or was skipped
+            upstream_ids = {
+                edge.source
+                for edge in graph.edges
+                if edge.target == node_id
+            }
+            if upstream_ids & failed_or_skipped:
+                yield CubeStatusEvent(
+                    node_id=node_id,
+                    status="skipped",
+                    reason="upstream cube failed or was skipped",
+                )
+                failed_or_skipped.add(node_id)
+                results[node_id] = {
+                    "status": "skipped",
+                    "reason": "upstream cube failed or was skipped",
+                    "outputs": {},
+                }
+                continue
+
+            # b. Look up cube
+            cube = registry.get(node.data.cube_id)
+            if cube is None:
+                yield CubeStatusEvent(
+                    node_id=node_id,
+                    status="error",
+                    error=f"Unknown cube: {node.data.cube_id}",
+                )
+                failed_or_skipped.add(node_id)
+                results[node_id] = {
+                    "status": "error",
+                    "message": f"Unknown cube: {node.data.cube_id}",
+                    "outputs": {},
+                }
+                continue
+
+            # c. Emit running event
+            yield CubeStatusEvent(node_id=node_id, status="running")
+
+            # d. Resolve inputs and execute
+            inputs = resolve_inputs(node, graph.edges, results)
+            try:
+                raw_outputs = await cube.execute(**inputs)
+                capped_outputs, truncated = apply_row_limit(raw_outputs)
+                yield CubeStatusEvent(
+                    node_id=node_id,
+                    status="done",
+                    outputs=capped_outputs,
+                    truncated=truncated,
+                )
+                results[node_id] = {
+                    "status": "done",
+                    "outputs": capped_outputs,
+                    "truncated": truncated,
+                }
+            except Exception as exc:
+                yield CubeStatusEvent(
+                    node_id=node_id,
+                    status="error",
+                    error=str(exc),
+                )
+                failed_or_skipped.add(node_id)
+                results[node_id] = {
+                    "status": "error",
+                    "message": str(exc),
+                    "outputs": {},
+                }
+
+    except asyncio.CancelledError:
+        # Required by sse-starlette: re-raise CancelledError to allow clean teardown
+        raise
+
+
 async def execute_graph(graph: WorkflowGraph) -> dict[str, Any]:
     """Execute a workflow graph and return per-node results.
 
-    Performs topological sort, resolves inputs (connections override manual),
-    executes each cube in order, applies row limiting, and handles failures
-    by marking downstream dependents as 'skipped' while independent branches continue.
+    Delegates to stream_graph internally, collecting events into the same dict
+    format as before. This eliminates code duplication between sync and streaming paths.
 
     Args:
         graph: The WorkflowGraph containing nodes and edges.
@@ -131,65 +247,33 @@ async def execute_graph(graph: WorkflowGraph) -> dict[str, Any]:
     Raises:
         HTTPException(400): If the graph contains a cycle.
     """
-    # 1. Topological sort
+    # Validate the graph first so we can raise HTTPException (not inside the generator)
     try:
-        order = topological_sort(graph.nodes, graph.edges)
+        topological_sort(graph.nodes, graph.edges)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    # 2. Build helpers
-    node_map: dict[str, WorkflowNode] = {node.id: node for node in graph.nodes}
     results: dict[str, dict[str, Any]] = {}
-    failed_or_skipped: set[str] = set()
 
-    # 3. Execute in topological order
-    for node_id in order:
-        node = node_map[node_id]
-
-        # a. Check if any direct upstream node failed or was skipped
-        upstream_ids = {
-            edge.source
-            for edge in graph.edges
-            if edge.target == node_id
-        }
-        if upstream_ids & failed_or_skipped:
-            results[node_id] = {
-                "status": "skipped",
-                "reason": "upstream cube failed or was skipped",
-                "outputs": {},
-            }
-            failed_or_skipped.add(node_id)
-            continue
-
-        # b. Look up cube
-        cube = registry.get(node.data.cube_id)
-        if cube is None:
-            results[node_id] = {
-                "status": "error",
-                "message": f"Unknown cube: {node.data.cube_id}",
-                "outputs": {},
-            }
-            failed_or_skipped.add(node_id)
-            continue
-
-        # c. Resolve inputs
-        inputs = resolve_inputs(node, graph.edges, results)
-
-        # d. Execute
-        try:
-            raw_outputs = await cube.execute(**inputs)
-            capped_outputs, truncated = apply_row_limit(raw_outputs)
-            results[node_id] = {
+    async for event in stream_graph(graph, request=None):
+        if event.status == "done":
+            results[event.node_id] = {
                 "status": "done",
-                "outputs": capped_outputs,
-                "truncated": truncated,
+                "outputs": event.outputs or {},
+                "truncated": event.truncated or False,
             }
-        except Exception as exc:
-            results[node_id] = {
+        elif event.status == "error":
+            results[event.node_id] = {
                 "status": "error",
-                "message": str(exc),
+                "message": event.error or "",
                 "outputs": {},
             }
-            failed_or_skipped.add(node_id)
+        elif event.status == "skipped":
+            results[event.node_id] = {
+                "status": "skipped",
+                "reason": event.reason or "upstream cube failed or was skipped",
+                "outputs": {},
+            }
+        # pending and running events are discarded — not part of the final result
 
     return results
