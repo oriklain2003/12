@@ -7,9 +7,11 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sse_starlette import EventSourceResponse, ServerSentEvent
+from starlette.requests import Request
 
 from app.database import get_db
-from app.engine.executor import execute_graph
+from app.engine.executor import execute_graph, stream_graph, topological_sort
 from app.models.workflow import Workflow
 from app.schemas.workflow import (
     WorkflowCreate,
@@ -143,3 +145,44 @@ async def run_workflow(
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.get("/{workflow_id}/run/stream")
+async def stream_workflow(
+    workflow_id: uuid.UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> EventSourceResponse:
+    """Stream workflow execution progress as Server-Sent Events.
+
+    Yields one 'cube_status' SSE event per cube state transition:
+    pending (all nodes up-front), then running/done/error/skipped per node.
+
+    Returns 400 if the graph contains a cycle (before SSE stream starts).
+    Returns 404 if the workflow is not found.
+    """
+    result = await db.execute(select(Workflow).where(Workflow.id == workflow_id))
+    wf = result.scalar_one_or_none()
+    if wf is None:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+
+    graph = WorkflowGraph.model_validate(wf.graph_json)
+
+    # Validate graph BEFORE starting SSE so we can still return HTTP error codes
+    try:
+        topological_sort(graph.nodes, graph.edges)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    async def event_publisher():
+        async for event in stream_graph(graph, request):
+            yield ServerSentEvent(
+                data=event.model_dump_json(exclude_none=True),
+                event="cube_status",
+            )
+
+    return EventSourceResponse(
+        event_publisher(),
+        ping=15,
+        headers={"X-Accel-Buffering": "no"},
+    )
