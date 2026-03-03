@@ -87,6 +87,11 @@ Plans:
 
 **Requirements:** BACK-13
 
+**Plans:** 1 plan
+
+Plans:
+- [ ] 03-01-PLAN.md — CubeStatusEvent schema, stream_graph async generator, SSE route handler + tests
+
 **Key files:**
 - `backend/app/engine/executor.py` — Refactor execute() to async generator yielding CubeStatusEvent
 - `backend/app/schemas/execution.py` — CubeStatusEvent model (node_id, status, outputs, error)
@@ -224,4 +229,4 @@ All 48 v1 requirements mapped:
 
 ---
 *Roadmap created: 2026-03-03*
-*Last updated: 2026-03-03 — Phase 2 plans created (02-01 foundation + API, 02-02 executor + run + all_flights)*
+*Last updated: 2026-03-03 — Phase 3 plan created (03-01 SSE streaming execution)*
