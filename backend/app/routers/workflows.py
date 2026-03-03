@@ -2,12 +2,14 @@
 
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.engine.executor import execute_graph
 from app.models.workflow import Workflow
 from app.schemas.workflow import (
     WorkflowCreate,
@@ -114,3 +116,30 @@ async def delete_workflow(
     await db.delete(wf)
     await db.commit()
     return {"detail": "Workflow deleted"}
+
+
+@router.post("/{workflow_id}/run")
+async def run_workflow(
+    workflow_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Execute a workflow graph and return per-node results.
+
+    Returns a dict keyed by node_id with status, outputs, and truncated flag.
+    Returns 400 if the graph contains a cycle.
+    Returns 404 if the workflow is not found.
+    """
+    result = await db.execute(select(Workflow).where(Workflow.id == workflow_id))
+    wf = result.scalar_one_or_none()
+    if wf is None:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+
+    graph = WorkflowGraph.model_validate(wf.graph_json)
+
+    # HTTPException (400 for cycle) propagates naturally through FastAPI
+    try:
+        return await execute_graph(graph)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
