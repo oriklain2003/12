@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -7,10 +8,9 @@ class ParamType(str, Enum):
     STRING = "string"
     NUMBER = "number"
     BOOLEAN = "boolean"
-    STRING_ARRAY = "string_array"
-    NUMBER_ARRAY = "number_array"
-    FLIGHT_IDS = "flight_ids"
-    JSON = "json"
+    LIST_OF_STRINGS = "list_of_strings"
+    LIST_OF_NUMBERS = "list_of_numbers"
+    JSON_OBJECT = "json_object"
 
 
 class CubeCategory(str, Enum):
@@ -24,28 +24,16 @@ class CubeCategory(str, Enum):
 class ParamDefinition(BaseModel):
     name: str
     type: ParamType
-    label: str
-    description: str = ""
     required: bool = False
-    default: str | int | float | bool | list | None = None
-    is_output: bool = False
+    default: Any = None
+    description: str = ""
     accepts_full_result: bool = False
 
 
 class CubeDefinition(BaseModel):
-    id: str
+    cube_id: str
     name: str
-    description: str
+    description: str = ""
     category: CubeCategory
-    inputs: list[ParamDefinition]
-    outputs: list[ParamDefinition]
-
-    @property
-    def full_result_output(self) -> ParamDefinition:
-        return ParamDefinition(
-            name="__full_result__",
-            type=ParamType.JSON,
-            label="Full Result",
-            description="All outputs bundled as JSON",
-            is_output=True,
-        )
+    inputs: list[ParamDefinition] = []
+    outputs: list[ParamDefinition] = []
