@@ -108,6 +108,13 @@ Plans:
 
 **Requirements:** FRONT-02, FRONT-03, FRONT-04, FRONT-05, FRONT-06, FRONT-07, FRONT-08, FRONT-09, FRONT-10, FRONT-11, FRONT-12
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Fix TypeScript types, dark theme CSS, glass effects, API client layer
+- [ ] 04-02-PLAN.md — Zustand flow store, CubeNode components (handles, param editors, results preview)
+- [ ] 04-03-PLAN.md — React Flow canvas, collapsible sidebar catalog, toolbar, connection validation, App wiring
+
 **Key files:**
 - `frontend/src/styles/theme.css` — Dark theme CSS variables
 - `frontend/src/styles/glass.css` — Liquid glass utility classes (backdrop-filter: blur(12px) saturate(150%))
@@ -228,4 +235,4 @@ All 48 v1 requirements mapped:
 
 ---
 *Roadmap created: 2026-03-03*
-*Last updated: 2026-03-03 — Phase 3 plan created (03-01 SSE streaming execution)*
+*Last updated: 2026-03-04 — Phase 4 plans created (04-01 foundation, 04-02 store+nodes, 04-03 canvas+sidebar+wiring)*
