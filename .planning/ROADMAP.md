@@ -145,13 +145,23 @@ Plans:
 
 **Requirements:** WFLOW-01, WFLOW-02, WFLOW-03, WFLOW-04, WFLOW-05, WFLOW-06, WFLOW-07, WFLOW-08
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — React Router setup, Zustand store extensions (workflow metadata + execution state), EditorPage extraction
+- [ ] 05-02-PLAN.md — Dashboard page with workflow card grid, rename, delete, navigation
+- [ ] 05-03-PLAN.md — SSE execution hook, Toolbar save/run/progress wiring, CubeNode status indicators, keyboard shortcuts, canvas locking
+
 **Key files:**
-- `frontend/src/App.tsx` — React Router with /, /workflow/:id, /workflow/new routes
-- `frontend/src/pages/DashboardPage.tsx` — Dashboard with workflow list
-- `frontend/src/pages/EditorPage.tsx` — Canvas editor page
-- `frontend/src/components/Dashboard/WorkflowList.tsx` — List with rename/delete/open actions
+- `frontend/src/main.tsx` — React Router with createBrowserRouter (/, /workflow/:id, /workflow/new)
+- `frontend/src/pages/DashboardPage.tsx` — Dashboard with card grid layout
+- `frontend/src/pages/EditorPage.tsx` — Canvas editor page with load-on-mount
+- `frontend/src/types/execution.ts` — CubeStatusEvent TypeScript type
 - `frontend/src/hooks/useWorkflowSSE.ts` — EventSource hook parsing SSE events
-- Modify: `flowStore.ts` (save/load/run actions), `Toolbar.tsx` (keyboard shortcuts), `CubeNode.tsx` (live status)
+- `frontend/src/store/flowStore.ts` — Extended with workflow metadata, execution state, save/load/run actions
+- `frontend/src/components/Toolbar/Toolbar.tsx` — Wired save/run, progress bar, keyboard shortcuts
+- `frontend/src/components/CubeNode/CubeNode.tsx` — Execution status indicators + error banner
+- `frontend/src/components/Canvas/FlowCanvas.tsx` — Canvas locking during execution
 
 **Success criteria:**
 1. Dashboard lists workflows with create/rename/delete functionality
@@ -234,4 +244,4 @@ All 48 v1 requirements mapped:
 
 ---
 *Roadmap created: 2026-03-03*
-*Last updated: 2026-03-04 — Phase 4 plans created (04-01 foundation, 04-02 store+nodes, 04-03 canvas+sidebar+wiring)*
+*Last updated: 2026-03-04 — Phase 5 plans created (05-01 router+store, 05-02 dashboard, 05-03 execution integration)*
