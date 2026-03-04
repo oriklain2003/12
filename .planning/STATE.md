@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-04T09:16:03.114Z"
+last_updated: "2026-03-04T10:37:13.722Z"
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 13
+  completed_plans: 12
 ---
 
 # Project State: Project 12
@@ -79,6 +79,9 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 05-03]: useRef for EventSource lifecycle — avoids re-renders, imperatively managed
 - [Phase 05-03]: EventSource must be explicitly closed on terminal state — auto-reconnects on server close
 - [Phase 05-03]: Error banner inside .cube-node (position:relative) at bottom:calc(100%+6px) floats above node
+- [Phase 06-01]: detectGeoColumns validates first-row numeric values to avoid false positives on string columns named lat
+- [Phase 06-01]: Selected row uses border-left: 2px solid accent — not background fill — preserves readability
+- [Phase 06-01]: Sort state resets on rows reference change to prevent stale sort key from prior cube column names
 
 ## Notes
 
@@ -107,4 +110,5 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 | Phase 05 P01 | 2min | 2 tasks | 5 files |
 | Phase 05 P02 | 3min | 2 tasks | 3 files |
 | Phase 05 P03 | 3min | 2 tasks | 6 files |
+| Phase 06 P01 | 2min | 2 tasks | 4 files |
 

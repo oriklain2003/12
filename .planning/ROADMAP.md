@@ -10,7 +10,7 @@
 |---|-------|------|--------------|------------------|
 | 1 | Types, Schemas & Project Scaffolding | Foundational data contracts + both projects bootable | CUBE-01, CUBE-02, CUBE-03, BACK-01, BACK-02, FRONT-01 | 3 | 1/1 | Complete   | 2026-03-03 | Complete   | 2026-03-03 | 4 | 3/3 | Complete   | 2026-03-03 | Background execution with real-time streaming | BACK-13 | 2 |
 | 4 | Frontend Canvas, Nodes, Sidebar & Dark Theme | Full visual editor with drag, configure, connect | FRONT-02 to FRONT-12 | 5 | 3/3 | Complete   | 2026-03-04 | Full loop — dashboard, save/load, run with live status | WFLOW-01 to WFLOW-08 | 4 |
-| 6 | Results Display — Tables, Map, Bidirectional | Rich results with tables + map for geo data | RSLT-01, RSLT-02, RSLT-03 | 5 |
+| 6 | 1/2 | In Progress|  | 5 |
 | 7 | Real DB Cubes, End-to-End & Docker | Working pipeline with real data + deployable containers | DATA-01 to DATA-05, DEPL-01 to DEPL-03 | 5 |
 
 ---
@@ -177,7 +177,7 @@ Plans:
 
 **Requirements:** RSLT-01, RSLT-02, RSLT-03
 
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 06-01-PLAN.md — Geo column detection utility, sortable results table, store extension for drawer state
