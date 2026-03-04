@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-04T10:41:43.056Z"
+last_updated: "2026-03-04T17:43:49.431Z"
 progress:
-  total_phases: 7
+  total_phases: 8
   completed_phases: 6
-  total_plans: 13
-  completed_plans: 13
+  total_plans: 16
+  completed_plans: 15
 ---
 
 # Project State: Project 12
@@ -85,6 +85,11 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 06-02]: GeoJSON layer uses key={JSON.stringify} for forced re-mount on cube switch, not MapContainer key
 - [Phase 06-02]: ResizeDivider uses pointer capture API for clean drag outside element bounds, clamped 15-85%
 - [Phase 06-02]: selectedRowIndex is local useState (not Zustand) — ephemeral view state per RESEARCH.md anti-pattern guidance
+- [Phase 07-02]: PolygonField and PolygonMapWidget colocated in one file for simplicity
+- [Phase 07-02]: ClickCapture child component pattern for useMapEvents (must be inside MapContainer)
+- [Phase 07-02]: position:fixed overlay z-index 9999 escapes React Flow stacking context for polygon widget
+- [Phase 07]: GetAnomalies guards empty flight_ids early (before SQL) to avoid PostgreSQL ANY() type error with empty array
+- [Phase 07]: CountByField extracts first list value from full_result dict via next() comprehension to enable direct wiring from any cube
 
 ## Notes
 
@@ -101,6 +106,13 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 |-------|------|----------|-------|-------|
 | 01 | 01 | 12 min | 2 | 4 |
 | 01 | 02 | 2 min | 2 | 18 |
+| Phase 07 P02 | 2 | 2 tasks | 3 files |
+| Phase 07-real-db-cubes-end-to-end-docker P01 | 8 | 1 tasks | 4 files |
+
+## Accumulated Context
+
+### Roadmap Evolution
+- Phase 8 added: Geo-temporal playback, learned paths, and flight course cubes
 
 ---
 *Last session: 2026-03-03 — Completed 01-01-PLAN.md (cube type system + BaseCube + FastAPI app)*
