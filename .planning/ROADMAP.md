@@ -212,31 +212,38 @@ Plans:
 
 **Requirements:** DATA-01, DATA-02, DATA-03, DATA-04, DATA-05, DEPL-01, DEPL-02, DEPL-03
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Enhance AllFlights cube + add GetAnomalies and CountByField cubes
+- [ ] 07-02-PLAN.md — Polygon map drawing widget for geofence input on AllFlights
+- [ ] 07-03-PLAN.md — Docker containerization (backend + frontend Dockerfiles, nginx, docker-compose)
+
 **Key files:**
-- `backend/app/cubes/get_flights.py` — Queries research.flight_metadata with time/airport/region filters
-- `backend/app/cubes/filter_flights.py` — Filters flight_ids by country, days_back, altitude
+- `backend/app/cubes/all_flights.py` — Enhanced with airport/region filters and airline output columns
 - `backend/app/cubes/get_anomalies.py` — Queries research.anomaly_reports for flight_ids
-- `backend/app/cubes/count_by_field.py` — Pure Python groupby aggregation
+- `backend/app/cubes/count_by_field.py` — Pandas groupby aggregation
+- `frontend/src/components/CubeNode/PolygonMapWidget.tsx` — Leaflet overlay for geofence drawing
 - `backend/Dockerfile` — Multi-stage: uv sync → slim Python runtime
 - `frontend/Dockerfile` — Multi-stage: pnpm build → nginx serving SPA
 - `frontend/nginx.conf` — Serves SPA, proxies /api to backend
 - `docker-compose.yml` — Backend + frontend services with .env
 
 **Success criteria:**
-1. Get Flights (168h) → Filter (country) → Get Anomalies pipeline returns real data
+1. AllFlights (168h) → GetAnomalies → CountByField pipeline returns real data
 2. Results table shows real flight_ids, callsigns, airlines from database
 3. Map shows markers at flight origin/destination lat/lon positions
 4. Count By Field groups by airline and shows counts table
-5. `docker-compose up --build` → full app accessible at localhost:3000
+5. Polygon widget draws geofence on map for AllFlights filtering
+6. `docker-compose up --build` → full app accessible at localhost:3000
 
 **End-to-end verification:**
 1. Open /workflow/new
-2. Drag Get Flights → set time_range_hours=168
-3. Drag Filter Flights → connect flight_ids, set country filter
-4. Drag Get Anomalies → connect filtered_flight_ids
-5. Drag Count By Field → connect Full Result, set group_by_field=airline
-6. Run → watch live status → see real results in tables + map
-7. Save → dashboard → reopen → verify state preserved
+2. Drag All Flights → set time_range_seconds=604800
+3. Drag Get Anomalies → connect flight_ids from All Flights
+4. Drag Count By Field → connect Full Result from All Flights, set group_by_field=airline
+5. Run → watch live status → see real results in tables + map
+6. Save → dashboard → reopen → verify state preserved
 
 ---
 
@@ -256,4 +263,4 @@ All 48 v1 requirements mapped:
 
 ---
 *Roadmap created: 2026-03-03*
-*Last updated: 2026-03-04 — Phase 6 plans created (06-01 geo detect + table + store, 06-02 map + drawer + wiring)*
+*Last updated: 2026-03-04 — Phase 7 plans created (07-01 cubes, 07-02 polygon widget, 07-03 Docker)*
