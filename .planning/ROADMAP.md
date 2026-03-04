@@ -177,19 +177,32 @@ Plans:
 
 **Requirements:** RSLT-01, RSLT-02, RSLT-03
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Geo column detection utility, sortable results table, store extension for drawer state
+- [ ] 06-02-PLAN.md — Leaflet map component, results drawer orchestrator with resizable split, EditorPage + CubeNode wiring
+
 **Key files:**
-- `frontend/src/components/Results/ResultsTable.tsx` — Auto-detect columns from JSON, sortable headers, row highlighting
-- `frontend/src/components/Results/ResultsMap.tsx` — Leaflet map with CartoDB dark tiles, markers, flyTo
-- `frontend/src/components/Results/ResultsDrawer.tsx` — Slide-up panel with table + map side by side
 - `frontend/src/utils/geoDetect.ts` — Detect lat/lon column pairs in result data
-- Modify: `CubeNode/ResultsPanel.tsx` — "View Results" button opens drawer
+- `frontend/src/components/Results/ResultsTable.tsx` — Auto-detect columns from JSON, sortable headers, row highlighting
+- `frontend/src/components/Results/ResultsTable.css` — Table dark theme styles
+- `frontend/src/components/Results/ResultsMap.tsx` — Leaflet map with CartoDB dark tiles, GeoJSON layer, circle markers, flyTo
+- `frontend/src/components/Results/ResultsMap.css` — Map container sizing
+- `frontend/src/components/Results/ResultsDrawer.tsx` — Bottom drawer with table + map side by side, resizable split divider
+- `frontend/src/components/Results/ResultsDrawer.css` — Drawer slide animation, split layout styles
+- `frontend/src/store/flowStore.ts` — Extended with selectedResultNodeId for drawer trigger
+- `frontend/src/pages/EditorPage.tsx` — Canvas area wrapper with ResultsDrawer mounted
+- `frontend/src/components/CubeNode/CubeNode.tsx` — Header click handler opens drawer
 
 **Success criteria:**
 1. Results render as scrollable table with auto-detected columns and sortable headers
 2. Rows with lat/lon coordinate pairs show Leaflet map panel alongside table
 3. Click map marker → highlight + scroll to corresponding table row
-4. Click table row → map flies to that location with marker popup
+4. Click table row → map flies to that location
 5. Truncation warning displayed when results exceed 100 rows
+6. Resizable split between table and map via draggable divider
+7. Drawer slides up from bottom of canvas, taking 1/3 height
 
 ---
 
@@ -243,4 +256,4 @@ All 48 v1 requirements mapped:
 
 ---
 *Roadmap created: 2026-03-03*
-*Last updated: 2026-03-04 — Phase 5 plans created (05-01 router+store, 05-02 dashboard, 05-03 execution integration)*
+*Last updated: 2026-03-04 — Phase 6 plans created (06-01 geo detect + table + store, 06-02 map + drawer + wiring)*
