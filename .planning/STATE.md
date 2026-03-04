@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-04T10:37:13.722Z"
+last_updated: "2026-03-04T10:41:02.735Z"
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 13
-  completed_plans: 12
+  completed_plans: 13
 ---
 
 # Project State: Project 12
@@ -82,6 +82,9 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 06-01]: detectGeoColumns validates first-row numeric values to avoid false positives on string columns named lat
 - [Phase 06-01]: Selected row uses border-left: 2px solid accent — not background fill — preserves readability
 - [Phase 06-01]: Sort state resets on rows reference change to prevent stale sort key from prior cube column names
+- [Phase 06-02]: GeoJSON layer uses key={JSON.stringify} for forced re-mount on cube switch, not MapContainer key
+- [Phase 06-02]: ResizeDivider uses pointer capture API for clean drag outside element bounds, clamped 15-85%
+- [Phase 06-02]: selectedRowIndex is local useState (not Zustand) — ephemeral view state per RESEARCH.md anti-pattern guidance
 
 ## Notes
 
@@ -111,4 +114,5 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 | Phase 05 P02 | 3min | 2 tasks | 3 files |
 | Phase 05 P03 | 3min | 2 tasks | 6 files |
 | Phase 06 P01 | 2min | 2 tasks | 4 files |
+| Phase 06 P02 | 2min | 2 tasks | 8 files |
 

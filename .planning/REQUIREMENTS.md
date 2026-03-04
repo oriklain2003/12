@@ -58,8 +58,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Results Display
 
 - [x] **RSLT-01**: Results table auto-detects columns from JSON array data, renders as scrollable table with sortable column headers
-- [ ] **RSLT-02**: Leaflet map panel with CartoDB dark tiles renders markers for result rows that contain lat/lon coordinate pairs
-- [ ] **RSLT-03**: Bidirectional interaction — clicking a map marker highlights and scrolls to the corresponding table row; clicking a table row flies the map to that location
+- [x] **RSLT-02**: Leaflet map panel with CartoDB dark tiles renders markers for result rows that contain lat/lon coordinate pairs
+- [x] **RSLT-03**: Bidirectional interaction — clicking a map marker highlights and scrolls to the corresponding table row; clicking a table row flies the map to that location
 
 ### Real Data Cubes
 
@@ -138,8 +138,8 @@ Requirements for initial release. Each maps to roadmap phases.
 | WFLOW-07 | Phase 5 | Complete |
 | WFLOW-08 | Phase 5 | Complete |
 | RSLT-01 | Phase 6 | Complete |
-| RSLT-02 | Phase 6 | Pending |
-| RSLT-03 | Phase 6 | Pending |
+| RSLT-02 | Phase 6 | Complete |
+| RSLT-03 | Phase 6 | Complete |
 | DATA-01 | Phase 7 | Pending |
 | DATA-02 | Phase 7 | Pending |
 | DATA-03 | Phase 7 | Pending |
