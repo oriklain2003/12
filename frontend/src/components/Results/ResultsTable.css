@@ -1,0 +1,87 @@
+/* ─── Results Table ──────────────────────────────────────────────────────── */
+
+.results-table__wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.results-table__truncation-warning {
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--color-warning);
+  background: rgba(249, 115, 22, 0.08);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.results-table__scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.results-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-surface-raised);
+}
+
+.results-table__th {
+  padding: 6px 12px;
+  text-align: left;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--color-border-hover);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.results-table__th:hover {
+  color: var(--color-text);
+}
+
+.results-table td {
+  padding: 6px 12px;
+  color: var(--color-text-dim);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.results-table__row {
+  cursor: pointer;
+  /* Reserve space with transparent border to avoid layout shift on selection */
+  border-left: 2px solid transparent;
+}
+
+.results-table__row:hover {
+  background: var(--color-surface-hover);
+}
+
+.results-table__row--selected {
+  border-left: 2px solid var(--color-accent);
+}
+
+.results-table__row--selected td {
+  color: var(--color-text);
+}
+
+.results-table__empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
