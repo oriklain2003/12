@@ -1,23 +1,66 @@
 .cube-node {
-  width: 280px;
+  width: 300px;
   padding: 0;
-  background: var(--color-surface);
-  border-radius: 8px;
-  overflow: hidden;
+  position: relative;
   font-family: inherit;
+  transition: box-shadow var(--duration-normal) var(--ease-out);
 }
 
-/* Category color accent — set via inline style on the header border-left */
-.cube-node__header {
-  font-weight: 600;
-  font-size: 13px;
-  padding: 8px 10px;
+.cube-node:hover {
+  box-shadow: var(--shadow-node-hover);
+}
+
+.cube-node--selected {
+  box-shadow: var(--shadow-node-selected);
+}
+
+/* ── Close button ─────────────────────────────────────────── */
+
+.cube-node__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--duration-fast), background var(--duration-fast), color var(--duration-fast);
+  z-index: 10;
+}
+
+.cube-node:hover .cube-node__close {
+  opacity: 1;
+}
+
+.cube-node__close:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-error);
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+
+.cube-node__header {
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   border-bottom: 1px solid var(--color-border);
-  /* Left border color supplied inline per-node via style prop */
-  border-left: 3px solid transparent;
+}
+
+.cube-node__category-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
 }
 
 .cube-node__header-name {
@@ -28,71 +71,163 @@
   color: var(--color-text);
 }
 
+/* ── Body ─────────────────────────────────────────────────── */
+
 .cube-node__body {
-  padding: 6px 10px;
+  padding: 10px 14px 14px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
-/* ── Section labels ────────────────────────────────────────── */
+/* ── Section labels ───────────────────────────────────────── */
+
 .cube-node__section-label {
-  font-size: 9px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--color-text-muted);
-  margin-top: 4px;
+  margin-top: 6px;
   margin-bottom: 2px;
 }
 
-/* ── Param rows ────────────────────────────────────────────── */
+/* ── Param rows ───────────────────────────────────────────── */
+
 .cube-node__param-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-height: 24px;
+  gap: 8px;
+  min-height: 32px;
   position: relative;
 }
 
-/* Input side — handle extends outside the node on the left */
+/*
+ * Handles are 12px wide and absolutely positioned at the node edge by
+ * React Flow. ~6px sticks inside the node.  Add enough padding so the
+ * content clears the handle.
+ */
 .cube-node__param-row--input {
-  padding-left: 0;
+  padding-left: 10px;
 }
 
-/* Output side — handle extends outside on the right */
 .cube-node__param-row--output {
   flex-direction: row-reverse;
-  padding-right: 0;
+  padding-right: 10px;
+}
+
+.cube-node__param-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
 }
 
 .cube-node__param-label {
   font-size: 11px;
-  color: var(--color-text-dim);
+  color: var(--color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
 }
 
-/* Output label aligned right */
 .cube-node__param-row--output .cube-node__param-label {
   text-align: right;
 }
 
-/* ── Full Result handle row ────────────────────────────────── */
+/* ── Full Result handle row ───────────────────────────────── */
+
 .cube-node__full-result-row {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
-  padding-top: 4px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.06);
-  margin-top: 2px;
+  gap: 8px;
+  padding-top: 8px;
+  padding-right: 10px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.05);
+  margin-top: 4px;
   position: relative;
 }
 
 .cube-node__full-result-label {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--color-text-muted);
-  font-style: italic;
+}
+
+/* ── Running state glow ───────────────────────────────────── */
+
+.cube-node--running {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+}
+
+/* ── Error banner (floats ABOVE the node) ─────────────────── */
+
+.cube-node__error-banner {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-sm);
+  color: var(--color-error);
+  font-size: 11px;
+  padding: 6px 10px;
+  z-index: 10;
+  word-break: break-word;
+  backdrop-filter: blur(8px);
+}
+
+/* ── Execution status indicator (in header) ───────────────── */
+
+.cube-node__status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.cube-node__status--pending {
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.cube-node__status--running {
+  color: var(--color-accent);
+  background: rgba(99, 102, 241, 0.15);
+}
+
+.cube-node__status--done {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.cube-node__status--error {
+  color: var(--color-error);
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.cube-node__status--skipped {
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ── Spinner animation (running state) ────────────────────── */
+
+.cube-node__spinner {
+  width: 10px;
+  height: 10px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: cube-spin 0.8s linear infinite;
+  display: block;
+}
+
+@keyframes cube-spin {
+  to { transform: rotate(360deg); }
 }
