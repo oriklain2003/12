@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-04T09:14:20.956Z"
+last_updated: "2026-03-04T09:15:15.985Z"
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State: Project 12
@@ -76,6 +76,9 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 05]: loadWorkflow fetches catalog first if empty to avoid race condition with CubeCatalog mount
 - [Phase 05]: DashboardPage is a single-file component (no separate WorkflowCard) — card JSX is inline since only used on this page
 - [Phase 05]: Delete confirmation is inline (replaces action row) per user decision — no modal or overlay needed
+- [Phase 05-03]: useRef for EventSource lifecycle — avoids re-renders, imperatively managed
+- [Phase 05-03]: EventSource must be explicitly closed on terminal state — auto-reconnects on server close
+- [Phase 05-03]: Error banner inside .cube-node (position:relative) at bottom:calc(100%+6px) floats above node
 
 ## Notes
 
@@ -103,4 +106,5 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 | Phase 04 P03 | 10min | 2 tasks | 11 files |
 | Phase 05 P01 | 2min | 2 tasks | 5 files |
 | Phase 05 P02 | 3min | 2 tasks | 3 files |
+| Phase 05 P03 | 3min | 2 tasks | 6 files |
 

@@ -49,11 +49,11 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **WFLOW-01**: React Router with routes: / (dashboard), /workflow/:id (editor), /workflow/new (new workflow)
 - [x] **WFLOW-02**: Dashboard page listing all saved workflows with name, last modified date, and actions (open, rename, delete, create new)
 - [x] **WFLOW-03**: Save serializes current flow state (nodes, edges, params) to backend via PUT; Load deserializes and restores canvas
-- [ ] **WFLOW-04**: Run button triggers SSE connection, streams per-cube status updates to Zustand store, updates CubeNode indicators in real-time
-- [ ] **WFLOW-05**: Each CubeNode shows execution status indicator: gray (pending), blue spinner (running), green check (done), red X (error with message)
-- [ ] **WFLOW-06**: Error messages from failed cubes display inline on the CubeNode with the error text
-- [ ] **WFLOW-07**: Keyboard shortcuts — Delete removes selected nodes/edges, Ctrl+S saves workflow, Ctrl+Enter runs workflow
-- [ ] **WFLOW-08**: Overall pipeline progress indicator during execution showing "X/Y cubes completed" with progress bar in toolbar area
+- [x] **WFLOW-04**: Run button triggers SSE connection, streams per-cube status updates to Zustand store, updates CubeNode indicators in real-time
+- [x] **WFLOW-05**: Each CubeNode shows execution status indicator: gray (pending), blue spinner (running), green check (done), red X (error with message)
+- [x] **WFLOW-06**: Error messages from failed cubes display inline on the CubeNode with the error text
+- [x] **WFLOW-07**: Keyboard shortcuts — Delete removes selected nodes/edges, Ctrl+S saves workflow, Ctrl+Enter runs workflow
+- [x] **WFLOW-08**: Overall pipeline progress indicator during execution showing "X/Y cubes completed" with progress bar in toolbar area
 
 ### Results Display
 
@@ -132,11 +132,11 @@ Requirements for initial release. Each maps to roadmap phases.
 | WFLOW-01 | Phase 5 | Complete |
 | WFLOW-02 | Phase 5 | Complete |
 | WFLOW-03 | Phase 5 | Complete |
-| WFLOW-04 | Phase 5 | Pending |
-| WFLOW-05 | Phase 5 | Pending |
-| WFLOW-06 | Phase 5 | Pending |
-| WFLOW-07 | Phase 5 | Pending |
-| WFLOW-08 | Phase 5 | Pending |
+| WFLOW-04 | Phase 5 | Complete |
+| WFLOW-05 | Phase 5 | Complete |
+| WFLOW-06 | Phase 5 | Complete |
+| WFLOW-07 | Phase 5 | Complete |
+| WFLOW-08 | Phase 5 | Complete |
 | RSLT-01 | Phase 6 | Pending |
 | RSLT-02 | Phase 6 | Pending |
 | RSLT-03 | Phase 6 | Pending |
