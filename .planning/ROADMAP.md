@@ -1,8 +1,8 @@
 # Roadmap: Project 12 — Visual Dataflow Workflow Builder
 
 **Created:** 2026-03-03
-**Phases:** 7
-**Requirements covered:** 48/48
+**Phases:** 8
+**Requirements covered:** 48/48 (v1) + 7 (Phase 8)
 
 ## Phase Overview
 
@@ -247,6 +247,46 @@ Plans:
 
 ---
 
+## Phase 8: Geo-Temporal Playback, Learned Paths & Flight Course Cubes
+
+**Goal:** Three new cubes (Get Flight Course, Get Learned Paths, Geo-Temporal Playback) plus visualization infrastructure enabling output cubes to render custom widgets in ResultsDrawer, with global row cap bumped to 10,000.
+
+**Requirements:** GEO-01, GEO-02, GEO-03, GEO-04, GEO-05, GEO-06, GEO-07
+
+**Depends on:** Phase 7
+
+**Plans:** 4 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Widget field on CubeDefinition (Python + TS), row cap bump, Get Flight Course cube
+- [ ] 08-02-PLAN.md — Install Shapely, Get Learned Paths cube with corridor buffering
+- [ ] 08-03-PLAN.md — Geo-Temporal Playback cube (backend) + ResultsDrawer widget dispatch
+- [ ] 08-04-PLAN.md — GeoPlaybackWidget (animated Leaflet map + timeline + histogram)
+
+**Key files:**
+- `backend/app/schemas/cube.py` — CubeDefinition with `widget` field
+- `backend/app/cubes/base.py` — BaseCube passes `widget` through definition property
+- `backend/app/config.py` — result_row_limit bumped to 10,000
+- `frontend/src/types/cube.ts` — CubeDefinition with `widget` field
+- `backend/app/cubes/get_flight_course.py` — Points and lines modes from normal_tracks
+- `backend/app/cubes/get_learned_paths.py` — Learned paths with centerline/corridor geometry
+- `backend/app/cubes/geo_temporal_playback.py` — Output cube with widget=geo_playback
+- `frontend/src/components/Results/ResultsDrawer.tsx` — Widget dispatch to custom components
+- `frontend/src/components/Visualization/GeoPlaybackWidget.tsx` — Animated map + timeline
+- `frontend/src/components/Visualization/GeoPlaybackWidget.css` — Playback widget styles
+
+**Success criteria:**
+1. All three cubes appear in catalog with correct inputs/outputs
+2. Get Flight Course returns GeoJSON Points (points mode) or LineStrings (lines mode)
+3. Get Learned Paths returns centerline LineStrings or corridor Polygons via Shapely
+4. Playback cube has widget="geo_playback" and passes data through
+5. ResultsDrawer dispatches to GeoPlaybackWidget for visualization cubes
+6. Playback widget animates geo data with dual-handle timeline and density histogram
+7. Pipeline: AllFlights -> Get Flight Course (points) -> Geo-Temporal Playback shows animated flights
+8. Regular cubes retain existing table + auto-detected map behavior
+
+---
+
 ## Requirement Coverage Validation
 
 All 48 v1 requirements mapped:
@@ -258,19 +298,10 @@ All 48 v1 requirements mapped:
 - **Phase 5 (8):** WFLOW-01 through WFLOW-08
 - **Phase 6 (3):** RSLT-01, RSLT-02, RSLT-03
 - **Phase 7 (8):** DATA-01 through DATA-05, DEPL-01 through DEPL-03
+- **Phase 8 (7):** GEO-01 through GEO-07
 
 **Unmapped:** 0
 
-### Phase 8: Geo-temporal playback, learned paths, and flight course cubes
-
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 7
-**Plans:** 0 plans
-
-Plans:
-- [ ] TBD (run /gsd:plan-phase 8 to break down)
-
 ---
 *Roadmap created: 2026-03-03*
-*Last updated: 2026-03-04 — Phase 7 plans created (07-01 cubes, 07-02 polygon widget, 07-03 Docker)*
+*Last updated: 2026-03-05 — Phase 8 plans created (08-01 schema+flight course, 08-02 learned paths, 08-03 playback cube+dispatch, 08-04 playback widget)*

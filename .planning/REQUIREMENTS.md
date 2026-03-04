@@ -75,6 +75,16 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **DEPL-02**: Backend Dockerfile — multi-stage build using uv for dependency install, slim Python runtime image
 - [x] **DEPL-03**: Frontend Dockerfile — multi-stage build using pnpm for build, nginx for serving SPA with /api proxy to backend
 
+### Geo-Temporal & Visualization (Phase 8)
+
+- [ ] **GEO-01**: CubeDefinition includes a `widget` field (string | None) in both Python and TypeScript; BaseCube.definition passes widget through; enables cubes to declare custom visualization components
+- [ ] **GEO-02**: Global result_row_limit bumped from 100 to 10,000 to support track data (thousands of points per flight)
+- [ ] **GEO-03**: Get Flight Course cube queries research.normal_tracks by flight_ids; points mode outputs all track columns + GeoJSON Point geometry; lines mode outputs flight_id, callsign, GeoJSON LineString, start/end time, min/max altitude
+- [ ] **GEO-04**: Get Learned Paths cube queries public.learned_paths with optional origin, destination, path_id, polygon, min_member_count filters; centerline mode returns GeoJSON LineString; corridor mode returns Shapely-buffered GeoJSON Polygon
+- [ ] **GEO-05**: Geo-Temporal Playback cube (category: output, widget: geo_playback) accepts data with geometry/timestamp/id columns; passes data through (visualization-only)
+- [ ] **GEO-06**: ResultsDrawer widget dispatch: output cubes with widget field render custom visualization component in right panel instead of ResultsMap; table panel always shows; regular cubes keep existing behavior
+- [ ] **GEO-07**: GeoPlaybackWidget renders animated Leaflet map with CartoDB dark tiles, dual-handle timeline slider, density histogram, play/pause, speed selector (1x/2x/5x/10x), auto-colored objects by id/color column, no labels/trails/ghosts
+
 ## v2 Requirements
 
 ### Advanced Features
@@ -148,12 +158,20 @@ Requirements for initial release. Each maps to roadmap phases.
 | DEPL-01 | Phase 7 | Complete |
 | DEPL-02 | Phase 7 | Complete |
 | DEPL-03 | Phase 7 | Complete |
+| GEO-01 | Phase 8 | Not Started |
+| GEO-02 | Phase 8 | Not Started |
+| GEO-03 | Phase 8 | Not Started |
+| GEO-04 | Phase 8 | Not Started |
+| GEO-05 | Phase 8 | Not Started |
+| GEO-06 | Phase 8 | Not Started |
+| GEO-07 | Phase 8 | Not Started |
 
 **Coverage:**
-- v1 requirements: 48 total
-- Mapped to phases: 48
+- v1 requirements: 48 total (all complete)
+- Phase 8 requirements: 7 total
+- Mapped to phases: 55
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-03*
-*Last updated: 2026-03-03 — CUBE-01, CUBE-02, CUBE-03, BACK-01, BACK-02, FRONT-01 marked complete after 01-01 and 01-02 execution*
+*Last updated: 2026-03-05 — GEO-01 through GEO-07 added for Phase 8 (geo-temporal playback, learned paths, flight course)*
