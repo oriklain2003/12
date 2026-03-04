@@ -5,18 +5,10 @@ import './styles/theme.css';
 import './styles/glass.css';
 import './index.css';
 import { EditorPage } from './pages/EditorPage';
-
-// Minimal dashboard placeholder — replaced in Plan 02
-function DashboardPlaceholder() {
-  return (
-    <div style={{ padding: '40px', color: '#fff' }}>
-      Dashboard — coming in Plan 02
-    </div>
-  );
-}
+import { DashboardPage } from './pages/DashboardPage';
 
 const router = createBrowserRouter([
-  { path: '/', element: <DashboardPlaceholder /> },
+  { path: '/', element: <DashboardPage /> },
   { path: '/workflow/new', element: <EditorPage /> },
   { path: '/workflow/:id', element: <EditorPage /> },
 ]);
