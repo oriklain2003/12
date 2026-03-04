@@ -1,0 +1,189 @@
+/* Dashboard — landing page at / */
+
+.dashboard {
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  padding: 40px 32px;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+
+.dashboard__header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto 32px;
+}
+
+.dashboard__title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-text);
+}
+
+/* ── New Workflow Button ───────────────────────────────────── */
+
+.dashboard__new-btn {
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--duration-fast), border-color var(--duration-fast), box-shadow var(--duration-fast);
+  font-family: inherit;
+  line-height: 1;
+}
+
+.dashboard__new-btn:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+  box-shadow: 0 0 16px var(--color-accent-glow);
+}
+
+/* ── Card Grid ────────────────────────────────────────────── */
+
+.dashboard__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── Card ─────────────────────────────────────────────────── */
+
+.dashboard__card {
+  padding: 20px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: box-shadow var(--duration-normal) var(--ease-out),
+              border-color var(--duration-normal) var(--ease-out);
+  outline: none;
+  user-select: none;
+}
+
+.dashboard__card:hover {
+  box-shadow: var(--shadow-node-hover);
+  border-color: var(--color-border-hover);
+}
+
+.dashboard__card:focus-visible {
+  box-shadow: var(--shadow-node-selected);
+}
+
+.dashboard__card-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard__card-date {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+/* ── Card Actions ─────────────────────────────────────────── */
+
+.dashboard__card-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  margin-top: 12px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+}
+
+.dashboard__card-action-btn {
+  background: transparent;
+  border: 1px solid var(--color-border-hover);
+  color: var(--color-text-dim);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+.dashboard__card-action-btn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+  border-color: var(--color-border-focus);
+}
+
+.dashboard__card-action-btn--danger {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--color-error);
+}
+
+.dashboard__card-action-btn--danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+/* ── Delete Confirmation ──────────────────────────────────── */
+
+.dashboard__delete-confirm {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard__delete-confirm span {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-right: 4px;
+}
+
+/* ── Rename Input ─────────────────────────────────────────── */
+
+.dashboard__rename-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-accent);
+  color: var(--color-text);
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  outline: none;
+  padding: 0 0 2px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* ── Empty State ──────────────────────────────────────────── */
+
+.dashboard__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 80px 0;
+}
+
+.dashboard__empty p {
+  font-size: 16px;
+  margin: 0;
+}
