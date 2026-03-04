@@ -59,18 +59,21 @@ class AllFlightsCube(BaseCube):
             description="Relative time filter — last N seconds. Default: 604800 (7 days).",
             required=False,
             default=604800,
+            widget_hint="relative_time",
         ),
         ParamDefinition(
             name="start_time",
             type=ParamType.STRING,
             description="Absolute start time as epoch seconds string. Overrides relative if provided.",
             required=False,
+            widget_hint="datetime",
         ),
         ParamDefinition(
             name="end_time",
             type=ParamType.STRING,
             description="Absolute end time as epoch seconds string.",
             required=False,
+            widget_hint="datetime",
         ),
         ParamDefinition(
             name="flight_ids",
@@ -101,6 +104,37 @@ class AllFlightsCube(BaseCube):
             type=ParamType.JSON_OBJECT,
             description="Array of [lat, lon] coordinate pairs defining a geofence boundary.",
             required=False,
+            widget_hint="polygon",
+        ),
+        ParamDefinition(
+            name="airport",
+            type=ParamType.STRING,
+            description="Airport code filter (ILIKE — matches origin or destination).",
+            required=False,
+        ),
+        ParamDefinition(
+            name="min_lat",
+            type=ParamType.NUMBER,
+            description="Region bounding box — minimum latitude.",
+            required=False,
+        ),
+        ParamDefinition(
+            name="max_lat",
+            type=ParamType.NUMBER,
+            description="Region bounding box — maximum latitude.",
+            required=False,
+        ),
+        ParamDefinition(
+            name="min_lon",
+            type=ParamType.NUMBER,
+            description="Region bounding box — minimum longitude.",
+            required=False,
+        ),
+        ParamDefinition(
+            name="max_lon",
+            type=ParamType.NUMBER,
+            description="Region bounding box — maximum longitude.",
+            required=False,
         ),
     ]
 
@@ -127,12 +161,13 @@ class AllFlightsCube(BaseCube):
         min_altitude = inputs.get("min_altitude")
         max_altitude = inputs.get("max_altitude")
         polygon = inputs.get("polygon")
+        # airport and bounding-box filters extracted inline below
 
         # Build parameterized SQL
         sql_parts = [
             """
             SELECT
-                flight_id, callsign, first_seen_ts, last_seen_ts,
+                flight_id, callsign, airline, airline_code, first_seen_ts, last_seen_ts,
                 min_altitude_ft, max_altitude_ft,
                 origin_airport, destination_airport,
                 is_anomaly, is_military,
@@ -177,6 +212,30 @@ class AllFlightsCube(BaseCube):
         if max_altitude is not None:
             sql_parts.append("AND max_altitude_ft <= :max_altitude")
             params["max_altitude"] = float(max_altitude)
+
+        # airport filter (ILIKE on origin or destination)
+        airport = inputs.get("airport")
+        if airport:
+            sql_parts.append("AND (origin_airport ILIKE :airport OR destination_airport ILIKE :airport)")
+            params["airport"] = f"%{airport}%"
+
+        # bounding-box region filter
+        min_lat = inputs.get("min_lat")
+        max_lat = inputs.get("max_lat")
+        min_lon = inputs.get("min_lon")
+        max_lon = inputs.get("max_lon")
+        if all(v is not None for v in [min_lat, max_lat, min_lon, max_lon]):
+            sql_parts.append(
+                "AND start_lat BETWEEN :min_lat AND :max_lat AND start_lon BETWEEN :min_lon AND :max_lon"
+            )
+            params.update(
+                {
+                    "min_lat": float(min_lat),
+                    "max_lat": float(max_lat),
+                    "min_lon": float(min_lon),
+                    "max_lon": float(max_lon),
+                }
+            )
 
         # Safety cap before polygon filtering
         sql_parts.append("LIMIT 5000")
