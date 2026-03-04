@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-04T09:09:53.964Z"
+last_updated: "2026-03-04T09:14:20.956Z"
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State: Project 12
@@ -74,6 +74,8 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 05]: EditorPage owns ReactFlowProvider (not root) to keep React Flow scoped to canvas routes
 - [Phase 05]: createBrowserRouter + RouterProvider pattern adopted (React Router v7); DashboardPlaceholder inline in main.tsx until Plan 02
 - [Phase 05]: loadWorkflow fetches catalog first if empty to avoid race condition with CubeCatalog mount
+- [Phase 05]: DashboardPage is a single-file component (no separate WorkflowCard) — card JSX is inline since only used on this page
+- [Phase 05]: Delete confirmation is inline (replaces action row) per user decision — no modal or overlay needed
 
 ## Notes
 
@@ -100,4 +102,5 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 | Phase 04 P02 | 3min | 2 tasks | 8 files |
 | Phase 04 P03 | 10min | 2 tasks | 11 files |
 | Phase 05 P01 | 2min | 2 tasks | 5 files |
+| Phase 05 P02 | 3min | 2 tasks | 3 files |
 
