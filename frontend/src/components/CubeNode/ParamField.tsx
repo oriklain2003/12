@@ -7,6 +7,9 @@ import { TagsInput } from 'react-tag-input-component';
 import { ParamType } from '../../types/cube';
 import type { ParamDefinition } from '../../types/cube';
 import { useFlowStore } from '../../store/flowStore';
+import { RelativeTimeInput } from './RelativeTimeInput';
+import { DateTimeInput } from './DateTimeInput';
+import { PolygonField } from './PolygonMapWidget';
 import './ParamField.css';
 
 interface ParamFieldProps {
@@ -32,7 +35,9 @@ export function ParamField({ nodeId, param }: ParamFieldProps) {
     return (
       <div className="param-field">
         <div className="param-field__connected">
-          <span className="param-field__connected-icon">⌁</span>
+          <svg className="param-field__connected-icon" width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M5 2.5a2.5 2.5 0 0 0 0 5h.5m1.5-5a2.5 2.5 0 0 1 0 5H6.5M4 5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
           Connected
         </div>
       </div>
@@ -40,6 +45,34 @@ export function ParamField({ nodeId, param }: ParamFieldProps) {
   }
 
   const renderInput = () => {
+    // Widget hint takes priority over generic type-based editors
+    if (param.widget_hint === 'relative_time') {
+      return (
+        <RelativeTimeInput
+          value={currentValue as number | undefined}
+          onChange={updateParam}
+          placeholder={param.description}
+        />
+      );
+    }
+    if (param.widget_hint === 'datetime') {
+      return (
+        <DateTimeInput
+          value={currentValue as string | undefined}
+          onChange={updateParam}
+          placeholder={param.description}
+        />
+      );
+    }
+    if (param.widget_hint === 'polygon') {
+      return (
+        <PolygonField
+          value={currentValue as number[][] | undefined}
+          onChange={updateParam}
+        />
+      );
+    }
+
     switch (param.type) {
       case ParamType.STRING:
         return (
