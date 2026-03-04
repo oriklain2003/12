@@ -14,6 +14,7 @@ import {
   ReactFlow,
   Background,
   BackgroundVariant,
+  ConnectionLineType,
   useReactFlow,
   type Connection,
   type Edge,
@@ -36,6 +37,7 @@ const edgeTypes = { mismatch: MismatchEdge } as const;
 export function FlowCanvas() {
   const { nodes, edges, onNodesChange, onEdgesChange } = useFlowStore();
   const addCubeNode = useFlowStore((s) => s.addCubeNode);
+  const isRunning = useFlowStore((s) => s.isRunning);
   const { screenToFlowPosition } = useReactFlow();
 
   // ── Drop handler: receives cube-id from sidebar drag, creates node ──────────
@@ -125,7 +127,7 @@ export function FlowCanvas() {
       sourceHandle: connection.sourceHandle,
       targetHandle: connection.targetHandle,
       type: isMismatch ? 'mismatch' : 'straight',
-      style: isMismatch ? undefined : { stroke: '#4b5563' },
+      style: isMismatch ? undefined : { stroke: 'rgba(255, 255, 255, 0.15)' },
     };
 
     // Directly update edges in the store
@@ -146,17 +148,24 @@ export function FlowCanvas() {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={{ type: 'straight' }}
+        connectionLineType={ConnectionLineType.Straight}
+        connectionLineStyle={{ stroke: 'rgba(255,255,255,0.25)', strokeWidth: 2 }}
         colorMode="dark"
         onDrop={onDrop}
         onDragOver={onDragOver}
         fitView
         proOptions={{ hideAttribution: true }}
+        nodesDraggable={!isRunning}
+        nodesConnectable={!isRunning}
+        elementsSelectable={!isRunning}
+        edgesReconnectable={!isRunning}
+        deleteKeyCode={isRunning ? null : ['Delete', 'Backspace']}
       >
         <Background
           variant={BackgroundVariant.Dots}
-          gap={24}
+          gap={28}
           size={1}
-          color="rgba(255,255,255,0.07)"
+          color="rgba(255,255,255,0.04)"
         />
       </ReactFlow>
     </div>
