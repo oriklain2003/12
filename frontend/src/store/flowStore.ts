@@ -139,6 +139,10 @@ interface FlowState {
   loadWorkflow: (id: string) => Promise<void>;
   resetWorkflow: () => void;
 
+  // Results drawer selection state
+  selectedResultNodeId: string | null;
+  setSelectedResultNodeId: (nodeId: string | null) => void;
+
   // Execution actions
   startExecution: () => void;
   stopExecution: () => void;
@@ -178,16 +182,29 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
   completedCount: 0,
   totalCount: 0,
 
+  // Results drawer selection state
+  selectedResultNodeId: null,
+
+  // Results drawer selection
+  setSelectedResultNodeId: (nodeId) => set({ selectedResultNodeId: nodeId }),
+
   // Catalog
   setCatalog: (catalog) => set({ catalog }),
   setCatalogLoading: (loading) => set({ catalogLoading: loading }),
 
   // React Flow change handlers — delegate to xyflow utilities, mark dirty
+  // Only substantive changes (position, add, remove, replace) set isDirty.
+  // Selection and dimension changes are internal React Flow bookkeeping.
   onNodesChange: (changes) =>
-    set((state) => ({
-      nodes: applyNodeChanges(changes, state.nodes),
-      isDirty: true,
-    })),
+    set((state) => {
+      const substantive = changes.some(
+        (c) => c.type !== 'select' && c.type !== 'dimensions'
+      );
+      return {
+        nodes: applyNodeChanges(changes, state.nodes),
+        ...(substantive ? { isDirty: true } : {}),
+      };
+    }),
 
   onEdgesChange: (changes) =>
     set((state) => ({
@@ -335,6 +352,7 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
       isRunning: false,
       completedCount: 0,
       totalCount: 0,
+      selectedResultNodeId: null,
     }),
 
   // Execution actions
