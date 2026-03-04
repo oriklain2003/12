@@ -15,3 +15,11 @@
   flex: 1;
   overflow: hidden;
 }
+
+.app__canvas-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}

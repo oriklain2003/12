@@ -13,6 +13,7 @@ import { Toaster } from 'sonner';
 import { FlowCanvas } from '../components/Canvas/FlowCanvas';
 import { CubeCatalog } from '../components/Sidebar/CubeCatalog';
 import { Toolbar } from '../components/Toolbar/Toolbar';
+import { ResultsDrawer } from '../components/Results/ResultsDrawer';
 import { useFlowStore } from '../store/flowStore';
 import '../App.css';
 
@@ -41,9 +42,12 @@ export function EditorPage() {
       <Toolbar />
       <div className="app__body">
         <CubeCatalog />
-        <ReactFlowProvider>
-          <FlowCanvas />
-        </ReactFlowProvider>
+        <div className="app__canvas-area">
+          <ReactFlowProvider>
+            <FlowCanvas />
+          </ReactFlowProvider>
+          <ResultsDrawer />
+        </div>
       </div>
       <Toaster position="bottom-right" theme="dark" />
     </div>

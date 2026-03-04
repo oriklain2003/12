@@ -41,6 +41,10 @@ export function CubeNode({ id, data, selected, isConnectable }: NodeProps<CubeFl
   const executionStatus = useFlowStore((s) => s.executionStatus[id]);
   const isRunning = useFlowStore((s) => s.isRunning);
 
+  // Results drawer — open drawer when header clicked and results exist
+  const setSelectedResultNodeId = useFlowStore((s) => s.setSelectedResultNodeId);
+  const hasResults = useFlowStore((s) => !!s.results[id]);
+
   // Build class list for the root node div
   const nodeClasses = [
     'cube-node',
@@ -73,8 +77,12 @@ export function CubeNode({ id, data, selected, isConnectable }: NodeProps<CubeFl
         </button>
       )}
 
-      {/* Header */}
-      <div className="cube-node__header">
+      {/* Header — click to open results drawer (only when results exist) */}
+      <div
+        className="cube-node__header"
+        onClick={hasResults ? () => setSelectedResultNodeId(id) : undefined}
+        style={{ cursor: hasResults ? 'pointer' : 'default' }}
+      >
         <span className="cube-node__category-dot" style={{ background: categoryColor }} />
         <span className="cube-node__header-name">{cubeDef.name}</span>
 
