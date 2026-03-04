@@ -46,9 +46,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Workflow Management
 
-- [ ] **WFLOW-01**: React Router with routes: / (dashboard), /workflow/:id (editor), /workflow/new (new workflow)
+- [x] **WFLOW-01**: React Router with routes: / (dashboard), /workflow/:id (editor), /workflow/new (new workflow)
 - [ ] **WFLOW-02**: Dashboard page listing all saved workflows with name, last modified date, and actions (open, rename, delete, create new)
-- [ ] **WFLOW-03**: Save serializes current flow state (nodes, edges, params) to backend via PUT; Load deserializes and restores canvas
+- [x] **WFLOW-03**: Save serializes current flow state (nodes, edges, params) to backend via PUT; Load deserializes and restores canvas
 - [ ] **WFLOW-04**: Run button triggers SSE connection, streams per-cube status updates to Zustand store, updates CubeNode indicators in real-time
 - [ ] **WFLOW-05**: Each CubeNode shows execution status indicator: gray (pending), blue spinner (running), green check (done), red X (error with message)
 - [ ] **WFLOW-06**: Error messages from failed cubes display inline on the CubeNode with the error text
@@ -129,9 +129,9 @@ Requirements for initial release. Each maps to roadmap phases.
 | FRONT-10 | Phase 4 | Complete |
 | FRONT-11 | Phase 4 | Complete |
 | FRONT-12 | Phase 4 | Complete |
-| WFLOW-01 | Phase 5 | Pending |
+| WFLOW-01 | Phase 5 | Complete |
 | WFLOW-02 | Phase 5 | Pending |
-| WFLOW-03 | Phase 5 | Pending |
+| WFLOW-03 | Phase 5 | Complete |
 | WFLOW-04 | Phase 5 | Pending |
 | WFLOW-05 | Phase 5 | Pending |
 | WFLOW-06 | Phase 5 | Pending |

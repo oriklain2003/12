@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-03T23:02:02.009Z"
+last_updated: "2026-03-04T09:09:53.964Z"
 progress:
   total_phases: 7
   completed_phases: 4
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 11
+  completed_plans: 9
 ---
 
 # Project State: Project 12
@@ -71,6 +71,9 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 04-03]: Type mismatches allowed — custom onConnect assigns edge.type='mismatch' for dashed orange MismatchEdge rendering
 - [Phase 04-03]: cube.ts enums converted to const+type alias pattern (erasableSyntaxOnly tsconfig compliance)
 - [Phase 04-03]: nodeTypes and edgeTypes defined at module level (React Flow v12 requirement — prevents re-registration)
+- [Phase 05]: EditorPage owns ReactFlowProvider (not root) to keep React Flow scoped to canvas routes
+- [Phase 05]: createBrowserRouter + RouterProvider pattern adopted (React Router v7); DashboardPlaceholder inline in main.tsx until Plan 02
+- [Phase 05]: loadWorkflow fetches catalog first if empty to avoid race condition with CubeCatalog mount
 
 ## Notes
 
@@ -96,4 +99,5 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 | Phase 04 P01 | 2min | 2 tasks | 8 files |
 | Phase 04 P02 | 3min | 2 tasks | 8 files |
 | Phase 04 P03 | 10min | 2 tasks | 11 files |
+| Phase 05 P01 | 2min | 2 tasks | 5 files |
 
