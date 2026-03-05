@@ -83,7 +83,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **GEO-04**: Get Learned Paths cube queries public.learned_paths with optional origin, destination, path_id, polygon, min_member_count filters; centerline mode returns GeoJSON LineString; corridor mode returns Shapely-buffered GeoJSON Polygon
 - [x] **GEO-05**: Geo-Temporal Playback cube (category: output, widget: geo_playback) accepts data with geometry/timestamp/id columns; passes data through (visualization-only)
 - [x] **GEO-06**: ResultsDrawer widget dispatch: output cubes with widget field render custom visualization component in right panel instead of ResultsMap; table panel always shows; regular cubes keep existing behavior
-- [ ] **GEO-07**: GeoPlaybackWidget renders animated Leaflet map with CartoDB dark tiles, dual-handle timeline slider, density histogram, play/pause, speed selector (1x/2x/5x/10x), auto-colored objects by id/color column, no labels/trails/ghosts
+- [x] **GEO-07**: GeoPlaybackWidget renders animated Leaflet map with CartoDB dark tiles, dual-handle timeline slider, density histogram, play/pause, speed selector (1x/2x/5x/10x), auto-colored objects by id/color column, no labels/trails/ghosts
 
 ## v2 Requirements
 

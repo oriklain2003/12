@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-05T12:15:03.631Z"
+last_updated: "2026-03-05T12:19:01.437Z"
 progress:
   total_phases: 8
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 20
-  completed_plans: 19
+  completed_plans: 20
 ---
 
 # Project State: Project 12
@@ -98,6 +98,9 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 08]: result_row_limit raised from 100 to 10000 for full track data support
 - [Phase 08]: GeoPlaybackPlaceholder is inline in ResultsDrawer until Plan 04 replaces it with real widget
 - [Phase 08]: Widget dispatch uses (cubeWidget || geoInfo) as single right-panel condition for extensible layout
+- [Phase 08-04]: GeoPlaybackWidget splits into outer guard + GeoPlaybackInner to avoid conditional hook violations
+- [Phase 08-04]: speedRef useRef pattern mirrors speed into ref to avoid animation effect re-trigger on speed change
+- [Phase 08-04]: GeoJSON keyed by windowStart-windowEnd forces re-mount on each time window change
 
 ## Notes
 
@@ -120,6 +123,7 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 | Phase 08 P02 | 2 min | 2 tasks | 3 files |
 | Phase 08 P01 | 8min | 2 tasks | 5 files |
 | Phase 08 P03 | 2min | 2 tasks | 2 files |
+| Phase 08 P04 | 2min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
