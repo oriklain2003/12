@@ -296,6 +296,11 @@ Plans:
 
 **Depends on:** Phase 7
 
+**Plans:** 1 plan
+
+Plans:
+- [ ] 09-01-PLAN.md — FilterFlightsCube implementation with two-tier filtering + tests
+
 **Key files:**
 - `backend/app/cubes/filter_flights.py` — Filter Flights cube querying normal_tracks for behavioral criteria
 - `backend/app/cubes/all_flights.py` — May need output adjustments for pipeline compatibility
