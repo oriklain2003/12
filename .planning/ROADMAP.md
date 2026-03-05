@@ -1,8 +1,8 @@
 # Roadmap: Project 12 — Visual Dataflow Workflow Builder
 
 **Created:** 2026-03-03
-**Phases:** 8
-**Requirements covered:** 48/48 (v1) + 7 (Phase 8)
+**Phases:** 10
+**Requirements covered:** 55/55 (48 v1 + 7 Phase 8)
 
 ## Phase Overview
 
@@ -287,9 +287,55 @@ Plans:
 
 ---
 
+## Phase 9: Filter Flights Cube (Gap Closure)
+
+**Goal:** Implement behavioral Filter Flights cube that evaluates flight track data against thresholds, completing the 4-cube pipeline
+
+**Requirements:** DATA-02, DATA-05
+**Gap Closure:** Closes gaps from v1.0 audit — missing cube + broken E2E flow
+
+**Depends on:** Phase 7
+
+**Key files:**
+- `backend/app/cubes/filter_flights.py` — Filter Flights cube querying normal_tracks for behavioral criteria
+- `backend/app/cubes/all_flights.py` — May need output adjustments for pipeline compatibility
+
+**Success criteria:**
+1. Filter Flights cube appears in catalog with inputs: flight_ids, max_altitude_ft, min_speed_knots, max_speed_knots, min_duration_minutes, max_duration_minutes
+2. Cube queries research.normal_tracks, evaluates per-flight behavioral stats, excludes flights violating thresholds
+3. Outputs filtered_flight_ids and filtered_flights (metadata for passing flights)
+4. 4-cube pipeline (AllFlights → FilterFlights → GetAnomalies → CountByField) produces real results
+5. Filter Flights appears in catalog under "filter" category
+
+---
+
+## Phase 10: Audit Remediation (Gap Closure)
+
+**Goal:** Fix all documentation, traceability, integration, and tech debt gaps identified by v1.0 milestone audit
+
+**Requirements:** WFLOW-04–08, RSLT-02–03, GEO-04 (SUMMARY fixes); BACK-08, BACK-11, BACK-13, GEO-02 (integration/tech debt)
+**Gap Closure:** Closes remaining gaps from v1.0 audit
+
+**Tasks:**
+1. Fix 05-03-SUMMARY.md — add WFLOW-04 through WFLOW-08 to requirements_completed
+2. Fix 06-02-SUMMARY.md — add RSLT-02, RSLT-03 to requirements_completed
+3. Fix 08-02-SUMMARY.md — add GEO-04 to requirements_completed
+4. Fix ResultsTable.tsx — change "100 rows" truncation text to match actual 10,000 limit
+5. Fix executor.py docstring — update "100" reference to "10,000"
+6. Update BACK-13 requirement text — document actual POST /api/workflows/run/stream endpoint
+7. Remove dead POST /api/workflows/{id}/run endpoint (BACK-08 tech debt)
+
+**Success criteria:**
+1. All SUMMARY frontmatter lists correct requirements_completed
+2. ResultsTable truncation warning matches actual row limit
+3. No stale documentation referencing old limits or endpoints
+4. Dead code endpoint removed
+
+---
+
 ## Requirement Coverage Validation
 
-All 48 v1 requirements mapped:
+All 55 requirements mapped:
 
 - **Phase 1 (6):** CUBE-01, CUBE-02, CUBE-03, BACK-01, BACK-02, FRONT-01
 - **Phase 2 (10):** BACK-03 through BACK-12
@@ -297,11 +343,13 @@ All 48 v1 requirements mapped:
 - **Phase 4 (11):** FRONT-02 through FRONT-12
 - **Phase 5 (8):** WFLOW-01 through WFLOW-08
 - **Phase 6 (3):** RSLT-01, RSLT-02, RSLT-03
-- **Phase 7 (8):** DATA-01 through DATA-05, DEPL-01 through DEPL-03
+- **Phase 7 (6):** DATA-01, DATA-03, DATA-04, DEPL-01 through DEPL-03
 - **Phase 8 (7):** GEO-01 through GEO-07
+- **Phase 9 (2):** DATA-02, DATA-05 (gap closure)
+- **Phase 10 (2):** Integration + tech debt fixes (gap closure)
 
 **Unmapped:** 0
 
 ---
 *Roadmap created: 2026-03-03*
-*Last updated: 2026-03-05 — Phase 8 plans created (08-01 schema+flight course, 08-02 learned paths, 08-03 playback cube+dispatch, 08-04 playback widget)*
+*Last updated: 2026-03-05 — Gap closure phases 9-10 added from v1.0 audit*

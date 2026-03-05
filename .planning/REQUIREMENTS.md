@@ -64,10 +64,10 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Real Data Cubes
 
 - [x] **DATA-01**: Get Flights cube queries research.flight_metadata with optional filters: time_range_hours (bigint epoch), airport (origin/dest ILIKE), region bounding box (lat/lon ranges); outputs flight_ids array and flights data array
-- [x] **DATA-02**: Filter Flights cube accepts flight_ids + flights data, filters by country (origin/dest country), days_back, min/max altitude; outputs filtered_flight_ids and filtered_flights
+- [ ] **DATA-02**: Filter Flights cube accepts flight_ids, queries research.normal_tracks to evaluate behavioral criteria (max_altitude_ft, min_speed_knots, max_speed_knots, min_duration_minutes, max_duration_minutes), excludes flights whose track data violates thresholds; outputs filtered_flight_ids and filtered_flights metadata
 - [x] **DATA-03**: Get Anomalies cube accepts flight_ids array, queries research.anomaly_reports for matching flight_ids; outputs anomaly records with severity and report data
 - [x] **DATA-04**: Count By Field cube accepts any data array and group_by_field name, performs pure Python groupby aggregation; outputs grouped counts as array of {field_value, count}
-- [x] **DATA-05**: End-to-end pipeline: Get Flights → Filter Flights → Get Anomalies + Count By Field produces real results from live database
+- [ ] **DATA-05**: End-to-end pipeline: Get Flights → Filter Flights → Get Anomalies + Count By Field produces real results from live database
 
 ### Deployment
 
@@ -151,27 +151,28 @@ Requirements for initial release. Each maps to roadmap phases.
 | RSLT-02 | Phase 6 | Complete |
 | RSLT-03 | Phase 6 | Complete |
 | DATA-01 | Phase 7 | Complete |
-| DATA-02 | Phase 7 | Complete |
+| DATA-02 | Phase 9 | Pending |
 | DATA-03 | Phase 7 | Complete |
 | DATA-04 | Phase 7 | Complete |
-| DATA-05 | Phase 7 | Complete |
+| DATA-05 | Phase 9 | Pending |
 | DEPL-01 | Phase 7 | Complete |
 | DEPL-02 | Phase 7 | Complete |
 | DEPL-03 | Phase 7 | Complete |
-| GEO-01 | Phase 8 | Not Started |
-| GEO-02 | Phase 8 | Not Started |
-| GEO-03 | Phase 8 | Not Started |
-| GEO-04 | Phase 8 | Not Started |
-| GEO-05 | Phase 8 | Not Started |
-| GEO-06 | Phase 8 | Not Started |
-| GEO-07 | Phase 8 | Not Started |
+| GEO-01 | Phase 8 | Complete |
+| GEO-02 | Phase 8 | Complete |
+| GEO-03 | Phase 8 | Complete |
+| GEO-04 | Phase 8 | Complete |
+| GEO-05 | Phase 8 | Complete |
+| GEO-06 | Phase 8 | Complete |
+| GEO-07 | Phase 8 | Complete |
 
 **Coverage:**
-- v1 requirements: 48 total (all complete)
-- Phase 8 requirements: 7 total
+- v1 requirements: 48 + 7 Phase 8 = 55 total
+- Complete: 53
+- Pending: 2 (DATA-02, DATA-05 → Phase 9)
 - Mapped to phases: 55
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-03*
-*Last updated: 2026-03-05 — GEO-01 through GEO-07 added for Phase 8 (geo-temporal playback, learned paths, flight course)*
+*Last updated: 2026-03-05 — Gap closure: DATA-02/DATA-05 reassigned to Phase 9, GEO-01–07 status corrected to Complete*
