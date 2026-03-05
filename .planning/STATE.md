@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-05T14:55:22.908Z"
+last_updated: "2026-03-05T14:58:27.898Z"
 progress:
   total_phases: 10
-  completed_phases: 9
+  completed_phases: 10
   total_plans: 23
-  completed_plans: 22
+  completed_plans: 23
 ---
 
 # Project State: Project 12
@@ -103,6 +103,7 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 08-04]: GeoJSON keyed by windowStart-windowEnd forces re-mount on each time window change
 - [Phase 09]: FilterFlights two-tier strategy: Tier 1 duration from metadata (no DB), Tier 2 GROUP BY on normal_tracks; AND logic via Python set narrowing; point_in_polygon reused from AllFlights
 - [Phase 10]: requirements_completed field placed after plan: in YAML frontmatter; BACK-13 corrected to POST /api/workflows/run/stream with graph-in-body
+- [Phase 10-audit-remediation]: POST /{workflow_id}/run (sync endpoint) removed — frontend uses only GET /{workflow_id}/run/stream for execution; no frontend or test references existed
 
 ## Notes
 
@@ -128,6 +129,7 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 | Phase 08 P04 | 2min | 2 tasks | 3 files |
 | Phase 09-filter-flights-cube P01 | 3min | 2 tasks | 2 files |
 | Phase 10 P01 | 1min | 2 tasks | 4 files |
+| Phase 10-audit-remediation P02 | 8min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
