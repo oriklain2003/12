@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-04T17:46:47.964Z"
+last_updated: "2026-03-05T12:11:00.978Z"
 progress:
   total_phases: 8
   completed_phases: 7
-  total_plans: 16
-  completed_plans: 16
+  total_plans: 20
+  completed_plans: 17
 ---
 
 # Project State: Project 12
@@ -91,6 +91,8 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 07]: GetAnomalies guards empty flight_ids early (before SQL) to avoid PostgreSQL ANY() type error with empty array
 - [Phase 07]: CountByField extracts first list value from full_result dict via next() comprehension to enable direct wiring from any cube
 - [Phase 07]: uv:0.9 minor version pin for resilient Docker builds; python urllib for healthcheck in slim images; proxy_buffering off for SSE in nginx
+- [Phase 08]: Centerline points stored as {lat, lon, alt} JSONB dicts — parsed at query time
+- [Phase 08]: Corridor buffer approximation: 1 NM = 1/60 degree (flat-cap Shapely buffer)
 
 ## Notes
 
@@ -110,6 +112,7 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 | Phase 07 P02 | 2 | 2 tasks | 3 files |
 | Phase 07-real-db-cubes-end-to-end-docker P01 | 8 | 1 tasks | 4 files |
 | Phase 07 P03 | 1 | 2 tasks | 6 files |
+| Phase 08 P02 | 2 min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
