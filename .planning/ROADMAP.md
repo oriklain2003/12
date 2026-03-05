@@ -318,17 +318,14 @@ Plans:
 
 **Goal:** Fix all documentation, traceability, integration, and tech debt gaps identified by v1.0 milestone audit
 
-**Requirements:** WFLOW-04–08, RSLT-02–03, GEO-04 (SUMMARY fixes); BACK-08, BACK-11, BACK-13, GEO-02 (integration/tech debt)
+**Requirements:** WFLOW-04-08, RSLT-02-03, GEO-04 (SUMMARY fixes); BACK-08, BACK-11, BACK-13, GEO-02 (integration/tech debt)
 **Gap Closure:** Closes remaining gaps from v1.0 audit
 
-**Tasks:**
-1. Fix 05-03-SUMMARY.md — add WFLOW-04 through WFLOW-08 to requirements_completed
-2. Fix 06-02-SUMMARY.md — add RSLT-02, RSLT-03 to requirements_completed
-3. Fix 08-02-SUMMARY.md — add GEO-04 to requirements_completed
-4. Fix ResultsTable.tsx — change "100 rows" truncation text to match actual 10,000 limit
-5. Fix executor.py docstring — update "100" reference to "10,000"
-6. Update BACK-13 requirement text — document actual POST /api/workflows/run/stream endpoint
-7. Remove dead POST /api/workflows/{id}/run endpoint (BACK-08 tech debt)
+**Plans:** 2 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Fix SUMMARY frontmatter traceability gaps + correct BACK-13 requirement text
+- [ ] 10-02-PLAN.md — Fix stale row limit references + remove dead run endpoint
 
 **Success criteria:**
 1. All SUMMARY frontmatter lists correct requirements_completed
@@ -351,10 +348,10 @@ All 55 requirements mapped:
 - **Phase 7 (6):** DATA-01, DATA-03, DATA-04, DEPL-01 through DEPL-03
 - **Phase 8 (7):** GEO-01 through GEO-07
 - **Phase 9 (2):** DATA-02, DATA-05 (gap closure)
-- **Phase 10 (2):** Integration + tech debt fixes (gap closure)
+- **Phase 10 (12):** WFLOW-04-08, RSLT-02-03, GEO-04, BACK-08, BACK-11, BACK-13, GEO-02 (audit remediation)
 
 **Unmapped:** 0
 
 ---
 *Roadmap created: 2026-03-03*
-*Last updated: 2026-03-05 — Gap closure phases 9-10 added from v1.0 audit*
+*Last updated: 2026-03-05 — Phase 10 plans created*
