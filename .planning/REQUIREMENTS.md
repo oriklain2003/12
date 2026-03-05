@@ -77,9 +77,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Geo-Temporal & Visualization (Phase 8)
 
-- [ ] **GEO-01**: CubeDefinition includes a `widget` field (string | None) in both Python and TypeScript; BaseCube.definition passes widget through; enables cubes to declare custom visualization components
-- [ ] **GEO-02**: Global result_row_limit bumped from 100 to 10,000 to support track data (thousands of points per flight)
-- [ ] **GEO-03**: Get Flight Course cube queries research.normal_tracks by flight_ids; points mode outputs all track columns + GeoJSON Point geometry; lines mode outputs flight_id, callsign, GeoJSON LineString, start/end time, min/max altitude
+- [x] **GEO-01**: CubeDefinition includes a `widget` field (string | None) in both Python and TypeScript; BaseCube.definition passes widget through; enables cubes to declare custom visualization components
+- [x] **GEO-02**: Global result_row_limit bumped from 100 to 10,000 to support track data (thousands of points per flight)
+- [x] **GEO-03**: Get Flight Course cube queries research.normal_tracks by flight_ids; points mode outputs all track columns + GeoJSON Point geometry; lines mode outputs flight_id, callsign, GeoJSON LineString, start/end time, min/max altitude
 - [x] **GEO-04**: Get Learned Paths cube queries public.learned_paths with optional origin, destination, path_id, polygon, min_member_count filters; centerline mode returns GeoJSON LineString; corridor mode returns Shapely-buffered GeoJSON Polygon
 - [ ] **GEO-05**: Geo-Temporal Playback cube (category: output, widget: geo_playback) accepts data with geometry/timestamp/id columns; passes data through (visualization-only)
 - [ ] **GEO-06**: ResultsDrawer widget dispatch: output cubes with widget field render custom visualization component in right panel instead of ResultsMap; table panel always shows; regular cubes keep existing behavior

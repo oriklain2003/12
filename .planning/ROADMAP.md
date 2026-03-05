@@ -255,7 +255,7 @@ Plans:
 
 **Depends on:** Phase 7
 
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 
 Plans:
 - [ ] 08-01-PLAN.md — Widget field on CubeDefinition (Python + TS), row cap bump, Get Flight Course cube

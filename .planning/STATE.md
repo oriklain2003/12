@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-05T12:11:00.978Z"
+last_updated: "2026-03-05T12:11:50.481Z"
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 20
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # Project State: Project 12
@@ -93,6 +93,9 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 07]: uv:0.9 minor version pin for resilient Docker builds; python urllib for healthcheck in slim images; proxy_buffering off for SSE in nginx
 - [Phase 08]: Centerline points stored as {lat, lon, alt} JSONB dicts — parsed at query time
 - [Phase 08]: Corridor buffer approximation: 1 NM = 1/60 degree (flat-cap Shapely buffer)
+- [Phase 08]: GeoJSON coordinates follow spec order [lon, lat], not display order [lat, lon]
+- [Phase 08]: widget field on CubeDefinition defaults to None via getattr — existing cubes unaffected
+- [Phase 08]: result_row_limit raised from 100 to 10000 for full track data support
 
 ## Notes
 
@@ -113,6 +116,7 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 | Phase 07-real-db-cubes-end-to-end-docker P01 | 8 | 1 tasks | 4 files |
 | Phase 07 P03 | 1 | 2 tasks | 6 files |
 | Phase 08 P02 | 2 min | 2 tasks | 3 files |
+| Phase 08 P01 | 8min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
