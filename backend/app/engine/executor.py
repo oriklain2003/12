@@ -1,8 +1,12 @@
 """WorkflowExecutor: topological sort, input resolution, Full Result bundling, row limiting, failure isolation."""
 
 import asyncio
+import logging
+import time
 from collections import deque
 from typing import Any, AsyncGenerator
+
+logger = logging.getLogger("flow.executor")
 
 from fastapi import HTTPException
 from starlette.requests import Request
@@ -92,7 +96,7 @@ def apply_row_limit(
 
     Args:
         outputs: The cube's output dict.
-        limit: Row cap; defaults to settings.result_row_limit (100).
+        limit: Row cap; defaults to settings.result_row_limit (10,000).
 
     Returns:
         (capped_outputs, truncated) where truncated is True if any list was capped.
@@ -191,18 +195,22 @@ async def stream_graph(
                 continue
 
             # c. Emit running event
+            logger.info("Executing cube %s (node %s)", node.data.cube_id, node_id)
             yield CubeStatusEvent(node_id=node_id, status="running")
 
             # d. Resolve inputs and execute
             inputs = resolve_inputs(node, graph.edges, results)
             try:
+                t0 = time.monotonic()
                 raw_outputs = await cube.execute(**inputs)
+                execution_ms = int((time.monotonic() - t0) * 1000)
                 capped_outputs, truncated = apply_row_limit(raw_outputs)
                 yield CubeStatusEvent(
                     node_id=node_id,
                     status="done",
                     outputs=capped_outputs,
                     truncated=truncated,
+                    execution_ms=execution_ms,
                 )
                 results[node_id] = {
                     "status": "done",
@@ -210,6 +218,7 @@ async def stream_graph(
                     "truncated": truncated,
                 }
             except Exception as exc:
+                logger.exception("Cube %s (node %s) failed", node.data.cube_id, node_id)
                 yield CubeStatusEvent(
                     node_id=node_id,
                     status="error",

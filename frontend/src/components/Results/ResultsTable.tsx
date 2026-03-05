@@ -67,7 +67,7 @@ export function ResultsTable({ rows, truncated, selectedRowIndex, onRowSelect }:
   return (
     <div className="results-table__wrapper">
       {truncated && (
-        <div className="results-table__truncation-warning">Showing first 100 rows</div>
+        <div className="results-table__truncation-warning">Showing first 10,000 rows</div>
       )}
       <div className="results-table__scroll">
         <table className="results-table">
@@ -93,11 +93,22 @@ export function ResultsTable({ rows, truncated, selectedRowIndex, onRowSelect }:
                 className={`results-table__row${selectedRowIndex === i ? ' results-table__row--selected' : ''}`}
                 onClick={() => onRowSelect(i)}
               >
-                {columns.map((col) => (
-                  <td key={col}>
-                    {String((row as Record<string, unknown>)[col] ?? '')}
-                  </td>
-                ))}
+                {columns.map((col) => {
+                  const val = (row as Record<string, unknown>)[col];
+                  let display: string;
+                  if (val === null || val === undefined) {
+                    display = '';
+                  } else if (typeof val === 'object') {
+                    // Show GeoJSON type if available, otherwise compact JSON
+                    const typed = val as Record<string, unknown>;
+                    display = typeof typed.type === 'string'
+                      ? `[${typed.type}]`
+                      : JSON.stringify(val).slice(0, 80);
+                  } else {
+                    display = String(val);
+                  }
+                  return <td key={col}>{display}</td>;
+                })}
               </tr>
             ))}
           </tbody>
