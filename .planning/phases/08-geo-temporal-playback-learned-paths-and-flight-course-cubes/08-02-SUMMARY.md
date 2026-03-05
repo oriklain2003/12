@@ -1,6 +1,7 @@
 ---
 phase: 08-geo-temporal-playback-learned-paths-and-flight-course-cubes
 plan: "02"
+requirements_completed: [GEO-04]
 subsystem: backend-cubes
 tags: [cubes, learned-paths, geospatial, shapely, geojson, corridor]
 dependency_graph:

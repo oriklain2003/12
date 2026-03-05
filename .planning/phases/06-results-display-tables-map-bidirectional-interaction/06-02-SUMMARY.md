@@ -1,6 +1,7 @@
 ---
 phase: 06-results-display-tables-map-bidirectional-interaction
 plan: 02
+requirements_completed: [RSLT-02, RSLT-03]
 subsystem: frontend/results
 tags: [leaflet, map, drawer, bidirectional, react-leaflet, geojson]
 dependency_graph:
