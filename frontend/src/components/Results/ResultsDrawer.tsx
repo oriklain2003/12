@@ -15,24 +15,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { ResultsTable } from './ResultsTable';
 import { ResultsMap } from './ResultsMap';
+import { GeoPlaybackWidget } from '../Visualization/GeoPlaybackWidget';
 import { detectGeoColumns } from '../../utils/geoDetect';
 import type { GeoInfo } from '../../utils/geoDetect';
 import { useFlowStore } from '../../store/flowStore';
 import './ResultsDrawer.css';
-
-// ─── GeoPlaybackPlaceholder ───────────────────────────────────────────────────
-
-// Placeholder until Plan 04 implements the real GeoPlaybackWidget
-function GeoPlaybackPlaceholder({ rows, params }: { rows: unknown[]; params: Record<string, unknown> }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
-      <div>
-        <p>Geo Playback Widget</p>
-        <p style={{ fontSize: '0.8rem' }}>{rows.length} rows | geometry: {String(params.geometry_column ?? 'geometry')} | timestamp: {String(params.timestamp_column ?? 'timestamp')}</p>
-      </div>
-    </div>
-  );
-}
 
 // ─── ResizeDivider ────────────────────────────────────────────────────────────
 
@@ -152,7 +139,7 @@ export function ResultsDrawer() {
                 <ResizeDivider containerRef={contentRef} onSplitChange={setSplitRatio} />
                 <div className="results-drawer__map-pane" style={{ flex: 1 }}>
                   {cubeWidget === 'geo_playback' ? (
-                    <GeoPlaybackPlaceholder rows={results.rows} params={cubeParams} />
+                    <GeoPlaybackWidget rows={results.rows} params={cubeParams} />
                   ) : geoInfo ? (
                     <ResultsMap
                       rows={results.rows}
