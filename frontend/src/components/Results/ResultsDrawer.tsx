@@ -5,6 +5,9 @@
  * or full-width table when there are no geo columns. Bidirectional
  * interaction: row select -> map flyTo, marker click -> row highlight.
  *
+ * For cubes with a `widget` field, renders custom visualization components
+ * instead of (or in addition to) the default ResultsMap.
+ *
  * Selection state is LOCAL (not Zustand) — ephemeral view state.
  * The only thing from the store is selectedResultNodeId and results.
  */
@@ -16,6 +19,20 @@ import { detectGeoColumns } from '../../utils/geoDetect';
 import type { GeoInfo } from '../../utils/geoDetect';
 import { useFlowStore } from '../../store/flowStore';
 import './ResultsDrawer.css';
+
+// ─── GeoPlaybackPlaceholder ───────────────────────────────────────────────────
+
+// Placeholder until Plan 04 implements the real GeoPlaybackWidget
+function GeoPlaybackPlaceholder({ rows, params }: { rows: unknown[]; params: Record<string, unknown> }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
+      <div>
+        <p>Geo Playback Widget</p>
+        <p style={{ fontSize: '0.8rem' }}>{rows.length} rows | geometry: {String(params.geometry_column ?? 'geometry')} | timestamp: {String(params.timestamp_column ?? 'timestamp')}</p>
+      </div>
+    </div>
+  );
+}
 
 // ─── ResizeDivider ────────────────────────────────────────────────────────────
 
@@ -74,6 +91,14 @@ export function ResultsDrawer() {
     const node = s.nodes.find((n) => n.id === s.selectedResultNodeId);
     return node?.data.cubeDef.name ?? 'Results';
   });
+  const cubeWidget = useFlowStore((s) => {
+    const node = s.nodes.find((n) => n.id === s.selectedResultNodeId);
+    return node?.data.cubeDef.widget ?? null;
+  });
+  const cubeParams = useFlowStore((s) => {
+    const node = s.nodes.find((n) => n.id === s.selectedResultNodeId);
+    return node?.data.params ?? {};
+  });
 
   // Derived
   const geoInfo: GeoInfo | null = useMemo(
@@ -112,7 +137,7 @@ export function ResultsDrawer() {
           <>
             <div
               className="results-drawer__table-pane"
-              style={{ flex: geoInfo ? `0 0 ${splitRatio * 100}%` : '1' }}
+              style={{ flex: (cubeWidget || geoInfo) ? `0 0 ${splitRatio * 100}%` : '1' }}
             >
               <ResultsTable
                 rows={results.rows}
@@ -122,16 +147,20 @@ export function ResultsDrawer() {
               />
             </div>
 
-            {geoInfo && (
+            {(cubeWidget || geoInfo) && (
               <>
                 <ResizeDivider containerRef={contentRef} onSplitChange={setSplitRatio} />
                 <div className="results-drawer__map-pane" style={{ flex: 1 }}>
-                  <ResultsMap
-                    rows={results.rows}
-                    geoInfo={geoInfo}
-                    selectedRowIndex={selectedRowIndex}
-                    onMarkerClick={setSelectedRowIndex}
-                  />
+                  {cubeWidget === 'geo_playback' ? (
+                    <GeoPlaybackPlaceholder rows={results.rows} params={cubeParams} />
+                  ) : geoInfo ? (
+                    <ResultsMap
+                      rows={results.rows}
+                      geoInfo={geoInfo}
+                      selectedRowIndex={selectedRowIndex}
+                      onMarkerClick={setSelectedRowIndex}
+                    />
+                  ) : null}
                 </div>
               </>
             )}
