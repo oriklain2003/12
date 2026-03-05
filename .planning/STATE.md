@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-05T12:11:50.481Z"
+last_updated: "2026-03-05T12:15:03.631Z"
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 20
-  completed_plans: 18
+  completed_plans: 19
 ---
 
 # Project State: Project 12
@@ -96,6 +96,8 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 08]: GeoJSON coordinates follow spec order [lon, lat], not display order [lat, lon]
 - [Phase 08]: widget field on CubeDefinition defaults to None via getattr — existing cubes unaffected
 - [Phase 08]: result_row_limit raised from 100 to 10000 for full track data support
+- [Phase 08]: GeoPlaybackPlaceholder is inline in ResultsDrawer until Plan 04 replaces it with real widget
+- [Phase 08]: Widget dispatch uses (cubeWidget || geoInfo) as single right-panel condition for extensible layout
 
 ## Notes
 
@@ -117,6 +119,7 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 | Phase 07 P03 | 1 | 2 tasks | 6 files |
 | Phase 08 P02 | 2 min | 2 tasks | 3 files |
 | Phase 08 P01 | 8min | 2 tasks | 5 files |
+| Phase 08 P03 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
