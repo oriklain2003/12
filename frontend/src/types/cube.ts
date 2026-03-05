@@ -31,6 +31,7 @@ export interface ParamDefinition {
   required: boolean;
   default: string | number | boolean | unknown[] | null;
   accepts_full_result: boolean;
+  widget_hint?: string | null;
 }
 
 export interface CubeDefinition {
@@ -40,4 +41,5 @@ export interface CubeDefinition {
   category: CubeCategory;
   inputs: ParamDefinition[];
   outputs: ParamDefinition[];
+  widget?: string | null;
 }

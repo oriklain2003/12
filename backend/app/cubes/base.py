@@ -39,6 +39,7 @@ class BaseCube(abc.ABC):
             category=self.category,
             inputs=list(self.inputs),
             outputs=list(self.outputs) + [full_result],
+            widget=getattr(self, 'widget', None),
         )
 
     @abc.abstractmethod

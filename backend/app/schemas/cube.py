@@ -28,6 +28,7 @@ class ParamDefinition(BaseModel):
     default: Any = None
     description: str = ""
     accepts_full_result: bool = False
+    widget_hint: str | None = None
 
 
 class CubeDefinition(BaseModel):
@@ -37,3 +38,4 @@ class CubeDefinition(BaseModel):
     category: CubeCategory
     inputs: list[ParamDefinition] = []
     outputs: list[ParamDefinition] = []
+    widget: str | None = None
