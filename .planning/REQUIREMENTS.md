@@ -64,10 +64,10 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Real Data Cubes
 
 - [x] **DATA-01**: Get Flights cube queries research.flight_metadata with optional filters: time_range_hours (bigint epoch), airport (origin/dest ILIKE), region bounding box (lat/lon ranges); outputs flight_ids array and flights data array
-- [ ] **DATA-02**: Filter Flights cube accepts flight_ids, queries research.normal_tracks to evaluate behavioral criteria (max_altitude_ft, min_speed_knots, max_speed_knots, min_duration_minutes, max_duration_minutes), excludes flights whose track data violates thresholds; outputs filtered_flight_ids and filtered_flights metadata
+- [x] **DATA-02**: Filter Flights cube accepts flight_ids, queries research.normal_tracks to evaluate behavioral criteria (max_altitude_ft, min_speed_knots, max_speed_knots, min_duration_minutes, max_duration_minutes), excludes flights whose track data violates thresholds; outputs filtered_flight_ids and filtered_flights metadata
 - [x] **DATA-03**: Get Anomalies cube accepts flight_ids array, queries research.anomaly_reports for matching flight_ids; outputs anomaly records with severity and report data
 - [x] **DATA-04**: Count By Field cube accepts any data array and group_by_field name, performs pure Python groupby aggregation; outputs grouped counts as array of {field_value, count}
-- [ ] **DATA-05**: End-to-end pipeline: Get Flights → Filter Flights → Get Anomalies + Count By Field produces real results from live database
+- [x] **DATA-05**: End-to-end pipeline: Get Flights → Filter Flights → Get Anomalies + Count By Field produces real results from live database
 
 ### Deployment
 
@@ -151,10 +151,10 @@ Requirements for initial release. Each maps to roadmap phases.
 | RSLT-02 | Phase 6 | Complete |
 | RSLT-03 | Phase 6 | Complete |
 | DATA-01 | Phase 7 | Complete |
-| DATA-02 | Phase 9 | Pending |
+| DATA-02 | Phase 9 | Complete |
 | DATA-03 | Phase 7 | Complete |
 | DATA-04 | Phase 7 | Complete |
-| DATA-05 | Phase 9 | Pending |
+| DATA-05 | Phase 9 | Complete |
 | DEPL-01 | Phase 7 | Complete |
 | DEPL-02 | Phase 7 | Complete |
 | DEPL-03 | Phase 7 | Complete |

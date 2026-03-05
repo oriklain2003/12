@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-05T12:19:41.854Z"
+last_updated: "2026-03-05T13:59:07.343Z"
 progress:
-  total_phases: 8
-  completed_phases: 8
-  total_plans: 20
-  completed_plans: 20
+  total_phases: 10
+  completed_phases: 9
+  total_plans: 21
+  completed_plans: 21
 ---
 
 # Project State: Project 12
@@ -101,6 +101,7 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 - [Phase 08-04]: GeoPlaybackWidget splits into outer guard + GeoPlaybackInner to avoid conditional hook violations
 - [Phase 08-04]: speedRef useRef pattern mirrors speed into ref to avoid animation effect re-trigger on speed change
 - [Phase 08-04]: GeoJSON keyed by windowStart-windowEnd forces re-mount on each time window change
+- [Phase 09]: FilterFlights two-tier strategy: Tier 1 duration from metadata (no DB), Tier 2 GROUP BY on normal_tracks; AND logic via Python set narrowing; point_in_polygon reused from AllFlights
 
 ## Notes
 
@@ -124,6 +125,7 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 | Phase 08 P01 | 8min | 2 tasks | 5 files |
 | Phase 08 P03 | 2min | 2 tasks | 2 files |
 | Phase 08 P04 | 2min | 2 tasks | 3 files |
+| Phase 09-filter-flights-cube P01 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
