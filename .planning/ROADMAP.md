@@ -32,7 +32,7 @@
 **Goal:** Implement `alison_flights` data source, `squawk_filter`, and `registration_country_filter` cubes — the Alison provider pipeline foundation plus two filter cubes with dual-provider squawk support and ICAO24 country resolution.
 **Cubes:** `alison_flights`, `squawk_filter`, `registration_country_filter`
 **Depends on:** v1.0 (cube framework)
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 11-01-PLAN.md — Alison data source cube + ICAO24 lookup module
@@ -91,7 +91,7 @@ Plans:
 | 8. Geo-Temporal | v1.0 | 4/4 | Complete | 2026-03-05 |
 | 9. Filter Flights | v1.0 | 1/1 | Complete | 2026-03-05 |
 | 10. Audit Remediation | v1.0 | 2/2 | Complete | 2026-03-05 |
-| 11. Squawk & Reg Country | 2/3 | In Progress|  | — |
+| 11. Squawk & Reg Country | 3/3 | Complete   | 2026-03-06 | — |
 | 12. Area Spatial Filter | v2.0 | 0/0 | Pending | — |
 | 13. Flight Plans & Compliance | v2.0 | 0/0 | Pending | — |
 | 14. Signal Health Analyzer | v2.0 | 0/0 | Pending | — |

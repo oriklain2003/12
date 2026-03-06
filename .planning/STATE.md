@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Advanced Flight Analysis Cubes
 status: unknown
-last_updated: "2026-03-06T12:44:48.287Z"
+last_updated: "2026-03-06T13:12:37.882Z"
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State: Project 12
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 | Phase | Name | Cubes | Status |
 |-------|------|-------|--------|
-| 11 | Simple Filters — Squawk & Reg Country | `squawk_filter`, `registration_country_filter` | In Progress (2/3 plans) |
+| 11 | Simple Filters — Squawk & Reg Country | `squawk_filter`, `registration_country_filter` | Complete (3/3 plans — awaiting human verify checkpoint) |
 | 12 | Area Spatial Filter + Geo Research | `area_spatial_filter` | Pending |
 | 13 | Flight Plans Source & Compliance | `flight_plans_source`, `flight_plan_compliance_analyzer` | Pending |
 | 14 | Signal Health Analyzer Placeholder | `signal_health_analyzer` | Pending |
@@ -66,6 +66,7 @@ See `.planning/MILESTONES.md` for details.
   - Phase 14: `signal_health_analyzer` (placeholder for future classification logic)
 - **2026-03-06:** Phase 11 Plan 01 executed — `AlisonFlightsCube` and `icao24_lookup` created
 - **2026-03-06:** Phase 11 Plan 02 executed — `SquawkFilterCube` created (dual-provider: FR + Alison, emergency detection via positions.emergency, code-change events)
+- **2026-03-06:** Phase 11 Plan 03 executed — `RegistrationCountryFilterCube` created (ICAO24 hex range + tail prefix dual-resolution, include/exclude modes, Black/Gray region groups)
 
 ### Key Decisions (Phase 11 / Plan 02)
 
@@ -73,5 +74,11 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-06:** Use `to_timestamp(:cutoff)` for Alison time filter — compute epoch in Python and pass as integer param to avoid SQL injection with interval syntax
 - **2026-03-06:** Store per_flight_details in return dict — BaseCube auto-includes in __full_result__ without extra configuration
 
+### Key Decisions (Phase 11 / Plan 03)
+
+- **2026-03-06:** Conservative unknown-aircraft rule: unknown country excluded in include mode (not assumed to match target), kept in exclude mode (not assumed to be outside target)
+- **2026-03-06:** Two-pass DB query for hex_range hexes: second pass upgrades match_type to "both" when tail prefix also confirms, providing resolution confidence metadata
+- **2026-03-06:** Empty countries+regions passes all hexes through (no filter) with warning — not an error; interpreted as "no country filtering requested"
+
 ---
-*Last session: 2026-03-06 — Phase 11 Plan 02 complete (SquawkFilterCube with dual-provider support)*
+*Last session: 2026-03-06 — Phase 11 Plan 03 complete (RegistrationCountryFilterCube — awaiting human verify checkpoint)*
