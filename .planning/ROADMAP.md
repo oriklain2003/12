@@ -3,6 +3,7 @@
 ## Milestones
 
 - ✅ **v1.0 Visual Dataflow Workflow Builder** — Phases 1-10 (shipped 2026-03-06)
+- 🔲 **v2.0 Advanced Flight Analysis Cubes** — Phases 11-14
 
 ## Phases
 
@@ -24,6 +25,58 @@
 
 </details>
 
+### v2.0 Advanced Flight Analysis Cubes (Phases 11-14)
+
+### Phase 11: Simple Filters — Squawk and Registration Country Cubes
+
+**Goal:** Implement `alison_flights` data source, `squawk_filter`, and `registration_country_filter` cubes — the Alison provider pipeline foundation plus two filter cubes with dual-provider squawk support and ICAO24 country resolution.
+**Cubes:** `alison_flights`, `squawk_filter`, `registration_country_filter`
+**Depends on:** v1.0 (cube framework)
+**Plans:** 3 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — Alison data source cube + ICAO24 lookup module
+- [ ] 11-02-PLAN.md — Squawk filter cube (dual-provider, code-change detection)
+- [ ] 11-03-PLAN.md — Registration country filter cube + integration verification
+
+### Phase 12: Area Spatial Filter with Geo Data Research
+
+**Goal:** Implement `area_spatial_filter` cube with manual polygon mode and movement triggers. Research geo datasets for future phases.
+**Cubes:** `area_spatial_filter`
+**Depends on:** Phase 11
+**Plans:** 0 plans
+
+**area_spatial_filter:** Filter flights by spatial criteria. Phase 1 scope: manual polygon mode (reuse `point_in_polygon` from `all_flights.py`). Movement triggers: transit, takeoff, landing. `country_fir` mode: SKIP (no FIR data). `surface_type` mode: research only.
+**Geo research deliverable:** Evaluate FIR boundaries (Eurocontrol atlas), land/water polygons (Natural Earth Data), country boundaries (geo-countries GeoJSON).
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 12 to break down)
+
+### Phase 13: Flight Plans Source and Compliance Analyzer
+
+**Goal:** Implement `flight_plans_source` (FlightAware AeroAPI v4) and `flight_plan_compliance_analyzer` cubes.
+**Cubes:** `flight_plans_source`, `flight_plan_compliance_analyzer`
+**Depends on:** Phase 11
+**Plans:** 0 plans
+
+**flight_plans_source:** Query FlightAware AeroAPI v4 for filed flight plans by airport. Add `FLIGHTAWARE_API_KEY` to config.
+**flight_plan_compliance_analyzer:** Match ADS-B flights to filed plans, detect unfiled flights, urgent filings, route deviations.
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 13 to break down)
+
+### Phase 14: Signal Health Analyzer Placeholder
+
+**Goal:** Implement `signal_health_analyzer` cube as a placeholder structure for future classification logic.
+**Cubes:** `signal_health_analyzer`
+**Depends on:** Phase 11
+**Plans:** 0 plans
+
+**signal_health_analyzer:** Placeholder cube structure. Classifications: Stable, Jamming, Spoofing, Dark Target, Technical Gaps. User has existing function to wire up later.
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 14 to break down)
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -38,7 +91,12 @@
 | 8. Geo-Temporal | v1.0 | 4/4 | Complete | 2026-03-05 |
 | 9. Filter Flights | v1.0 | 1/1 | Complete | 2026-03-05 |
 | 10. Audit Remediation | v1.0 | 2/2 | Complete | 2026-03-05 |
+| 11. Squawk & Reg Country | v2.0 | 0/3 | Planning | — |
+| 12. Area Spatial Filter | v2.0 | 0/0 | Pending | — |
+| 13. Flight Plans & Compliance | v2.0 | 0/0 | Pending | — |
+| 14. Signal Health Analyzer | v2.0 | 0/0 | Pending | — |
 
 ---
 *Roadmap created: 2026-03-03*
 *v1.0 shipped: 2026-03-06*
+*v2.0 roadmap added: 2026-03-06*
