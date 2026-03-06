@@ -146,25 +146,11 @@ class AlisonFlightsCube(BaseCube):
         min_lon = inputs.get("min_lon")
         max_lon = inputs.get("max_lon")
 
-        # Build parameterized SQL
-        sql_parts = [
-            """
-            SELECT
-                a.hex,
-                a.registration,
-                a.icao_type,
-                a.type_description,
-                a.category,
-                array_agg(DISTINCT p.flight) FILTER (WHERE p.flight IS NOT NULL) AS callsigns,
-                MIN(p.ts) AS first_seen_ts,
-                MAX(p.ts) AS last_seen_ts,
-                MIN(p.alt_baro) AS min_alt_baro,
-                MAX(p.alt_baro) AS max_alt_baro
-            FROM public.aircraft a
-            JOIN public.positions p ON a.hex = p.hex
-            WHERE 1=1
-            """
-        ]
+        # Build parameterized SQL using CTE: aggregate positions first, then
+        # join aircraft for metadata. This avoids the expensive cross-product
+        # of joining 46M positions with 35K aircraft before GROUP BY.
+        pos_where: list[str] = []
+        aircraft_where: list[str] = []
         params: dict[str, Any] = {}
 
         # --- Time filters ---
@@ -172,43 +158,43 @@ class AlisonFlightsCube(BaseCube):
         if start_time is not None and end_time is not None:
             start_dt = datetime.fromtimestamp(int(float(start_time)), tz=timezone.utc)
             end_dt = datetime.fromtimestamp(int(float(end_time)), tz=timezone.utc)
-            sql_parts.append("AND p.ts BETWEEN :start_epoch AND :end_epoch")
+            pos_where.append("ts BETWEEN :start_epoch AND :end_epoch")
             params["start_epoch"] = start_dt
             params["end_epoch"] = end_dt
         else:
             cutoff_epoch = int(time.time()) - int(time_range_seconds or 604800)
             cutoff_dt = datetime.fromtimestamp(cutoff_epoch, tz=timezone.utc)
-            sql_parts.append("AND p.ts >= :cutoff")
+            pos_where.append("ts >= :cutoff")
             params["cutoff"] = cutoff_dt
 
         # --- hex_filter ---
         if hex_filter:
-            sql_parts.append("AND a.hex = ANY(:hex_filter)")
+            pos_where.append("hex = ANY(:hex_filter)")
             params["hex_filter"] = list(hex_filter)
 
         # --- callsign ILIKE ---
         if callsign:
-            sql_parts.append("AND p.flight ILIKE :callsign")
+            pos_where.append("flight ILIKE :callsign")
             params["callsign"] = f"%{callsign}%"
 
-        # --- aircraft_type ILIKE ---
+        # --- aircraft_type ILIKE (applied on aircraft table in outer query) ---
         if aircraft_type:
-            sql_parts.append("AND a.icao_type ILIKE :aircraft_type")
+            aircraft_where.append("a.icao_type ILIKE :aircraft_type")
             params["aircraft_type"] = f"%{aircraft_type}%"
 
         # --- altitude filters ---
         if min_altitude is not None:
-            sql_parts.append("AND p.alt_baro >= :min_altitude")
+            pos_where.append("alt_baro >= :min_altitude")
             params["min_altitude"] = float(min_altitude)
 
         if max_altitude is not None:
-            sql_parts.append("AND p.alt_baro <= :max_altitude")
+            pos_where.append("alt_baro <= :max_altitude")
             params["max_altitude"] = float(max_altitude)
 
         # --- bounding box filters ---
         if all(v is not None for v in [min_lat, max_lat, min_lon, max_lon]):
-            sql_parts.append(
-                "AND p.lat BETWEEN :min_lat AND :max_lat AND p.lon BETWEEN :min_lon AND :max_lon"
+            pos_where.append(
+                "lat BETWEEN :min_lat AND :max_lat AND lon BETWEEN :min_lon AND :max_lon"
             )
             params.update(
                 {
@@ -219,11 +205,10 @@ class AlisonFlightsCube(BaseCube):
                 }
             )
         elif polygon and len(polygon) >= 3:
-            # Auto-derive bbox from polygon for SQL pre-filter
             poly_lats = [p[0] for p in polygon]
             poly_lons = [p[1] for p in polygon]
-            sql_parts.append(
-                "AND p.lat BETWEEN :min_lat AND :max_lat AND p.lon BETWEEN :min_lon AND :max_lon"
+            pos_where.append(
+                "lat BETWEEN :min_lat AND :max_lat AND lon BETWEEN :min_lon AND :max_lon"
             )
             params.update(
                 {
@@ -234,15 +219,31 @@ class AlisonFlightsCube(BaseCube):
                 }
             )
 
-        # GROUP BY to collapse multiple position rows into one aircraft row
-        sql_parts.append(
-            """
-            GROUP BY a.hex, a.registration, a.icao_type, a.type_description, a.category
-            LIMIT 5000
-            """
-        )
+        # Build CTE: aggregate positions by hex first (fast scan with filters)
+        pos_filter_clause = " AND ".join(pos_where) if pos_where else "TRUE"
+        aircraft_filter_clause = (" AND " + " AND ".join(aircraft_where)) if aircraft_where else ""
 
-        full_sql = "\n".join(sql_parts)
+        sql = f"""
+            WITH recent AS (
+                SELECT hex,
+                       array_agg(DISTINCT flight) FILTER (WHERE flight IS NOT NULL) AS callsigns,
+                       MIN(ts) AS first_seen_ts,
+                       MAX(ts) AS last_seen_ts,
+                       MIN(alt_baro) AS min_alt_baro,
+                       MAX(alt_baro) AS max_alt_baro
+                FROM public.positions
+                WHERE {pos_filter_clause}
+                GROUP BY hex
+                LIMIT 5000
+            )
+            SELECT r.hex, a.registration, a.icao_type, a.type_description, a.category,
+                   r.callsigns, r.first_seen_ts, r.last_seen_ts, r.min_alt_baro, r.max_alt_baro
+            FROM recent r
+            JOIN public.aircraft a ON r.hex = a.hex
+            WHERE 1=1{aircraft_filter_clause}
+        """
+
+        full_sql = sql
 
         # Debug log with substituted params
         debug_sql = full_sql
