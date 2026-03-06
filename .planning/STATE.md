@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Advanced Flight Analysis Cubes
-status: in-progress
-last_updated: "2026-03-06T12:42:35Z"
+status: unknown
+last_updated: "2026-03-06T12:44:48.287Z"
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State: Project 12
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 | Phase | Name | Cubes | Status |
 |-------|------|-------|--------|
-| 11 | Simple Filters — Squawk & Reg Country | `squawk_filter`, `registration_country_filter` | In Progress (1/3 plans) |
+| 11 | Simple Filters — Squawk & Reg Country | `squawk_filter`, `registration_country_filter` | In Progress (2/3 plans) |
 | 12 | Area Spatial Filter + Geo Research | `area_spatial_filter` | Pending |
 | 13 | Flight Plans Source & Compliance | `flight_plans_source`, `flight_plan_compliance_analyzer` | Pending |
 | 14 | Signal Health Analyzer Placeholder | `signal_health_analyzer` | Pending |
@@ -65,6 +65,13 @@ See `.planning/MILESTONES.md` for details.
   - Phase 13: `flight_plans_source` + `flight_plan_compliance_analyzer` (FlightAware API integration)
   - Phase 14: `signal_health_analyzer` (placeholder for future classification logic)
 - **2026-03-06:** Phase 11 Plan 01 executed — `AlisonFlightsCube` and `icao24_lookup` created
+- **2026-03-06:** Phase 11 Plan 02 executed — `SquawkFilterCube` created (dual-provider: FR + Alison, emergency detection via positions.emergency, code-change events)
+
+### Key Decisions (Phase 11 / Plan 02)
+
+- **2026-03-06:** String comparison for squawk codes throughout — DB type check for public.positions timed out; string comparison is safe for both VARCHAR and INTEGER storage
+- **2026-03-06:** Use `to_timestamp(:cutoff)` for Alison time filter — compute epoch in Python and pass as integer param to avoid SQL injection with interval syntax
+- **2026-03-06:** Store per_flight_details in return dict — BaseCube auto-includes in __full_result__ without extra configuration
 
 ---
-*Last session: 2026-03-06 — Phase 11 Plan 01 complete (Alison data source + ICAO24 lookup)*
+*Last session: 2026-03-06 — Phase 11 Plan 02 complete (SquawkFilterCube with dual-provider support)*
