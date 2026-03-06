@@ -124,13 +124,13 @@ class AlisonFlightsCube(BaseCube):
         if start_time is not None and end_time is not None:
             ts_start = datetime.fromtimestamp(int(float(start_time)), tz=timezone.utc)
             ts_end = datetime.fromtimestamp(int(float(end_time)), tz=timezone.utc)
-            time_clause = "p.ts BETWEEN :ts_start AND :ts_end"
+            time_clause = "ts BETWEEN :ts_start AND :ts_end"
             params["ts_start"] = ts_start
             params["ts_end"] = ts_end
         else:
             cutoff_epoch = int(time.time()) - int(time_range_seconds or 604800)
             params["cutoff"] = datetime.fromtimestamp(cutoff_epoch, tz=timezone.utc)
-            time_clause = "p.ts >= :cutoff"
+            time_clause = "ts >= :cutoff"
 
         # Aircraft-level WHERE clauses
         aircraft_where: list[str] = []
