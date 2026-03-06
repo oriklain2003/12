@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Advanced Flight Analysis Cubes
-status: planning
-last_updated: "2026-03-06"
+status: in-progress
+last_updated: "2026-03-06T12:42:35Z"
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 3
+  completed_plans: 1
 ---
 
 # Project State: Project 12
@@ -22,15 +22,15 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 
 ## Current Milestone
 
-**v2.0:** 🔲 Planning — Advanced Flight Analysis Cubes
+**v2.0:** 🔲 In Progress — Advanced Flight Analysis Cubes
 
-4 phases, 0 plans. Next action: `/gsd:plan-phase 11`
+4 phases, 3 plans (phase 11 planned, 1 plan executed). Next action: `/gsd:execute-phase 11` plan 02
 
 ### Phase Overview
 
 | Phase | Name | Cubes | Status |
 |-------|------|-------|--------|
-| 11 | Simple Filters — Squawk & Reg Country | `squawk_filter`, `registration_country_filter` | Pending |
+| 11 | Simple Filters — Squawk & Reg Country | `squawk_filter`, `registration_country_filter` | In Progress (1/3 plans) |
 | 12 | Area Spatial Filter + Geo Research | `area_spatial_filter` | Pending |
 | 13 | Flight Plans Source & Compliance | `flight_plans_source`, `flight_plan_compliance_analyzer` | Pending |
 | 14 | Signal Health Analyzer Placeholder | `signal_health_analyzer` | Pending |
@@ -51,6 +51,12 @@ See `.planning/MILESTONES.md` for details.
 - BACK-08 requirement text describes removed endpoint
 - No VERIFICATION.md files for any phase (0/10)
 
+### Key Decisions (Phase 11 / Plan 01)
+
+- **2026-03-06:** AlisonFlightsCube uses `array_agg(DISTINCT p.flight)` so GROUP BY yields one row per hex (not per position record)
+- **2026-03-06:** `ICAO24_RANGES` sorted narrowest-first so smaller address blocks (Oman 1024, Yemen 4096, Afghanistan 4096) resolve before wider overlapping ranges
+- **2026-03-06:** `icao24_lookup.py` is a plain module (not a BaseCube) — it is a shared data dependency for registration_country_filter, not an executable workflow node
+
 ### Roadmap Evolution
 
 - **2026-03-06:** v2.0 milestone created with 4 phases (11-14) covering 6 new cubes:
@@ -58,6 +64,7 @@ See `.planning/MILESTONES.md` for details.
   - Phase 12: `area_spatial_filter` (polygon intersection + geo data research)
   - Phase 13: `flight_plans_source` + `flight_plan_compliance_analyzer` (FlightAware API integration)
   - Phase 14: `signal_health_analyzer` (placeholder for future classification logic)
+- **2026-03-06:** Phase 11 Plan 01 executed — `AlisonFlightsCube` and `icao24_lookup` created
 
 ---
-*Last session: 2026-03-06 — v2.0 roadmap created*
+*Last session: 2026-03-06 — Phase 11 Plan 01 complete (Alison data source + ICAO24 lookup)*
