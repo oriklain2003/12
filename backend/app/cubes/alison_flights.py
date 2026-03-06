@@ -1,8 +1,8 @@
 """AlisonFlightsCube: queries Alison provider aircraft from public schema.
 
 Starts from public.aircraft (35K rows), uses LATERAL join to public.positions
-to grab the most recent callsign per hex. Outputs a hex_list for downstream
-filter cubes (squawk_filter, registration_country_filter).
+to get distinct callsigns per hex — one row per (hex, callsign) pair.
+Outputs a hex_list for downstream filter cubes.
 """
 
 import logging
@@ -23,8 +23,8 @@ from app.schemas.cube import CubeCategory, ParamDefinition, ParamType
 class AlisonFlightsCube(BaseCube):
     """Data source cube querying the Alison provider (public schema).
 
-    Starts from public.aircraft, lateral-joins public.positions for the
-    most recent callsign, and returns a hex_list for downstream filter cubes.
+    Starts from public.aircraft, lateral-joins public.positions for distinct
+    callsigns — one row per (hex, callsign). Returns hex_list for downstream cubes.
     """
 
     cube_id = "alison_flights"
@@ -171,21 +171,19 @@ class AlisonFlightsCube(BaseCube):
         aircraft_filter = (" AND " + " AND ".join(aircraft_where)) if aircraft_where else ""
         lateral_filter = " AND ".join(lateral_where)
 
-        # Start from aircraft (35K rows), CROSS JOIN LATERAL to grab the most
-        # recent callsign from positions. Only aircraft with at least one
-        # matching position row are returned (CROSS JOIN = inner).
+        # Start from aircraft (35K rows), CROSS JOIN LATERAL to get distinct
+        # callsigns from positions. Produces one row per (hex, callsign) pair.
+        # Only aircraft with matching position rows are returned.
         sql = f"""
             SELECT a.hex, a.registration, a.icao_type, a.type_description, a.category,
                    p.callsign
             FROM public.aircraft a
             CROSS JOIN LATERAL (
-                SELECT flight AS callsign
+                SELECT DISTINCT flight AS callsign
                 FROM public.positions
                 WHERE hex = a.hex
                   AND {lateral_filter}
                   AND flight IS NOT NULL
-                ORDER BY ts DESC
-                LIMIT 1
             ) p
             WHERE 1=1{aircraft_filter}
             LIMIT 5000
