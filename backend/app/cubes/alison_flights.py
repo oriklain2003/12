@@ -6,6 +6,7 @@ Outputs a hex_list for downstream filter cubes (squawk_filter, registration_coun
 
 import logging
 import time
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import text
@@ -167,16 +168,18 @@ class AlisonFlightsCube(BaseCube):
         params: dict[str, Any] = {}
 
         # --- Time filters ---
+        # p.ts is a timestamp column, so pass datetime objects (not int epochs)
         if start_time is not None and end_time is not None:
-            start_epoch = int(float(start_time))
-            end_epoch = int(float(end_time))
+            start_dt = datetime.fromtimestamp(int(float(start_time)), tz=timezone.utc)
+            end_dt = datetime.fromtimestamp(int(float(end_time)), tz=timezone.utc)
             sql_parts.append("AND p.ts BETWEEN :start_epoch AND :end_epoch")
-            params["start_epoch"] = start_epoch
-            params["end_epoch"] = end_epoch
+            params["start_epoch"] = start_dt
+            params["end_epoch"] = end_dt
         else:
-            cutoff = int(time.time()) - int(time_range_seconds or 604800)
+            cutoff_epoch = int(time.time()) - int(time_range_seconds or 604800)
+            cutoff_dt = datetime.fromtimestamp(cutoff_epoch, tz=timezone.utc)
             sql_parts.append("AND p.ts >= :cutoff")
-            params["cutoff"] = cutoff
+            params["cutoff"] = cutoff_dt
 
         # --- hex_filter ---
         if hex_filter:
