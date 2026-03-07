@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Advanced Flight Analysis Cubes
-status: unknown
-last_updated: "2026-03-06T13:12:37.882Z"
+status: in_progress
+last_updated: "2026-03-08T00:00:00.000Z"
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 5
 ---
 
 # Project State: Project 12
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | Phase | Name | Cubes | Status |
 |-------|------|-------|--------|
 | 11 | Simple Filters — Squawk & Reg Country | `squawk_filter`, `registration_country_filter` | Complete (3/3 plans — awaiting human verify checkpoint) |
-| 12 | Area Spatial Filter + Geo Research | `area_spatial_filter` | Pending |
+| 12 | Area Spatial Filter + Geo Research | `area_spatial_filter` | Complete (2/2 plans) |
 | 13 | Flight Plans Source & Compliance | `flight_plans_source`, `flight_plan_compliance_analyzer` | Pending |
 | 14 | Signal Health Analyzer Placeholder | `signal_health_analyzer` | Pending |
 
@@ -80,5 +80,17 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-06:** Two-pass DB query for hex_range hexes: second pass upgrades match_type to "both" when tail prefix also confirms, providing resolution confidence metadata
 - **2026-03-06:** Empty countries+regions passes all hexes through (no filter) with warning — not an error; interpreted as "no country filtering requested"
 
+### Key Decisions (Phase 12 / Plan 02)
+
+- **2026-03-08:** FIR GeoJSON is in `static/` subdirectory of jaluebbe/FlightMapEuropeSimple (not repo root) — URL discovery via GitHub API contents endpoint required
+- **2026-03-08:** Natural Earth primary mirror (martynafford) returned 404 — used nvkelso/natural-earth-vector as fallback mirror (same dataset, public domain)
+- **2026-03-08:** `land_water_loader` uses `STRtree` for 1420 polygon bbox pre-filter; `country_loader` and `fir_loader` use linear scan (sufficient for <300 features)
+- **2026-03-08:** countries.geojson property keys are `name` and `ISO3166-1-Alpha-3` (not `ADMIN`/`ISO_A3` as in other datasets like Natural Earth countries); fir_uir_europe.geojson uses `AV_AIRSPAC` and `AV_NAME`
+
+### Roadmap Evolution (Phase 12)
+
+- **2026-03-08:** Phase 12 Plan 01 executed — `AreaSpatialFilterCube` created (dual-provider FR+Alison, polygon-inside filter, movement classification)
+- **2026-03-08:** Phase 12 Plan 02 executed — `backend/app/geo/` module created with 3 bundled GeoJSON datasets and 3 Shapely-backed loader modules
+
 ---
-*Last session: 2026-03-06 — Phase 11 Plan 03 complete (RegistrationCountryFilterCube — awaiting human verify checkpoint)*
+*Last session: 2026-03-08 — Phase 12 Plan 02 complete (geo data loader modules — country, FIR, land/water)*

@@ -44,11 +44,11 @@ Plans:
 **Goal:** Implement `area_spatial_filter` cube with dual-provider polygon filtering, movement classification (landing/takeoff/cruise), and build geo data loader modules (country boundaries, FIR, land/water) for future spatial modes.
 **Cubes:** `area_spatial_filter`
 **Depends on:** Phase 11
-**Plans:** 2 plans
+**Plans:** 2/2 plans executed
 
 Plans:
-- [ ] 12-01-PLAN.md — AreaSpatialFilterCube with dual-provider support and movement classification
-- [ ] 12-02-PLAN.md — Geo data loaders (country boundaries, FIR, land/water polygons)
+- [x] 12-01-PLAN.md — AreaSpatialFilterCube with dual-provider support and movement classification
+- [x] 12-02-PLAN.md — Geo data loaders (country boundaries, FIR, land/water polygons)
 
 ### Phase 13: Flight Plans Source and Compliance Analyzer
 
@@ -90,7 +90,7 @@ Plans:
 | 9. Filter Flights | v1.0 | 1/1 | Complete | 2026-03-05 |
 | 10. Audit Remediation | v1.0 | 2/2 | Complete | 2026-03-05 |
 | 11. Squawk & Reg Country | 3/3 | Complete   | 2026-03-06 | — |
-| 12. Area Spatial Filter | v2.0 | 0/2 | Planned | — |
+| 12. Area Spatial Filter | v2.0 | 2/2 | Complete | 2026-03-08 |
 | 13. Flight Plans & Compliance | v2.0 | 0/0 | Pending | — |
 | 14. Signal Health Analyzer | v2.0 | 0/0 | Pending | — |
 
