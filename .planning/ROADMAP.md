@@ -41,16 +41,14 @@ Plans:
 
 ### Phase 12: Area Spatial Filter with Geo Data Research
 
-**Goal:** Implement `area_spatial_filter` cube with manual polygon mode and movement triggers. Research geo datasets for future phases.
+**Goal:** Implement `area_spatial_filter` cube with dual-provider polygon filtering, movement classification (landing/takeoff/cruise), and build geo data loader modules (country boundaries, FIR, land/water) for future spatial modes.
 **Cubes:** `area_spatial_filter`
 **Depends on:** Phase 11
-**Plans:** 0 plans
-
-**area_spatial_filter:** Filter flights by spatial criteria. Phase 1 scope: manual polygon mode (reuse `point_in_polygon` from `all_flights.py`). Movement triggers: transit, takeoff, landing. `country_fir` mode: SKIP (no FIR data). `surface_type` mode: research only.
-**Geo research deliverable:** Evaluate FIR boundaries (Eurocontrol atlas), land/water polygons (Natural Earth Data), country boundaries (geo-countries GeoJSON).
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 12 to break down)
+- [ ] 12-01-PLAN.md — AreaSpatialFilterCube with dual-provider support and movement classification
+- [ ] 12-02-PLAN.md — Geo data loaders (country boundaries, FIR, land/water polygons)
 
 ### Phase 13: Flight Plans Source and Compliance Analyzer
 
@@ -92,7 +90,7 @@ Plans:
 | 9. Filter Flights | v1.0 | 1/1 | Complete | 2026-03-05 |
 | 10. Audit Remediation | v1.0 | 2/2 | Complete | 2026-03-05 |
 | 11. Squawk & Reg Country | 3/3 | Complete   | 2026-03-06 | — |
-| 12. Area Spatial Filter | v2.0 | 0/0 | Pending | — |
+| 12. Area Spatial Filter | v2.0 | 0/2 | Planned | — |
 | 13. Flight Plans & Compliance | v2.0 | 0/0 | Pending | — |
 | 14. Signal Health Analyzer | v2.0 | 0/0 | Pending | — |
 
