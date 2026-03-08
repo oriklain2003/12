@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Advanced Flight Analysis Cubes
 status: unknown
-last_updated: "2026-03-08T22:06:18.049Z"
+last_updated: "2026-03-08T22:10:59.232Z"
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 8
 ---
 
 # Project State: Project 12
@@ -33,7 +33,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | 11 | Simple Filters — Squawk & Reg Country | `squawk_filter`, `registration_country_filter` | Complete (3/3 plans — awaiting human verify checkpoint) |
 | 12 | Area Spatial Filter + Geo Research | `area_spatial_filter` | Complete (2/2 plans) |
 | 13 | Flight Plans Source & Compliance | `flight_plans_source`, `flight_plan_compliance_analyzer` | Pending |
-| 14 | Signal Health Analyzer Placeholder | `signal_health_analyzer` | In Progress (1/3 plans) |
+| 14 | Signal Health Analyzer Placeholder | `signal_health_analyzer` | Complete (3/3 plans) |
 
 ## Previous Milestones
 
@@ -105,10 +105,17 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-08:** `_serialize_datetimes()` helper converts datetime objects to ISO strings in classify_flight_async result — ensures JSON serializability without polluting computation functions
 - **2026-03-08:** All Kalman constants preserved verbatim from detect_kalman.py (CHI2_THRESHOLD=13.82, POSITION_JUMP_KM=55.56, ALT_DIVERGENCE_FT=1000) — tuned against known spoofing test cases
 
+### Key Decisions (Phase 14 / Plan 03)
+
+- **2026-03-09:** `full_result` extraction checks both `hex_list` and `flight_ids` keys — AlisonFlights uses hex_list, other cubes may use flight_ids
+- **2026-03-09:** "Stable" classify_mode handled separately — returns hexes with zero non-normal events (not an empty event filter result)
+- **2026-03-09:** `target_phase` filtering post-hoc by entry altitude: takeoff/landing < 5000ft, cruise >= 10000ft; Kalman events always pass through (no per-event altitude in v1 unified schema)
+
 ### Roadmap Evolution (Phase 14)
 
 - **2026-03-09:** Phase 14 Plan 01 executed — `backend/app/signal/rule_based.py` created (async integrity event detection, transponder shutdown detection, 16-point scoring, coverage baseline with TTL cache); numpy + scipy added
 - **2026-03-08:** Phase 14 Plan 02 executed — `backend/app/signal/kalman.py` created (constant-velocity Kalman filter, chi-squared innovation testing, position jump detection, altitude divergence, physics cross-validation, async flight classification)
+- **2026-03-09:** Phase 14 Plan 03 executed — `backend/app/cubes/signal_health_analyzer.py` created (SignalHealthAnalyzerCube orchestrating both detection layers, classify_mode filtering, unified event schema); phase 14 complete
 
 ---
-*Last session: 2026-03-09 — Phase 14 Plan 01 complete (rule-based GPS anomaly detection async module)*
+*Last session: 2026-03-09 — Phase 14 Plan 03 complete (SignalHealthAnalyzerCube — GPS anomaly detection cube)*
