@@ -68,7 +68,7 @@ Plans:
 **Goal:** Implement `signal_health_analyzer` ANALYSIS cube with real detection logic ported from `scripts/` — rule-based integrity/shutdown detection + Kalman filter anomaly detection, Alison provider only, read-only.
 **Cubes:** `signal_health_analyzer`
 **Depends on:** Phase 11
-**Plans:** 3 plans
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 14-01-PLAN.md — Rule-based detection module (async port) + numpy/scipy dependencies
@@ -92,7 +92,7 @@ Plans:
 | 11. Squawk & Reg Country | 3/3 | Complete   | 2026-03-06 | — |
 | 12. Area Spatial Filter | v2.0 | 2/2 | Complete | 2026-03-08 |
 | 13. Flight Plans & Compliance | v2.0 | 0/0 | Pending | — |
-| 14. Signal Health Analyzer | v2.0 | 0/3 | Planned | — |
+| 14. Signal Health Analyzer | 2/3 | In Progress|  | — |
 
 ---
 *Roadmap created: 2026-03-03*

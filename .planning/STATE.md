@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Advanced Flight Analysis Cubes
-status: in_progress
-last_updated: "2026-03-08T00:00:00.000Z"
+status: unknown
+last_updated: "2026-03-08T22:06:18.049Z"
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 8
+  completed_plans: 6
 ---
 
 # Project State: Project 12
@@ -33,7 +33,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | 11 | Simple Filters — Squawk & Reg Country | `squawk_filter`, `registration_country_filter` | Complete (3/3 plans — awaiting human verify checkpoint) |
 | 12 | Area Spatial Filter + Geo Research | `area_spatial_filter` | Complete (2/2 plans) |
 | 13 | Flight Plans Source & Compliance | `flight_plans_source`, `flight_plan_compliance_analyzer` | Pending |
-| 14 | Signal Health Analyzer Placeholder | `signal_health_analyzer` | Pending |
+| 14 | Signal Health Analyzer Placeholder | `signal_health_analyzer` | In Progress (1/3 plans) |
 
 ## Previous Milestones
 
@@ -92,5 +92,15 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-08:** Phase 12 Plan 01 executed — `AreaSpatialFilterCube` created (dual-provider FR+Alison, polygon-inside filter, movement classification)
 - **2026-03-08:** Phase 12 Plan 02 executed — `backend/app/geo/` module created with 3 bundled GeoJSON datasets and 3 Shapely-backed loader modules
 
+### Key Decisions (Phase 14 / Plan 02)
+
+- **2026-03-08:** Only DB-touching functions are async in kalman.py; pure computation stays sync — no benefit to async-ifying math, simpler to test and reason about
+- **2026-03-08:** `_serialize_datetimes()` helper converts datetime objects to ISO strings in classify_flight_async result — ensures JSON serializability without polluting computation functions
+- **2026-03-08:** All Kalman constants preserved verbatim from detect_kalman.py (CHI2_THRESHOLD=13.82, POSITION_JUMP_KM=55.56, ALT_DIVERGENCE_FT=1000) — tuned against known spoofing test cases
+
+### Roadmap Evolution (Phase 14)
+
+- **2026-03-08:** Phase 14 Plan 02 executed — `backend/app/signal/kalman.py` created (constant-velocity Kalman filter, chi-squared innovation testing, position jump detection, altitude divergence, physics cross-validation, async flight classification)
+
 ---
-*Last session: 2026-03-08 — Phase 12 Plan 02 complete (geo data loader modules — country, FIR, land/water)*
+*Last session: 2026-03-08 — Phase 14 Plan 02 complete (Kalman GPS anomaly detection module — classify_flight_async)*
