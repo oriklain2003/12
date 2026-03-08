@@ -92,7 +92,7 @@ Plans:
 | 11. Squawk & Reg Country | 3/3 | Complete   | 2026-03-06 | — |
 | 12. Area Spatial Filter | v2.0 | 2/2 | Complete | 2026-03-08 |
 | 13. Flight Plans & Compliance | v2.0 | 0/0 | Pending | — |
-| 14. Signal Health Analyzer | 3/3 | Complete   | 2026-03-08 | — |
+| 14. Signal Health Analyzer | 3/3 | Complete    | 2026-03-08 | — |
 
 ---
 *Roadmap created: 2026-03-03*
