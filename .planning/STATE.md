@@ -92,6 +92,13 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-08:** Phase 12 Plan 01 executed — `AreaSpatialFilterCube` created (dual-provider FR+Alison, polygon-inside filter, movement classification)
 - **2026-03-08:** Phase 12 Plan 02 executed — `backend/app/geo/` module created with 3 bundled GeoJSON datasets and 3 Shapely-backed loader modules
 
+### Key Decisions (Phase 14 / Plan 01)
+
+- **2026-03-09:** `score_event` returns augmented event dict (not tuple) — plan API spec requires scored dict for `classify_event` to consume
+- **2026-03-09:** `classify_event` accepts scored event dict: transponder_off passthrough for gap_detection source events without re-scoring
+- **2026-03-09:** 7-day default lookback for coverage baseline (vs 30-day in CLI script) — per RESEARCH.md recommendation for interactive cube latency
+- **2026-03-09:** 1-hour TTL module-level cache for coverage baseline avoids repeated heavy queries on every workflow run
+
 ### Key Decisions (Phase 14 / Plan 02)
 
 - **2026-03-08:** Only DB-touching functions are async in kalman.py; pure computation stays sync — no benefit to async-ifying math, simpler to test and reason about
@@ -100,7 +107,8 @@ See `.planning/MILESTONES.md` for details.
 
 ### Roadmap Evolution (Phase 14)
 
+- **2026-03-09:** Phase 14 Plan 01 executed — `backend/app/signal/rule_based.py` created (async integrity event detection, transponder shutdown detection, 16-point scoring, coverage baseline with TTL cache); numpy + scipy added
 - **2026-03-08:** Phase 14 Plan 02 executed — `backend/app/signal/kalman.py` created (constant-velocity Kalman filter, chi-squared innovation testing, position jump detection, altitude divergence, physics cross-validation, async flight classification)
 
 ---
-*Last session: 2026-03-08 — Phase 14 Plan 02 complete (Kalman GPS anomaly detection module — classify_flight_async)*
+*Last session: 2026-03-09 — Phase 14 Plan 01 complete (rule-based GPS anomaly detection async module)*
