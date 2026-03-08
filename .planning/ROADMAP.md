@@ -63,17 +63,17 @@ Plans:
 Plans:
 - [ ] TBD (run /gsd:plan-phase 13 to break down)
 
-### Phase 14: Signal Health Analyzer Placeholder
+### Phase 14: Signal Health Analyzer
 
-**Goal:** Implement `signal_health_analyzer` cube as a placeholder structure for future classification logic.
+**Goal:** Implement `signal_health_analyzer` ANALYSIS cube with real detection logic ported from `scripts/` — rule-based integrity/shutdown detection + Kalman filter anomaly detection, Alison provider only, read-only.
 **Cubes:** `signal_health_analyzer`
 **Depends on:** Phase 11
-**Plans:** 0 plans
-
-**signal_health_analyzer:** Placeholder cube structure. Classifications: Stable, Jamming, Spoofing, Dark Target, Technical Gaps. User has existing function to wire up later.
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 14 to break down)
+- [ ] 14-01-PLAN.md — Rule-based detection module (async port) + numpy/scipy dependencies
+- [ ] 14-02-PLAN.md — Kalman detection module (async port)
+- [ ] 14-03-PLAN.md — SignalHealthAnalyzerCube orchestrating both detection layers
 
 ## Progress
 
@@ -92,7 +92,7 @@ Plans:
 | 11. Squawk & Reg Country | 3/3 | Complete   | 2026-03-06 | — |
 | 12. Area Spatial Filter | v2.0 | 2/2 | Complete | 2026-03-08 |
 | 13. Flight Plans & Compliance | v2.0 | 0/0 | Pending | — |
-| 14. Signal Health Analyzer | v2.0 | 0/0 | Pending | — |
+| 14. Signal Health Analyzer | v2.0 | 0/3 | Planned | — |
 
 ---
 *Roadmap created: 2026-03-03*
