@@ -94,6 +94,22 @@ Plans:
 | 13. Flight Plans & Compliance | v2.0 | 0/0 | Pending | — |
 | 14. Signal Health Analyzer | 3/3 | Complete    | 2026-03-08 | — |
 
+### Phase 15: Cube unit tests and integration tests for current and future cubes
+
+**Goal:** Comprehensive test suite for all 14+ cubes, signal detection modules (rule_based, kalman), geo loaders (country, FIR, land/water), icao24_lookup, and multi-cube integration pipelines through the WorkflowExecutor. Safety net for current and future cube development.
+**Requirements**: TBD
+**Depends on:** Phase 14
+**Plans:** 7 plans
+
+Plans:
+- [ ] 15-01-PLAN.md — Shared conftest.py + pure-logic cube tests (echo, add_numbers, count_by_field, geo_temporal_playback) + icao24_lookup
+- [ ] 15-02-PLAN.md — Data-source cube tests (all_flights, alison_flights, get_anomalies)
+- [ ] 15-03-PLAN.md — Data-source cube tests (get_flight_course, get_learned_paths)
+- [ ] 15-04-PLAN.md — v2.0 filter cube tests (squawk_filter, registration_country_filter, area_spatial_filter)
+- [ ] 15-05-PLAN.md — Geo loader tests (country_loader, fir_loader, land_water_loader)
+- [ ] 15-06-PLAN.md — Signal module tests (rule_based, kalman)
+- [ ] 15-07-PLAN.md — SignalHealthAnalyzerCube tests + integration pipeline tests
+
 ---
 *Roadmap created: 2026-03-03*
 *v1.0 shipped: 2026-03-06*
