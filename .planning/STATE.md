@@ -118,6 +118,11 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-09:** Phase 14 Plan 03 executed — `backend/app/cubes/signal_health_analyzer.py` created (SignalHealthAnalyzerCube orchestrating both detection layers, classify_mode filtering, unified event schema); phase 14 complete
 - Phase 15 added: Cube unit tests and integration tests for current and future cubes
 
+### Key Decisions (Phase 15 / Plan 01)
+
+- **2026-03-09:** expand_regions only resolves known region tags (black/gray); country names are silently ignored -- tests reflect actual implementation
+- **2026-03-09:** Full result dict test for CountByFieldCube uses realistic structure with metadata + flights array to validate first-list extraction
+
 ### Key Decisions (Phase 15 / Plan 05)
 
 - **2026-03-09:** countries.geojson uses "-99" for some ISO3 codes (e.g. France) -- tests check key existence not standard codes
@@ -125,7 +130,8 @@ See `.planning/MILESTONES.md` for details.
 
 ### Roadmap Evolution (Phase 15)
 
+- **2026-03-09:** Phase 15 Plan 01 executed -- conftest.py + 55 unit tests for 4 pure-logic cubes and icao24_lookup module, all passing
 - **2026-03-09:** Phase 15 Plan 05 executed -- 26 unit tests for geo loaders (country_loader, fir_loader, land_water_loader), all passing
 
 ---
-*Last session: 2026-03-09 — Phase 15 Plan 05 complete (geo loader unit tests — 26 tests across 3 modules)*
+*Last session: 2026-03-09 — Phase 15 Plan 01 complete (conftest.py + 55 pure-logic cube and icao24_lookup tests)*
