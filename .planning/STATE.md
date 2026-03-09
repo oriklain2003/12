@@ -139,6 +139,7 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-09:** Phase 15 Plan 01 executed -- conftest.py + 55 unit tests for 4 pure-logic cubes and icao24_lookup module, all passing
 - **2026-03-09:** Phase 15 Plan 02 executed -- 29 unit tests for data-source cubes (AllFlights 9, AlisonFlights 10, GetAnomalies 10), all passing
 - **2026-03-09:** Phase 15 Plan 05 executed -- 26 unit tests for geo loaders (country_loader, fir_loader, land_water_loader), all passing
+- **2026-03-09:** Phase 15 Plan 04 executed -- 42 unit tests for filter cubes (SquawkFilter 14, RegistrationCountryFilter 13, AreaSpatialFilter 15), all passing
 
 ---
-*Last session: 2026-03-09 — Phase 15 Plan 02 complete (data-source cube unit tests — 29 tests across 3 files)*
+*Last session: 2026-03-09 — Phase 15 Plan 04 complete (filter cube unit tests — 42 tests across 3 files)*
