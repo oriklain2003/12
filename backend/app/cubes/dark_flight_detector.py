@@ -112,17 +112,18 @@ class DarkFlightDetectorCube(BaseCube):
         min_gap_minutes = float(inputs.get("min_gap_minutes") or 15)
         lookback_hours = float(inputs.get("lookback_hours") or 24)
 
-        # ---- Extract hex_list from direct input or full_result ----
+        # ---- Extract hex_list: direct input first, fall back to full_result ----
         hex_list: list[str] = []
-        full_result = inputs.get("full_result")
-
-        if full_result and isinstance(full_result, dict):
-            raw = full_result.get("hex_list") or full_result.get("flight_ids") or []
-            hex_list = [str(x) for x in raw if x is not None]
 
         direct = inputs.get("hex_list")
-        if direct and not hex_list:
+        if direct:
             hex_list = [str(x) for x in direct if x is not None]
+
+        if not hex_list:
+            full_result = inputs.get("full_result")
+            if full_result and isinstance(full_result, dict):
+                raw = full_result.get("hex_list") or full_result.get("flight_ids") or []
+                hex_list = [str(x) for x in raw if x is not None]
 
         if not hex_list:
             logger.info("DarkFlightDetector: no hex addresses — returning empty result")
@@ -199,6 +200,7 @@ class DarkFlightDetectorCube(BaseCube):
                 hex_with_gaps.add(hex_addr)
 
         flight_ids = sorted(hex_with_gaps)
+        gap_events.sort(key=lambda e: e["suspicion_score"], reverse=True)
 
         logger.info(
             "DarkFlightDetector: found %d gap events across %d aircraft",

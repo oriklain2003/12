@@ -179,6 +179,9 @@ async def test_airborne_gap_higher_suspicion_than_ground():
     assert gnd_event["airborne"] is False
     assert air_event["suspicion_score"] > gnd_event["suspicion_score"]
 
+    # Verify sort order: highest suspicion first
+    assert result["gap_events"][0]["suspicion_score"] >= result["gap_events"][1]["suspicion_score"]
+
 
 @pytest.mark.asyncio
 async def test_suspicion_score_capped_at_one():
@@ -305,3 +308,69 @@ async def test_multiple_aircraft_independent_detection():
     assert result["count"] == 1
     assert "AAA" in result["flight_ids"]
     assert "BBB" not in result["flight_ids"]
+
+
+# ============================================================
+# hex_list takes priority over full_result
+# ============================================================
+
+
+@pytest.mark.asyncio
+async def test_direct_hex_list_takes_priority_over_full_result():
+    """When both hex_list and full_result are provided, direct hex_list wins."""
+    from app.cubes.dark_flight_detector import DarkFlightDetectorCube
+
+    cube = DarkFlightDetectorCube()
+    now = datetime(2025, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
+
+    positions = [
+        make_position("DIRECT1", now, 32.0, 34.0, alt_baro=5000),
+        make_position("DIRECT1", now + timedelta(minutes=30), 32.5, 34.5, alt_baro=6000),
+    ]
+
+    with patch.object(cube, "_query_positions", new_callable=AsyncMock) as mock_query:
+        mock_query.return_value = positions
+        result = await cube.execute(
+            hex_list=["DIRECT1"],
+            full_result={"hex_list": ["FROM_FR"]},
+            min_gap_minutes=15,
+        )
+
+    # _query_positions should have been called with the direct hex_list, not the full_result one
+    mock_query.assert_called_once()
+    call_args = mock_query.call_args
+    assert "DIRECT1" in call_args[0][0]
+    assert "FROM_FR" not in call_args[0][0]
+
+
+# ============================================================
+# gap_events sorted by suspicion_score descending
+# ============================================================
+
+
+@pytest.mark.asyncio
+async def test_gap_events_sorted_by_suspicion_descending():
+    """gap_events are sorted by suspicion_score in descending order."""
+    from app.cubes.dark_flight_detector import DarkFlightDetectorCube
+
+    cube = DarkFlightDetectorCube()
+    now = datetime(2025, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
+
+    positions = [
+        # Aircraft A: short ground gap (low suspicion)
+        make_position("AAA", now, 32.0, 34.0, alt_baro=100),
+        make_position("AAA", now + timedelta(minutes=20), 32.0, 34.0, alt_baro=100),
+        # Aircraft B: long airborne gap (high suspicion)
+        make_position("BBB", now, 33.0, 35.0, alt_baro=30000),
+        make_position("BBB", now + timedelta(minutes=120), 34.0, 36.0, alt_baro=28000),
+    ]
+
+    with patch.object(cube, "_query_positions", new_callable=AsyncMock) as mock_query:
+        mock_query.return_value = positions
+        result = await cube.execute(hex_list=["AAA", "BBB"], min_gap_minutes=15)
+
+    assert len(result["gap_events"]) == 2
+    scores = [e["suspicion_score"] for e in result["gap_events"]]
+    assert scores == sorted(scores, reverse=True)
+    # BBB (airborne, long) should be first
+    assert result["gap_events"][0]["hex"] == "BBB"
