@@ -128,10 +128,17 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-09:** countries.geojson uses "-99" for some ISO3 codes (e.g. France) -- tests check key existence not standard codes
 - **2026-03-09:** NYC at 50m Natural Earth resolution falls on water boundary -- used Denver as inland US test point
 
+### Key Decisions (Phase 15 / Plan 02)
+
+- **2026-03-09:** DB mocking via patch at import location (app.cubes.xxx.engine) with AsyncMock context managers
+- **2026-03-09:** Polygon tests use side_effect on engine.connect for sequential DB calls (metadata then tracks)
+- **2026-03-09:** Empty flight_ids guard verified as no-filter behavior (not early return) matching GetAnomaliesCube implementation
+
 ### Roadmap Evolution (Phase 15)
 
 - **2026-03-09:** Phase 15 Plan 01 executed -- conftest.py + 55 unit tests for 4 pure-logic cubes and icao24_lookup module, all passing
+- **2026-03-09:** Phase 15 Plan 02 executed -- 29 unit tests for data-source cubes (AllFlights 9, AlisonFlights 10, GetAnomalies 10), all passing
 - **2026-03-09:** Phase 15 Plan 05 executed -- 26 unit tests for geo loaders (country_loader, fir_loader, land_water_loader), all passing
 
 ---
-*Last session: 2026-03-09 — Phase 15 Plan 01 complete (conftest.py + 55 pure-logic cube and icao24_lookup tests)*
+*Last session: 2026-03-09 — Phase 15 Plan 02 complete (data-source cube unit tests — 29 tests across 3 files)*
