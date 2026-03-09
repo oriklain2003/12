@@ -99,7 +99,7 @@ Plans:
 **Goal:** Comprehensive test suite for all 14+ cubes, signal detection modules (rule_based, kalman), geo loaders (country, FIR, land/water), icao24_lookup, and multi-cube integration pipelines through the WorkflowExecutor. Safety net for current and future cube development.
 **Requirements**: TBD
 **Depends on:** Phase 14
-**Plans:** 7 plans
+**Plans:** 1/7 plans executed
 
 Plans:
 - [ ] 15-01-PLAN.md — Shared conftest.py + pure-logic cube tests (echo, add_numbers, count_by_field, geo_temporal_playback) + icao24_lookup

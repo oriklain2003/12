@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Advanced Flight Analysis Cubes
 status: unknown
-last_updated: "2026-03-08T22:12:24.325Z"
+last_updated: "2026-03-09T12:15:39.283Z"
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 2
-  total_plans: 8
-  completed_plans: 7
+  total_plans: 15
+  completed_plans: 8
 ---
 
 # Project State: Project 12
@@ -118,5 +118,14 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-09:** Phase 14 Plan 03 executed — `backend/app/cubes/signal_health_analyzer.py` created (SignalHealthAnalyzerCube orchestrating both detection layers, classify_mode filtering, unified event schema); phase 14 complete
 - Phase 15 added: Cube unit tests and integration tests for current and future cubes
 
+### Key Decisions (Phase 15 / Plan 05)
+
+- **2026-03-09:** countries.geojson uses "-99" for some ISO3 codes (e.g. France) -- tests check key existence not standard codes
+- **2026-03-09:** NYC at 50m Natural Earth resolution falls on water boundary -- used Denver as inland US test point
+
+### Roadmap Evolution (Phase 15)
+
+- **2026-03-09:** Phase 15 Plan 05 executed -- 26 unit tests for geo loaders (country_loader, fir_loader, land_water_loader), all passing
+
 ---
-*Last session: 2026-03-09 — Phase 14 Plan 03 complete (SignalHealthAnalyzerCube — GPS anomaly detection cube)*
+*Last session: 2026-03-09 — Phase 15 Plan 05 complete (geo loader unit tests — 26 tests across 3 modules)*
