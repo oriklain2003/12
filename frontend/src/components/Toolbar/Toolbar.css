@@ -35,17 +35,12 @@
   background: var(--color-surface-hover);
 }
 
-.toolbar__brand-icon {
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-}
-
 .toolbar__brand-logo {
-  height: 18px;
+  height: 24px;
   width: auto;
-  opacity: 0.85;
+  opacity: 0.8;
   flex-shrink: 0;
+  transition: opacity var(--duration-fast);
 }
 
 .toolbar__brand:hover .toolbar__brand-logo {
@@ -89,7 +84,7 @@
   outline: none;
   padding: 4px 10px;
   min-width: 160px;
-  max-width: 320px;
+  max-width: 600px;
   width: 100%;
   transition: border-color var(--duration-fast);
   font-family: inherit;

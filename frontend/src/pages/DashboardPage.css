@@ -17,15 +17,11 @@
   margin: 0 auto 32px;
 }
 
-.dashboard__brand-icon {
-  width: 32px;
-  height: 32px;
-}
-
 .dashboard__brand-logo {
-  height: 22px;
+  height: 28px;
   width: auto;
-  opacity: 0.85;
+  opacity: 0.8;
+  transition: opacity var(--duration-fast);
 }
 
 .dashboard__brand-divider {

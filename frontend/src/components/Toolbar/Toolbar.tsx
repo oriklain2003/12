@@ -119,7 +119,6 @@ export function Toolbar() {
     <header className="toolbar glass">
       <div className="toolbar__left">
         <Link to="/" className="toolbar__brand" title="Dashboard">
-          <img src="/favicon.svg" alt="" className="toolbar__brand-icon" />
           <img src="/onyx-logo.svg" alt="ONYX" className="toolbar__brand-logo" />
           <span className="toolbar__brand-divider" />
           <span className="toolbar__brand-product">12</span>

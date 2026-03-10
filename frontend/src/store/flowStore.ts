@@ -108,7 +108,7 @@ interface FlowState {
 
   // Execution state
   isRunning: boolean;
-  executionStatus: Record<string, { status: CubeStatus; error?: string; outputs?: Record<string, unknown> }>;
+  executionStatus: Record<string, { status: CubeStatus; error?: string; outputs?: Record<string, unknown>; execution_ms?: number }>;
   completedCount: number;
   totalCount: number;
 
