@@ -8,12 +8,26 @@
   height: 33.33%;
   display: flex;
   flex-direction: column;
-  background: var(--color-surface);
-  border-top: 1px solid var(--color-border-hover);
+  background: rgba(8, 9, 13, 0.85);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border-top: none;
   transform: translateY(100%);
   transition: transform var(--duration-normal) var(--ease-out);
   z-index: 20;
-  box-shadow: var(--shadow-panel);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.7);
+}
+
+/* Gradient glow top edge */
+.results-drawer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(99, 102, 241, 0.2) 20%, rgba(99, 102, 241, 0.35) 50%, rgba(99, 102, 241, 0.2) 80%, transparent 100%);
+  pointer-events: none;
 }
 
 .results-drawer--open {

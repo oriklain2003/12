@@ -8,10 +8,23 @@
   padding: 0 20px;
   height: 52px;
   background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: none;
   flex-shrink: 0;
   border-radius: 0;
   gap: 12px;
+  position: relative;
+}
+
+/* Gradient glow bottom edge */
+.toolbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(99, 102, 241, 0.2) 20%, rgba(99, 102, 241, 0.35) 50%, rgba(99, 102, 241, 0.2) 80%, transparent 100%);
+  pointer-events: none;
 }
 
 /* Left section: dashboard link */
@@ -59,7 +72,7 @@
   font-weight: 600;
   color: var(--color-text-dim);
   white-space: nowrap;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
 }
 
 .toolbar__brand:hover .toolbar__brand-product {
@@ -114,53 +127,91 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: background var(--duration-fast), border-color var(--duration-fast), box-shadow var(--duration-fast);
+  transition: all var(--duration-glass) var(--ease-out);
   font-family: inherit;
   line-height: 1;
+  position: relative;
 }
 
-/* Save — outline style */
+/* Save — liquid glass neutral */
 .toolbar__btn--save {
-  background: transparent;
-  border: 1px solid var(--color-border-hover);
+  background: var(--btn-glass-bg);
+  border: 1px solid var(--btn-glass-border);
+  border-top-color: var(--btn-glass-border-top);
+  border-bottom-color: var(--btn-glass-border-bottom);
   color: var(--color-text-dim);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+}
+
+.toolbar__btn--save::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 .toolbar__btn--save:hover {
-  background: var(--color-surface-hover);
+  background: rgba(255, 255, 255, 0.09);
   color: var(--color-text);
-  border-color: var(--color-accent);
+  border-top-color: rgba(255, 255, 255, 0.22);
+  transform: translateY(-0.5px);
 }
 
-/* Run — accent filled */
+.toolbar__btn--save:active {
+  transform: translateY(0.5px);
+}
+
+/* Run — liquid glass accent */
 .toolbar__btn--run {
-  background: var(--color-accent);
-  border: 1px solid var(--color-accent);
+  background: var(--btn-accent-bg);
+  border: 1px solid var(--btn-accent-border);
+  border-top-color: var(--btn-accent-border-top);
+  border-bottom-color: var(--btn-accent-border-bottom);
   color: #fff;
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+}
+
+.toolbar__btn--run::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(139, 142, 255, 0.12) 0%, rgba(99, 102, 241, 0.04) 40%, transparent 70%);
+  pointer-events: none;
 }
 
 .toolbar__btn--run:hover {
-  background: var(--color-accent-hover);
-  border-color: var(--color-accent-hover);
-  box-shadow: 0 0 16px var(--color-accent-glow);
+  background: rgba(99, 102, 241, 0.25);
+  border-top-color: rgba(139, 142, 255, 0.4);
+  box-shadow: var(--shadow-glow-accent);
+  transform: translateY(-0.5px);
+}
+
+.toolbar__btn--run:active {
+  transform: translateY(0.5px);
 }
 
 /* Running state — disabled appearance with pulse */
 .toolbar__btn--running {
   opacity: 0.7;
   cursor: not-allowed;
-  animation: toolbar-pulse 1.5s ease-in-out infinite;
+  animation: toolbar-pulse 2s ease-in-out infinite;
 }
 
 @keyframes toolbar-pulse {
   0%, 100% { box-shadow: 0 0 0 rgba(99, 102, 241, 0); }
-  50% { box-shadow: 0 0 12px rgba(99, 102, 241, 0.4); }
+  50% { box-shadow: 0 0 24px rgba(99, 102, 241, 0.35), 0 0 48px rgba(99, 102, 241, 0.1); }
 }
 
 /* Disabled state for all buttons */
 .toolbar__btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  transform: none;
 }
 
 /* Unsaved changes indicator dot */
@@ -184,7 +235,7 @@
 .toolbar__progress-bar {
   width: 120px;
   height: 4px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 2px;
   overflow: hidden;
 }

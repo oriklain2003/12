@@ -4,12 +4,25 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--color-surface);
-  border-right: 1px solid var(--color-border);
+  background: linear-gradient(180deg, var(--color-surface) 0%, #050609 100%);
+  border-right: none;
   flex-shrink: 0;
   transition: width var(--duration-normal) var(--ease-out);
   overflow: hidden;
   border-radius: 0;
+  position: relative;
+}
+
+/* Gradient glow right edge */
+.sidebar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, transparent 0%, rgba(99, 102, 241, 0.15) 30%, rgba(99, 102, 241, 0.25) 50%, rgba(99, 102, 241, 0.15) 70%, transparent 100%);
+  pointer-events: none;
 }
 
 .sidebar--collapsed {
@@ -79,7 +92,7 @@
 .sidebar__search {
   width: 100%;
   box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text);
@@ -106,7 +119,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   border: none;
   border-radius: var(--radius-full);
   color: var(--color-text-dim);
@@ -115,7 +128,7 @@
 }
 
 .sidebar__search-clear:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.12);
   color: var(--color-text);
 }
 
@@ -172,10 +185,20 @@
   transition: background var(--duration-fast);
   border-radius: 6px;
   margin: 0 6px;
+  position: relative;
 }
 
 .sidebar__cube-card:hover {
   background: var(--color-surface-hover);
+}
+
+.sidebar__cube-card:hover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .sidebar__cube-card:active {
@@ -227,7 +250,7 @@
   justify-content: center;
   color: var(--color-text-dim);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.03);
   cursor: default;
   transition: background var(--duration-fast), color var(--duration-fast);
 }

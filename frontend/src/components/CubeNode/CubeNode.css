@@ -3,7 +3,8 @@
   padding: 0;
   position: relative;
   font-family: inherit;
-  transition: box-shadow var(--duration-normal) var(--ease-out);
+  transition: box-shadow var(--duration-normal) var(--ease-out),
+              transform var(--duration-normal) var(--ease-out);
 }
 
 .cube-node:hover {
@@ -53,7 +54,9 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
 }
 
 .cube-node__category-dot {
@@ -144,7 +147,7 @@
   gap: 8px;
   padding-top: 8px;
   padding-right: 10px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.05);
+  border-top: 1px dashed rgba(255, 255, 255, 0.04);
   margin-top: 4px;
   position: relative;
 }
@@ -157,7 +160,12 @@
 /* ── Running state glow ───────────────────────────────────── */
 
 .cube-node--running {
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+  animation: node-running-pulse 2s ease-in-out infinite;
+}
+
+@keyframes node-running-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(99, 102, 241, 0.1); }
+  50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.3), 0 0 60px rgba(99, 102, 241, 0.08); }
 }
 
 /* ── Error banner (floats ABOVE the node) ─────────────────── */
@@ -231,6 +239,12 @@
 .cube-node__status--running {
   color: var(--color-accent);
   background: rgba(99, 102, 241, 0.15);
+  animation: status-glow 2s ease-in-out infinite;
+}
+
+@keyframes status-glow {
+  0%, 100% { box-shadow: 0 0 0 rgba(99, 102, 241, 0); }
+  50% { box-shadow: 0 0 8px rgba(99, 102, 241, 0.4); }
 }
 
 .cube-node__status--done {

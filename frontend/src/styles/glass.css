@@ -1,17 +1,101 @@
 .glass {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-top-color: rgba(255, 255, 255, 0.12);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-top);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-panel);
+  position: relative;
+}
+
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .glass--node {
-  background: rgba(20, 22, 30, 0.97);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 12, 18, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-top-color: rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-node);
+  position: relative;
+}
+
+.glass--node::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+/* ── Liquid glass button ─────────────────────────────────── */
+
+.glass-btn {
+  background: var(--btn-glass-bg);
+  border: 1px solid var(--btn-glass-border);
+  border-top-color: var(--btn-glass-border-top);
+  border-bottom-color: var(--btn-glass-border-bottom);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  border-radius: var(--radius-sm);
+  position: relative;
+  transition: all var(--duration-glass) var(--ease-out);
+  cursor: pointer;
+}
+
+.glass-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, transparent 60%);
+  pointer-events: none;
+  transition: opacity var(--duration-glass);
+}
+
+.glass-btn:hover {
+  transform: translateY(-0.5px);
+  background: rgba(255, 255, 255, 0.09);
+  border-top-color: rgba(255, 255, 255, 0.22);
+}
+
+.glass-btn:active {
+  transform: translateY(0.5px);
+}
+
+/* ── Liquid glass accent button ──────────────────────────── */
+
+.glass-btn--accent {
+  background: var(--btn-accent-bg);
+  border-color: var(--btn-accent-border);
+  border-top-color: var(--btn-accent-border-top);
+  border-bottom-color: var(--btn-accent-border-bottom);
+}
+
+.glass-btn--accent::before {
+  background: linear-gradient(135deg, rgba(139, 142, 255, 0.12) 0%, rgba(99, 102, 241, 0.04) 40%, transparent 70%);
+}
+
+.glass-btn--accent:hover {
+  background: rgba(99, 102, 241, 0.25);
+  border-top-color: rgba(139, 142, 255, 0.4);
+  box-shadow: var(--shadow-glow-accent);
+}
+
+/* ── Disabled states ─────────────────────────────────────── */
+
+.glass-btn:disabled,
+.glass-btn--accent:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }

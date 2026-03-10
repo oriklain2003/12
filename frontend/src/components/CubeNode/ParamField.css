@@ -13,9 +13,22 @@
   font-size: 12px;
   color: var(--color-accent-hover);
   padding: 6px 10px;
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(99, 102, 241, 0.06);
   border-radius: 6px;
-  border: 1px solid rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.10);
+  border-top-color: rgba(139, 142, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  position: relative;
+}
+
+.param-field__connected::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 .param-field__connected-icon {
@@ -28,8 +41,9 @@
   width: 100%;
   box-sizing: border-box;
   font-size: 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--color-border);
+  border-top-color: rgba(255, 255, 255, 0.08);
   border-radius: 6px;
   color: var(--color-text);
   padding: 6px 10px;
@@ -60,8 +74,9 @@
   box-sizing: border-box;
   font-size: 11px;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--color-border);
+  border-top-color: rgba(255, 255, 255, 0.08);
   border-radius: 6px;
   color: var(--color-text);
   padding: 6px 10px;
@@ -89,8 +104,9 @@
   flex: 1;
   min-width: 0;
   font-size: 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--color-border);
+  border-top-color: rgba(255, 255, 255, 0.08);
   border-radius: 6px;
   color: var(--color-text);
   padding: 6px 10px;
@@ -105,8 +121,9 @@
 
 .relative-time-input select {
   font-size: 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--color-border);
+  border-top-color: rgba(255, 255, 255, 0.08);
   border-radius: 6px;
   color: var(--color-text);
   padding: 6px 8px;
@@ -125,8 +142,9 @@
   width: 100%;
   box-sizing: border-box;
   font-size: 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--color-border);
+  border-top-color: rgba(255, 255, 255, 0.08);
   border-radius: 6px;
   color: var(--color-text);
   padding: 6px 10px;
@@ -142,7 +160,7 @@
 
 /* react-tag-input-component overrides for dark theme */
 .param-field .rti--container {
-  background: rgba(255, 255, 255, 0.05) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: 6px !important;
   padding: 4px 6px !important;
