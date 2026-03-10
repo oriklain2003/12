@@ -20,6 +20,7 @@ import {
   type Edge,
   type IsValidConnection,
 } from '@xyflow/react';
+import { useShallow } from 'zustand/react/shallow';
 import { toast } from 'sonner';
 import { CubeNode } from '../CubeNode/CubeNode';
 import { MismatchEdge } from './MismatchEdge';
@@ -35,7 +36,14 @@ const edgeTypes = { mismatch: MismatchEdge } as const;
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function FlowCanvas() {
-  const { nodes, edges, onNodesChange, onEdgesChange } = useFlowStore();
+  const { nodes, edges, onNodesChange, onEdgesChange } = useFlowStore(
+    useShallow((s) => ({
+      nodes: s.nodes,
+      edges: s.edges,
+      onNodesChange: s.onNodesChange,
+      onEdgesChange: s.onEdgesChange,
+    }))
+  );
   const addCubeNode = useFlowStore((s) => s.addCubeNode);
   const isRunning = useFlowStore((s) => s.isRunning);
   const { screenToFlowPosition } = useReactFlow();

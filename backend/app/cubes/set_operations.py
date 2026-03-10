@@ -61,7 +61,7 @@ class SetOperationsCube(BaseCube):
         set_a = set(inputs.get("set_a") or [])
         set_b = set(inputs.get("set_b") or [])
         set_c_raw = inputs.get("set_c")
-        operation = inputs.get("operation") or "intersection"
+        operation = (inputs.get("operation") or "intersection").lower().strip()
 
         if operation == "intersection":
             result = set_a & set_b

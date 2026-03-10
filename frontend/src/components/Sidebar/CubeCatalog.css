@@ -7,7 +7,7 @@
   background: var(--color-surface);
   border-right: 1px solid var(--color-border);
   flex-shrink: 0;
-  transition: width 0.2s ease;
+  transition: width var(--duration-normal) var(--ease-out);
   overflow: hidden;
   border-radius: 0;
 }
@@ -19,7 +19,7 @@
 }
 
 .sidebar--expanded {
-  width: 260px;
+  width: 280px;
 }
 
 /* Header row */
@@ -27,7 +27,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px 6px;
+  padding: 12px 14px 10px;
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -42,15 +42,17 @@
 
 /* Toggle button */
 .sidebar__toggle {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border: none;
   color: var(--color-text-dim);
   cursor: pointer;
-  font-size: 12px;
-  padding: 4px 6px;
-  border-radius: 4px;
-  line-height: 1;
-  transition: color 0.15s, background 0.15s;
+  border-radius: 6px;
+  transition: color var(--duration-fast), background var(--duration-fast);
 }
 
 .sidebar__toggle:hover {
@@ -60,8 +62,18 @@
 
 /* Search input */
 .sidebar__search-wrapper {
-  padding: 8px 12px;
+  padding: 10px 14px;
   flex-shrink: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar__search-icon {
+  position: absolute;
+  left: 24px;
+  color: var(--color-text-muted);
+  pointer-events: none;
 }
 
 .sidebar__search {
@@ -69,20 +81,42 @@
   box-sizing: border-box;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--color-text);
   font-size: 13px;
-  padding: 6px 10px;
+  padding: 7px 32px 7px 34px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
 
 .sidebar__search::placeholder {
-  color: var(--color-text-muted);
+  color: var(--color-text-placeholder);
 }
 
 .sidebar__search:focus {
-  border-color: var(--color-accent);
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px var(--color-accent-glow);
+}
+
+.sidebar__search-clear {
+  position: absolute;
+  right: 20px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--color-text-dim);
+  cursor: pointer;
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+
+.sidebar__search-clear:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--color-text);
 }
 
 /* Scrollable catalog area */
@@ -110,7 +144,7 @@
 .sidebar__empty {
   color: var(--color-text-muted);
   font-size: 12px;
-  padding: 16px 12px;
+  padding: 16px 14px;
   text-align: center;
 }
 
@@ -121,44 +155,30 @@
 
 .sidebar__category-header {
   color: var(--color-text-muted);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 8px 12px 4px;
+  padding: 10px 14px 6px;
 }
 
-/* Cube card */
+/* Cube card — entire card is draggable */
 .sidebar__cube-card {
   display: flex;
   align-items: flex-start;
-  padding: 6px 12px;
+  padding: 10px 14px;
   gap: 8px;
-  border-bottom: 1px solid var(--color-border);
-  transition: background 0.12s;
+  cursor: grab;
+  transition: background var(--duration-fast);
+  border-radius: 6px;
+  margin: 0 6px;
 }
 
 .sidebar__cube-card:hover {
   background: var(--color-surface-hover);
 }
 
-/* Drag handle — only this element is draggable */
-.sidebar__drag-handle {
-  cursor: grab;
-  color: var(--color-text-muted);
-  font-size: 14px;
-  line-height: 1.4;
-  padding-top: 1px;
-  flex-shrink: 0;
-  user-select: none;
-  transition: color 0.12s;
-}
-
-.sidebar__drag-handle:hover {
-  color: var(--color-text-dim);
-}
-
-.sidebar__drag-handle:active {
+.sidebar__cube-card:active {
   cursor: grabbing;
 }
 
@@ -166,7 +186,7 @@
 .sidebar__cube-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
@@ -182,7 +202,7 @@
 .sidebar__cube-desc {
   color: var(--color-text-muted);
   font-size: 11px;
-  line-height: 1.3;
+  line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -200,18 +220,16 @@
 }
 
 .sidebar__category-icon {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--color-text-dim);
-  font-size: 10px;
-  font-weight: 700;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.04);
   cursor: default;
-  transition: background 0.12s, color 0.12s;
+  transition: background var(--duration-fast), color var(--duration-fast);
 }
 
 .sidebar__category-icon:hover {

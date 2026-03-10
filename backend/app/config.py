@@ -3,8 +3,10 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://localhost:5432/tracer"
-    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
+    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5174"]
     result_row_limit: int = 10000
+    port: int = 8000
+    host: str = "0.0.0.0"
 
     model_config = {"env_file": "../.env", "env_file_encoding": "utf-8"}
 

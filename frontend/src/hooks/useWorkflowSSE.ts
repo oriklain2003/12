@@ -1,68 +1,101 @@
 /**
  * Hook for streaming workflow execution progress via SSE.
  *
- * Connects to GET /api/workflows/{id}/run/stream and dispatches
- * cube_status events to the Zustand store for per-node status updates.
- *
- * IMPORTANT: EventSource auto-reconnects on server close.
- * We must explicitly close the connection when all nodes reach terminal state.
+ * POSTs the graph to /api/workflows/run/stream and parses the SSE
+ * response manually (EventSource only supports GET).
  */
 
 import { useCallback, useRef } from 'react';
 import type { CubeStatusEvent } from '../types/execution';
+import type { WorkflowGraph } from '../types/workflow';
 import { useFlowStore } from '../store/flowStore';
+import { API_BASE } from '../api/config';
 
 export function useWorkflowSSE() {
-  const esRef = useRef<EventSource | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const startStream = useCallback((workflowId: string) => {
-    // Close any existing connection first
-    if (esRef.current) {
-      esRef.current.close();
-      esRef.current = null;
+  const startStream = useCallback((graph: WorkflowGraph) => {
+    // Abort any existing stream
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
     }
 
     // Signal execution start — resets counters and sets isRunning = true
     useFlowStore.getState().startExecution();
 
-    const es = new EventSource(`/api/workflows/${workflowId}/run/stream`);
-    esRef.current = es;
+    const controller = new AbortController();
+    abortRef.current = controller;
 
-    // Listen specifically for 'cube_status' typed events (NOT default 'message')
-    es.addEventListener('cube_status', (event: MessageEvent) => {
-      let data: CubeStatusEvent;
+    (async () => {
       try {
-        data = JSON.parse(event.data) as CubeStatusEvent;
-      } catch (err) {
-        console.error('useWorkflowSSE: failed to parse cube_status event', err);
-        return;
-      }
+        const res = await fetch(`${API_BASE}/workflows/run/stream`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(graph),
+          signal: controller.signal,
+        });
 
-      // Dispatch status update to store
-      useFlowStore.getState().setNodeExecutionStatus(data.node_id, data);
+        if (!res.ok || !res.body) {
+          console.error('useWorkflowSSE: request failed', res.status);
+          useFlowStore.getState().stopExecution();
+          return;
+        }
 
-      // Check if all nodes have reached terminal state — if so, close the stream.
-      // EventSource would auto-reconnect on server close, so we must close explicitly.
-      const { completedCount, totalCount } = useFlowStore.getState();
-      if (totalCount > 0 && completedCount >= totalCount) {
-        es.close();
-        esRef.current = null;
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          // Parse SSE frames from buffer
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? ''; // keep incomplete last line in buffer
+
+          for (const line of lines) {
+            if (!line.startsWith('data:')) continue;
+            const raw = line.slice(5).trim();
+            if (!raw) continue;
+
+            let data: CubeStatusEvent;
+            try {
+              data = JSON.parse(raw) as CubeStatusEvent;
+            } catch {
+              continue;
+            }
+
+            useFlowStore.getState().setNodeExecutionStatus(data.node_id, data);
+
+            const { completedCount, totalCount } = useFlowStore.getState();
+            if (totalCount > 0 && completedCount >= totalCount) {
+              reader.cancel();
+              useFlowStore.getState().stopExecution();
+              return;
+            }
+          }
+        }
+
+        // Stream ended naturally
         useFlowStore.getState().stopExecution();
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          console.error('useWorkflowSSE: stream error', err);
+        }
+        useFlowStore.getState().stopExecution();
+      } finally {
+        abortRef.current = null;
       }
-    });
-
-    es.onerror = () => {
-      console.error('useWorkflowSSE: SSE connection error');
-      es.close();
-      esRef.current = null;
-      useFlowStore.getState().stopExecution();
-    };
+    })();
   }, []);
 
   const stopStream = useCallback(() => {
-    if (esRef.current) {
-      esRef.current.close();
-      esRef.current = null;
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
     }
     useFlowStore.getState().stopExecution();
   }, []);

@@ -16,8 +16,9 @@ COPY alembic/ ./alembic/
 COPY alembic.ini ./
 
 ENV PATH="/app/.venv/bin:$PATH"
+ENV PORT=8000
 
-EXPOSE 8000
+EXPOSE ${PORT}
 HEALTHCHECK --interval=10s --timeout=5s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+  CMD python -c "import urllib.request,os; urllib.request.urlopen(f'http://localhost:{os.environ.get(\"PORT\",\"8000\")}/health')" || exit 1
+CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT

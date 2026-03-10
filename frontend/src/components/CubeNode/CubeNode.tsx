@@ -9,6 +9,7 @@
  *  - Running glow: subtle box-shadow when the node is actively running
  */
 
+import { useState, useCallback } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import { CubeCategory, ParamType } from '../../types/cube';
@@ -29,6 +30,41 @@ const CATEGORY_COLORS: Record<CubeCategory, string> = {
   [CubeCategory.AGGREGATION]: '#06b6d4', // cyan
   [CubeCategory.OUTPUT]: '#10b981',      // emerald
 };
+
+// ─── Error banner with copy button ───────────────────────────────────────────
+
+function ErrorBanner({ error }: { error: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(error).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }, [error]);
+
+  return (
+    <div className="cube-node__error-banner">
+      <span className="cube-node__error-text">{error}</span>
+      <button
+        className="cube-node__error-copy nodrag"
+        onClick={handleCopy}
+        title="Copy error"
+      >
+        {copied ? (
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ) : (
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <rect x="4" y="4" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.2" />
+            <path d="M8 4V2a1 1 0 00-1-1H2a1 1 0 00-1 1v5a1 1 0 001 1h2" stroke="currentColor" strokeWidth="1.2" />
+          </svg>
+        )}
+      </button>
+    </div>
+  );
+}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -59,9 +95,7 @@ export function CubeNode({ id, data, selected, isConnectable }: NodeProps<CubeFl
     <div className={nodeClasses}>
       {/* Error banner — absolute positioned ABOVE the node (bottom: calc(100% + 6px)) */}
       {executionStatus?.status === 'error' && executionStatus.error && (
-        <div className="cube-node__error-banner">
-          {executionStatus.error}
-        </div>
+        <ErrorBanner error={executionStatus.error} />
       )}
 
       {/* Close button — hidden during execution to prevent accidental removal */}
@@ -86,29 +120,37 @@ export function CubeNode({ id, data, selected, isConnectable }: NodeProps<CubeFl
         <span className="cube-node__category-dot" style={{ background: categoryColor }} />
         <span className="cube-node__header-name">{cubeDef.name}</span>
 
-        {/* Execution status indicator */}
+        {/* Execution timing + status indicator */}
         {executionStatus && (
-          <span className={`cube-node__status cube-node__status--${executionStatus.status}`}>
-            {executionStatus.status === 'running' && (
-              <span className="cube-node__spinner" />
+          <>
+            {executionStatus.execution_ms != null && (
+              <span className="cube-node__timing">
+                {executionStatus.execution_ms < 1000
+                  ? `${executionStatus.execution_ms}ms`
+                  : `${(executionStatus.execution_ms / 1000).toFixed(1)}s`}
+              </span>
             )}
-            {executionStatus.status === 'done' && (
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
-            {executionStatus.status === 'error' && (
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            )}
-            {executionStatus.status === 'skipped' && (
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            )}
-            {/* pending status: no icon — just the styled background circle via CSS */}
-          </span>
+            <span className={`cube-node__status cube-node__status--${executionStatus.status}`}>
+              {executionStatus.status === 'running' && (
+                <span className="cube-node__spinner" />
+              )}
+              {executionStatus.status === 'done' && (
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+              {executionStatus.status === 'error' && (
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              )}
+              {executionStatus.status === 'skipped' && (
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              )}
+            </span>
+          </>
         )}
       </div>
 

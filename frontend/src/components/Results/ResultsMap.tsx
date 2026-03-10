@@ -2,6 +2,11 @@
  * ResultsMap — Leaflet map with CartoDB dark tiles, GeoJSON layer,
  * circle markers, bidirectional interaction (flyTo on row select,
  * onMarkerClick on marker click), and auto-fit bounds on data load.
+ *
+ * Supports three modes:
+ *  1. lat/lon only — Point markers from scalar columns
+ *  2. lat/lon + geometry — uses geometry objects directly
+ *  3. geometry only — renders GeoJSON geometry (LineString, Polygon, etc.)
  */
 
 import { useMemo, useEffect } from 'react';
@@ -45,11 +50,6 @@ function buildGeoJSON(
     if (typeof row !== 'object' || row === null) return;
     const r = row as Record<string, unknown>;
 
-    const lat = Number(r[geoInfo.latCol]);
-    const lon = Number(r[geoInfo.lonCol]);
-
-    if (!isFinite(lat) || !isFinite(lon)) return;
-
     // If a geometry column exists and contains a valid object, use it directly
     if (geoInfo.geomCol && r[geoInfo.geomCol] && typeof r[geoInfo.geomCol] === 'object') {
       features.push({
@@ -57,16 +57,20 @@ function buildGeoJSON(
         geometry: r[geoInfo.geomCol] as GeoJSON.Geometry,
         properties: { rowIndex: i },
       });
-    } else {
-      // Default: Point geometry — GeoJSON uses [lon, lat] order
-      features.push({
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [lon, lat],
-        },
-        properties: { rowIndex: i },
-      });
+      return;
+    }
+
+    // Fall back to Point from lat/lon scalars
+    if (geoInfo.latCol && geoInfo.lonCol) {
+      const lat = Number(r[geoInfo.latCol]);
+      const lon = Number(r[geoInfo.lonCol]);
+      if (isFinite(lat) && isFinite(lon)) {
+        features.push({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [lon, lat] },
+          properties: { rowIndex: i },
+        });
+      }
     }
   });
 
@@ -76,59 +80,66 @@ function buildGeoJSON(
 // ─── MapController — flyTo selected row ──────────────────────────────────────
 
 interface MapControllerProps {
+  geojson: GeoJSON.FeatureCollection;
   rows: unknown[];
   geoInfo: GeoInfo;
   selectedRowIndex: number | null;
 }
 
-function MapController({ rows, geoInfo, selectedRowIndex }: MapControllerProps) {
+function MapController({ geojson, rows, geoInfo, selectedRowIndex }: MapControllerProps) {
   const map = useMap();
 
   useEffect(() => {
     if (selectedRowIndex === null) return;
-    const row = rows[selectedRowIndex];
-    if (typeof row !== 'object' || row === null) return;
 
-    const r = row as Record<string, unknown>;
-    const lat = Number(r[geoInfo.latCol]);
-    const lon = Number(r[geoInfo.lonCol]);
-
-    if (isFinite(lat) && isFinite(lon)) {
-      map.flyTo([lat, lon], 10, { animate: true, duration: 0.5 });
+    // Try lat/lon scalar flyTo first
+    if (geoInfo.latCol && geoInfo.lonCol) {
+      const row = rows[selectedRowIndex];
+      if (typeof row === 'object' && row !== null) {
+        const r = row as Record<string, unknown>;
+        const lat = Number(r[geoInfo.latCol]);
+        const lon = Number(r[geoInfo.lonCol]);
+        if (isFinite(lat) && isFinite(lon)) {
+          map.flyTo([lat, lon], 10, { animate: true, duration: 0.5 });
+          return;
+        }
+      }
     }
-  }, [selectedRowIndex, rows, geoInfo, map]);
+
+    // Fall back to fitting the geometry bounds of the selected feature
+    const feature = geojson.features.find(
+      (f) => f.properties?.rowIndex === selectedRowIndex
+    );
+    if (feature) {
+      const layer = L.geoJSON(feature);
+      const bounds = layer.getBounds();
+      if (bounds.isValid()) {
+        map.flyToBounds(bounds, { padding: [30, 30], animate: true, duration: 0.5 });
+      }
+    }
+  }, [selectedRowIndex, rows, geoInfo, geojson, map]);
 
   return null;
 }
 
-// ─── MapBoundsController — auto-fit all markers on load ──────────────────────
+// ─── MapBoundsController — auto-fit all features on load ─────────────────────
 
 interface MapBoundsControllerProps {
-  rows: unknown[];
-  geoInfo: GeoInfo;
+  geojson: GeoJSON.FeatureCollection;
 }
 
-function MapBoundsController({ rows, geoInfo }: MapBoundsControllerProps) {
+function MapBoundsController({ geojson }: MapBoundsControllerProps) {
   const map = useMap();
 
   useEffect(() => {
-    const points: [number, number][] = [];
+    if (geojson.features.length === 0) return;
 
-    for (const row of rows) {
-      if (typeof row !== 'object' || row === null) continue;
-      const r = row as Record<string, unknown>;
-      const lat = Number(r[geoInfo.latCol]);
-      const lon = Number(r[geoInfo.lonCol]);
-      if (isFinite(lat) && isFinite(lon)) {
-        points.push([lat, lon]);
-      }
-    }
-
-    if (points.length > 0) {
-      const bounds = L.latLngBounds(points);
+    const layer = L.geoJSON(geojson);
+    const bounds = layer.getBounds();
+    if (bounds.isValid()) {
       map.fitBounds(bounds, { padding: [30, 30] });
     }
-  }, [rows, geoInfo, map]);
+  }, [geojson, map]);
 
   return null;
 }
@@ -148,7 +159,7 @@ export function ResultsMap({ rows, geoInfo, selectedRowIndex, onMarkerClick }: R
     >
       {/* CartoDB dark tiles */}
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         subdomains={['a', 'b', 'c', 'd']}
         maxZoom={19}
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -184,8 +195,8 @@ export function ResultsMap({ rows, geoInfo, selectedRowIndex, onMarkerClick }: R
       />
 
       {/* Controllers must be inside MapContainer to access map context */}
-      <MapController rows={rows} geoInfo={geoInfo} selectedRowIndex={selectedRowIndex} />
-      <MapBoundsController rows={rows} geoInfo={geoInfo} />
+      <MapController geojson={geojson} rows={rows} geoInfo={geoInfo} selectedRowIndex={selectedRowIndex} />
+      <MapBoundsController geojson={geojson} />
     </MapContainer>
   );
 }

@@ -98,6 +98,14 @@ None - no external service configuration required.
 - `ICAO24_RANGES`, `TAIL_PREFIXES`, `REGION_GROUPS`, and helpers exported from `icao24_lookup` — Plan 03 can import and use immediately
 - Both cubes auto-register in CubeRegistry; no additional wiring needed
 
+## Self-Check: PASSED
+
+- FOUND: backend/app/cubes/icao24_lookup.py
+- FOUND: backend/app/cubes/alison_flights.py
+- FOUND: .planning/phases/11-simple-filters-squawk-and-registration-country-cubes/11-01-SUMMARY.md
+- FOUND: commit dfc2620 (Task 1 — ICAO24 lookup module)
+- FOUND: commit b0a4bc9 (Task 2 — AlisonFlightsCube)
+
 ---
 *Phase: 11-simple-filters-squawk-and-registration-country-cubes*
 *Completed: 2026-03-06*

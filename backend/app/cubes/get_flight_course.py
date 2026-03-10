@@ -1,7 +1,10 @@
 """GetFlightCourse cube: returns flight track points or LineStrings from normal_tracks."""
 
 import collections
+import logging
 from typing import Any
+
+logger = logging.getLogger("flow.cubes.get_flight_course")
 
 from sqlalchemy import text
 
@@ -49,11 +52,17 @@ class GetFlightCourseCube(BaseCube):
 
     async def execute(self, **inputs: Any) -> dict[str, Any]:
         """Query normal_tracks and return GeoJSON points or linestrings."""
-        flight_ids: list[str] = inputs.get("flight_ids") or []
+        raw_ids = inputs.get("flight_ids") or []
+        if isinstance(raw_ids, str):
+            raw_ids = [s.strip() for s in raw_ids.split(",") if s.strip()]
+        flight_ids: list[str] = list(raw_ids)
         output_mode: str = inputs.get("output_mode") or "points"
+
+        logger.info("GetFlightCourse raw_ids=%r flight_ids=%r output_mode=%s", raw_ids, flight_ids, output_mode)
 
         # Guard empty flight_ids early to avoid PostgreSQL ANY() error with empty array
         if not flight_ids:
+            logger.info("GetFlightCourse: flight_ids is empty, returning early")
             return {"tracks": [], "flight_ids": []}
 
         sql = """

@@ -92,6 +92,13 @@ export function DashboardPage() {
     <div className="dashboard">
       <Toaster position="bottom-right" theme="dark" />
 
+      <div className="dashboard__brand">
+        <img src="/favicon.svg" alt="" className="dashboard__brand-icon" />
+        <img src="/onyx-logo.svg" alt="ONYX" className="dashboard__brand-logo" />
+        <span className="dashboard__brand-divider" />
+        <span className="dashboard__brand-product">12</span>
+      </div>
+
       <div className="dashboard__header">
         <h1 className="dashboard__title">Workflows</h1>
         <button

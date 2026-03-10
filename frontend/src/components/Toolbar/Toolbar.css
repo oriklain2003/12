@@ -21,22 +21,54 @@
   flex: 0 0 auto;
 }
 
-.toolbar__dashboard-link {
+.toolbar__brand {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: var(--color-text-dim);
+  gap: 8px;
   text-decoration: none;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 6px 10px;
+  padding: 4px 10px;
   border-radius: 6px;
-  transition: color var(--duration-fast), background var(--duration-fast);
+  transition: background var(--duration-fast);
 }
 
-.toolbar__dashboard-link:hover {
-  color: var(--color-text);
+.toolbar__brand:hover {
   background: var(--color-surface-hover);
+}
+
+.toolbar__brand-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toolbar__brand-logo {
+  height: 18px;
+  width: auto;
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.toolbar__brand:hover .toolbar__brand-logo {
+  opacity: 1;
+}
+
+.toolbar__brand-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--color-border);
+  flex-shrink: 0;
+}
+
+.toolbar__brand-product {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-dim);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.toolbar__brand:hover .toolbar__brand-product {
+  color: var(--color-text);
 }
 
 /* Center section: editable workflow name */

@@ -5,6 +5,11 @@
   height: 100%;
 }
 
+/* Fix tile gap / grid-line seams on high-DPI screens */
+.results-map .leaflet-tile-container img {
+  outline: 1px solid transparent;
+}
+
 /* Subtle attribution on dark theme */
 .results-map .leaflet-control-attribution {
   font-size: 10px;

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 import math
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 from scipy.linalg import inv
@@ -85,12 +85,25 @@ async def fetch_positions_async(hex_code: str,
         return rows
 
 
-async def fetch_time_range_async(hex_code: str) -> tuple[datetime, datetime] | None:
-    """Fetch the min and max timestamps for a given hex (auto-detect mode)."""
+async def fetch_time_range_async(
+    hex_code: str,
+    lookback_hours: float = 168,
+) -> tuple[datetime, datetime] | None:
+    """Fetch the min and max timestamps for a given hex within a lookback window.
+
+    Args:
+        hex_code: ICAO24 hex address.
+        lookback_hours: Only consider positions from the last N hours (default 168 = 7 days).
+            Prevents full table scans on the 46M-row positions table.
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=lookback_hours)
     async with engine.connect() as conn:
         result = await conn.execute(
-            text("SELECT min(ts), max(ts) FROM positions WHERE hex = :hex"),
-            {"hex": hex_code},
+            text(
+                "SELECT min(ts), max(ts) FROM positions"
+                " WHERE hex = :hex AND ts >= :cutoff"
+            ),
+            {"hex": hex_code, "cutoff": cutoff},
         )
         row = result.fetchone()
         if row is None or row[0] is None:

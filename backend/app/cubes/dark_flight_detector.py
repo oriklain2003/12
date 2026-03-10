@@ -92,12 +92,12 @@ class DarkFlightDetectorCube(BaseCube):
             result = await conn.execute(
                 text(
                     """
-                    SELECT hex, ts, lat, lon, alt_baro, on_ground
+                    SELECT hex, ts, lat, lon, alt_baro
                     FROM public.positions
                     WHERE hex = ANY(:hex_list)
                       AND ts >= :cutoff
                     ORDER BY hex, ts
-                    LIMIT 500000
+                    LIMIT 200000
                     """
                 ),
                 {"hex_list": hex_list, "cutoff": cutoff},

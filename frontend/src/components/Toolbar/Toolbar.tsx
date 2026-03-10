@@ -14,7 +14,7 @@
 import { useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useFlowStore } from '../../store/flowStore';
+import { useFlowStore, serializeGraph } from '../../store/flowStore';
 import { useWorkflowSSE } from '../../hooks/useWorkflowSSE';
 import './Toolbar.css';
 
@@ -74,7 +74,9 @@ export function Toolbar() {
       }
     }
 
-    startStream(id);
+    const { nodes, edges } = useFlowStore.getState();
+    const graph = serializeGraph(nodes, edges);
+    startStream(graph);
   }, [isRunning, workflowId, handleSave, startStream]);
 
   // ── Keyboard shortcuts ──────────────────────────────────────────────────────
@@ -116,11 +118,11 @@ export function Toolbar() {
   return (
     <header className="toolbar glass">
       <div className="toolbar__left">
-        <Link to="/" className="toolbar__dashboard-link">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M9 3l-4 4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Dashboard
+        <Link to="/" className="toolbar__brand" title="Dashboard">
+          <img src="/favicon.svg" alt="" className="toolbar__brand-icon" />
+          <img src="/onyx-logo.svg" alt="ONYX" className="toolbar__brand-logo" />
+          <span className="toolbar__brand-divider" />
+          <span className="toolbar__brand-product">12</span>
         </Link>
       </div>
 

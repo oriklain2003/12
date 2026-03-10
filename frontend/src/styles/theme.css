@@ -1,28 +1,57 @@
 :root {
-  --color-bg: #0f1117;
-  --color-surface: #1a1d27;
+  /* ── Backgrounds & surfaces ──────────────────────────────── */
+  --color-bg: #0a0b10;
+  --color-surface: #14161e;
+  --color-surface-raised: #1a1d27;
   --color-surface-hover: #242837;
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-hover: rgba(255, 255, 255, 0.15);
-  --color-text: rgba(255, 255, 255, 0.87);
+
+  /* ── Borders ─────────────────────────────────────────────── */
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-border-hover: rgba(255, 255, 255, 0.14);
+  --color-border-focus: rgba(99, 102, 241, 0.5);
+
+  /* ── Text ────────────────────────────────────────────────── */
+  --color-text: rgba(255, 255, 255, 0.9);
+  --color-text-secondary: rgba(255, 255, 255, 0.55);
   --color-text-dim: rgba(255, 255, 255, 0.45);
   --color-text-muted: rgba(255, 255, 255, 0.25);
+  --color-text-placeholder: rgba(255, 255, 255, 0.2);
+
+  /* ── Accent & semantic ───────────────────────────────────── */
   --color-accent: #6366f1;
   --color-accent-hover: #818cf8;
+  --color-accent-glow: rgba(99, 102, 241, 0.25);
   --color-success: #22c55e;
   --color-error: #ef4444;
   --color-warning: #f97316;
 
-  /* ParamType handle colors (FRONT-05) */
+  /* ── ParamType handle colors ─────────────────────────────── */
   --color-param-string: #3b82f6;
   --color-param-number: #22c55e;
   --color-param-boolean: #f97316;
   --color-param-list: #14b8a6;
   --color-param-json: #6b7280;
 
-  /* React Flow CSS variable overrides for dark mode */
+  /* ── Radii ───────────────────────────────────────────────── */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ─────────────────────────────────────────────── */
+  --shadow-node: 0 4px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --shadow-node-hover: 0 8px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --shadow-node-selected: 0 0 0 2px var(--color-accent), 0 8px 40px rgba(99, 102, 241, 0.15);
+  --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.5);
+
+  /* ── Transitions ─────────────────────────────────────────── */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 0.12s;
+  --duration-normal: 0.2s;
+
+  /* ── React Flow overrides ────────────────────────────────── */
   --xy-background-color: var(--color-bg);
   --xy-node-background-color-default: transparent;
-  --xy-node-border-default: 1px solid var(--color-border);
-  --xy-edge-stroke-default: #4b5563;
+  --xy-node-border-default: none;
+  --xy-edge-stroke-default: rgba(255, 255, 255, 0.15);
 }

@@ -29,6 +29,11 @@
   overflow: hidden;
 }
 
+/* Fix tile gap / grid-line seams on high-DPI screens */
+.polygon-widget-map .leaflet-tile-container img {
+  outline: 1px solid transparent;
+}
+
 /* ── Control bar ─────────────────────────────────────────────── */
 
 .polygon-widget-controls {

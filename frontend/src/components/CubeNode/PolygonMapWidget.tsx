@@ -8,6 +8,7 @@
  */
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MapContainer, TileLayer, Polyline, CircleMarker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import './PolygonMapWidget.css';
@@ -146,12 +147,13 @@ export function PolygonField({ value, onChange }: PolygonFieldProps) {
           </>
         )}
       </button>
-      {open && (
+      {open && createPortal(
         <PolygonMapWidget
           initialPolygon={value}
           onConfirm={onChange}
           onClose={() => setOpen(false)}
-        />
+        />,
+        document.body
       )}
     </>
   );

@@ -1,9 +1,12 @@
 """AllFlights cube: queries Tracer 42 research.flight_metadata with optional filters."""
 
+import logging
 import time
 from typing import Any
 
 from sqlalchemy import text
+
+logger = logging.getLogger(__name__)
 
 from app.cubes.base import BaseCube
 from app.database import engine
@@ -236,11 +239,39 @@ class AllFlightsCube(BaseCube):
                     "max_lon": float(max_lon),
                 }
             )
+        elif polygon and len(polygon) >= 3:
+            # Auto-derive bounding box from polygon to narrow flight_metadata candidates
+            poly_lats = [p[0] for p in polygon]
+            poly_lons = [p[1] for p in polygon]
+            sql_parts.append(
+                "AND start_lat BETWEEN :min_lat AND :max_lat AND start_lon BETWEEN :min_lon AND :max_lon"
+            )
+            params.update(
+                {
+                    "min_lat": min(poly_lats),
+                    "max_lat": max(poly_lats),
+                    "min_lon": min(poly_lons),
+                    "max_lon": max(poly_lons),
+                }
+            )
 
         # Safety cap before polygon filtering
         sql_parts.append("LIMIT 5000")
 
         full_sql = "\n".join(sql_parts)
+
+        # Log the executable query for debugging — substitute params inline
+        debug_sql = full_sql
+        for k, v in params.items():
+            placeholder = f":{k}"
+            if isinstance(v, str):
+                debug_sql = debug_sql.replace(placeholder, f"'{v}'")
+            elif isinstance(v, list):
+                formatted = ", ".join(f"'{x}'" if isinstance(x, str) else str(x) for x in v)
+                debug_sql = debug_sql.replace(placeholder, f"ARRAY[{formatted}]")
+            else:
+                debug_sql = debug_sql.replace(placeholder, str(v))
+        logger.info("AllFlights query:\n%s", debug_sql)
 
         async with engine.connect() as conn:
             result = await conn.execute(text(full_sql), params)
@@ -249,25 +280,43 @@ class AllFlightsCube(BaseCube):
 
         # Polygon filter (Python-side ray casting — PostGIS not available)
         if polygon and len(polygon) >= 3:
-            # Get flight_ids of flights with track points inside polygon
             candidate_ids = [row["flight_id"] for row in rows]
 
             if candidate_ids:
+                # Derive bounding box from polygon for SQL pre-filter
+                poly_lats = [p[0] for p in polygon]
+                poly_lons = [p[1] for p in polygon]
+                bbox_min_lat = min(poly_lats)
+                bbox_max_lat = max(poly_lats)
+                bbox_min_lon = min(poly_lons)
+                bbox_max_lon = max(poly_lons)
+
                 async with engine.connect() as conn:
                     track_result = await conn.execute(
                         text(
-                            "SELECT DISTINCT flight_id, lat, lon "
+                            "SELECT flight_id, lat, lon "
                             "FROM research.normal_tracks "
-                            "WHERE flight_id = ANY(:ids)"
+                            "WHERE flight_id = ANY(:ids) "
+                            "AND lat BETWEEN :bbox_min_lat AND :bbox_max_lat "
+                            "AND lon BETWEEN :bbox_min_lon AND :bbox_max_lon"
                         ),
-                        {"ids": candidate_ids},
+                        {
+                            "ids": candidate_ids,
+                            "bbox_min_lat": bbox_min_lat,
+                            "bbox_max_lat": bbox_max_lat,
+                            "bbox_min_lon": bbox_min_lon,
+                            "bbox_max_lon": bbox_max_lon,
+                        },
                     )
                     track_rows = track_result.fetchall()
 
                 # Build set of flight_ids that have a point inside polygon
+                # Early-exit: skip remaining points once a flight is confirmed
                 flights_in_polygon: set[str] = set()
                 for track_row in track_rows:
                     fid, lat, lon = track_row[0], track_row[1], track_row[2]
+                    if fid in flights_in_polygon:
+                        continue
                     if lat is not None and lon is not None:
                         if point_in_polygon(float(lat), float(lon), polygon):
                             flights_in_polygon.add(fid)

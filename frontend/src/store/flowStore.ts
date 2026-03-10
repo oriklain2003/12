@@ -385,9 +385,25 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
       // If the event has outputs, update results for this node
       let results = state.results;
       if (event.outputs && event.status === 'done') {
-        const rows = Array.isArray(event.outputs.rows)
-          ? (event.outputs.rows as unknown[])
-          : Object.values(event.outputs);
+        // Extract the primary data array from cube outputs.
+        // Prefer an explicit 'rows' key; otherwise find the first array of
+        // objects (the main data table), then any array, then fall back to
+        // Object.values().
+        let rows: unknown[];
+        if (Array.isArray(event.outputs.rows)) {
+          rows = event.outputs.rows as unknown[];
+        } else {
+          const vals = Object.values(event.outputs);
+          const objArr = vals.find(
+            (v) => Array.isArray(v) && v.length > 0 && typeof v[0] === 'object' && v[0] !== null,
+          );
+          if (objArr) {
+            rows = objArr as unknown[];
+          } else {
+            const anyArr = vals.find((v) => Array.isArray(v));
+            rows = anyArr ? (anyArr as unknown[]) : (vals as unknown[]);
+          }
+        }
         const truncated = event.truncated ?? false;
         results = {
           ...state.results,

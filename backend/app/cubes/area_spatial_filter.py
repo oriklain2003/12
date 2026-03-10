@@ -185,14 +185,13 @@ class AreaSpatialFilterCube(BaseCube):
             ),
         ),
         ParamDefinition(
-            name="lookback_hours",
+            name="time_window_hours",
             type=ParamType.NUMBER,
             required=False,
             default=24,
             description=(
-                "Time window (hours) for Alison positions queries. "
-                "Prevents full-table scans of the 46M-row positions table. "
-                "Default: 24 hours."
+                "How far back to search for positions (hours). "
+                "Only used with Alison provider. Default: 24 hours."
             ),
         ),
     ]
@@ -218,6 +217,16 @@ class AreaSpatialFilterCube(BaseCube):
             type=ParamType.NUMBER,
             description="Number of matching flights with positions inside the polygon.",
         ),
+        ParamDefinition(
+            name="per_flight_details",
+            type=ParamType.JSON_OBJECT,
+            description=(
+                "Per-flight spatial details keyed by flight ID. Each entry contains: "
+                "entry_time, exit_time, time_in_area, duration_seconds, "
+                "movement_classification (landing/takeoff/cruise), positions_in_area count, "
+                "and path_in_area (GeoJSON LineString of the flight segment within the polygon)."
+            ),
+        ),
     ]
 
     async def execute(self, **inputs: Any) -> dict[str, Any]:
@@ -225,7 +234,7 @@ class AreaSpatialFilterCube(BaseCube):
 
         provider = str(inputs.get("provider") or "fr").lower()
         altitude_threshold = float(inputs.get("altitude_threshold") or 1000)
-        lookback_hours = float(inputs.get("lookback_hours") or 24)
+        time_window_hours = float(inputs.get("time_window_hours") or 24)
 
         # ----------------------------------------------------------------
         # Step 1: Extract flight identifiers (dual-provider pattern)
@@ -338,7 +347,7 @@ class AreaSpatialFilterCube(BaseCube):
 
         else:
             # Alison provider — MUST include time filter to avoid full-table scan on 46M+ rows
-            cutoff_epoch = int(time.time() - lookback_hours * 3600)
+            cutoff_epoch = int(time.time() - time_window_hours * 3600)
 
             async with engine.connect() as conn:
                 result = await conn.execute(
@@ -475,6 +484,18 @@ class AreaSpatialFilterCube(BaseCube):
                 # (not just inside_positions — transitions may occur outside bbox)
                 movement = classify_movement_alison(pos_list, altitude_threshold)
 
+            # Build GeoJSON LineString from inside positions (already collected, no extra query)
+            path_coords = [
+                [float(p["lon"]), float(p["lat"])]
+                for p in inside_positions
+                if p.get("lat") is not None and p.get("lon") is not None
+            ]
+            path_in_area = (
+                {"type": "LineString", "coordinates": path_coords}
+                if len(path_coords) >= 2
+                else None
+            )
+
             matching_ids.append(fid)
             per_flight_details[fid] = {
                 "entry_time": entry_time,
@@ -483,6 +504,9 @@ class AreaSpatialFilterCube(BaseCube):
                 "duration_seconds": duration_seconds,
                 "movement_classification": movement,
                 "positions_in_area": len(inside_positions),
+                "entry_point": [float(inside_positions[0]["lat"]), float(inside_positions[0]["lon"])],
+                "exit_point": [float(inside_positions[-1]["lat"]), float(inside_positions[-1]["lon"])],
+                "path_in_area": path_in_area,
             }
 
         logger.info(

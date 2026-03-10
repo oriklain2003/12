@@ -36,12 +36,13 @@ export function ParamHandle({ param, type, isConnectable }: ParamHandleProps) {
       position={position}
       id={param.name}
       isConnectable={isConnectable}
-      className="nodrag"
+      className="nodrag cube-node__handle"
       style={{
         background: color,
-        width: 10,
-        height: 10,
-        border: '2px solid rgba(0,0,0,0.4)',
+        width: 12,
+        height: 12,
+        borderRadius: 4,
+        border: '2px solid rgba(0,0,0,0.3)',
       }}
     />
   );

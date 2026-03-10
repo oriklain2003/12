@@ -1,4 +1,6 @@
-const BASE = '/api';
+import { API_BASE } from './config';
+
+const BASE = API_BASE;
 
 export class ApiError extends Error {
   status: number;

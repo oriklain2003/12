@@ -22,5 +22,6 @@ class CubeStatusEvent(BaseModel):
     status: Literal["pending", "running", "done", "error", "skipped"]
     outputs: dict[str, Any] | None = None
     truncated: bool | None = None
+    execution_ms: int | None = None  # wall-clock execution time in milliseconds
     error: str | None = None
     reason: str | None = None  # for skipped: why it was skipped

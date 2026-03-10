@@ -14,3 +14,14 @@
   width: 100%;
   height: 100%;
 }
+
+/* Override React Flow selected node outline — we use box-shadow instead */
+.flow-canvas .react-flow__node.selected {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Smooth edge path transition */
+.flow-canvas .react-flow__edge-path {
+  transition: stroke var(--duration-fast);
+}

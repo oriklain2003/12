@@ -1,7 +1,7 @@
 """AlisonFlightsCube: queries Alison provider aircraft from public schema.
 
-Starts from public.aircraft (35K rows), uses LATERAL join to public.positions
-to get distinct callsigns per hex — one row per (hex, callsign) pair.
+Queries public.aircraft (35K rows) using last_seen for time filtering.
+Only joins public.positions when callsign/altitude/polygon filters are provided.
 Outputs a hex_list for downstream filter cubes.
 """
 
@@ -23,8 +23,9 @@ from app.schemas.cube import CubeCategory, ParamDefinition, ParamType
 class AlisonFlightsCube(BaseCube):
     """Data source cube querying the Alison provider (public schema).
 
-    Starts from public.aircraft, lateral-joins public.positions for distinct
-    callsigns — one row per (hex, callsign). Returns hex_list for downstream cubes.
+    Queries public.aircraft with last_seen time filter. Only touches
+    positions when callsign/altitude/polygon filters require it.
+    Returns hex_list for downstream cubes.
     """
 
     cube_id = "alison_flights"
@@ -64,7 +65,7 @@ class AlisonFlightsCube(BaseCube):
         ParamDefinition(
             name="callsign",
             type=ParamType.STRING,
-            description="Callsign filter (ILIKE pattern match on positions.flight).",
+            description="Callsign filter (ILIKE pattern match on positions.flight). Requires positions join.",
             required=False,
         ),
         ParamDefinition(
@@ -76,13 +77,13 @@ class AlisonFlightsCube(BaseCube):
         ParamDefinition(
             name="min_altitude",
             type=ParamType.NUMBER,
-            description="Minimum altitude in feet (filters on positions.alt_baro).",
+            description="Minimum altitude in feet (filters on positions.alt_baro). Requires positions join.",
             required=False,
         ),
         ParamDefinition(
             name="max_altitude",
             type=ParamType.NUMBER,
-            description="Maximum altitude in feet (filters on positions.alt_baro).",
+            description="Maximum altitude in feet (filters on positions.alt_baro). Requires positions join.",
             required=False,
         ),
         ParamDefinition(
@@ -108,7 +109,7 @@ class AlisonFlightsCube(BaseCube):
     ]
 
     async def execute(self, **inputs: Any) -> dict[str, Any]:
-        """Query public.aircraft with lateral join to positions for callsign."""
+        """Query public.aircraft, optionally joining positions for advanced filters."""
         time_range_seconds = inputs.get("time_range_seconds", 604800)
         start_time = inputs.get("start_time")
         end_time = inputs.get("end_time")
@@ -119,75 +120,88 @@ class AlisonFlightsCube(BaseCube):
         max_altitude = inputs.get("max_altitude")
         polygon = inputs.get("polygon")
 
-        # Build time cutoff (p.ts is timestamp, pass datetime)
         params: dict[str, Any] = {}
+
+        # Time filter on aircraft.last_seen
         if start_time is not None and end_time is not None:
             ts_start = datetime.fromtimestamp(int(float(start_time)), tz=timezone.utc)
             ts_end = datetime.fromtimestamp(int(float(end_time)), tz=timezone.utc)
-            time_clause = "ts BETWEEN :ts_start AND :ts_end"
             params["ts_start"] = ts_start
             params["ts_end"] = ts_end
+            time_clause = "a.last_seen BETWEEN :ts_start AND :ts_end"
         else:
             cutoff_epoch = int(time.time()) - int(time_range_seconds or 604800)
             params["cutoff"] = datetime.fromtimestamp(cutoff_epoch, tz=timezone.utc)
-            time_clause = "ts >= :cutoff"
+            time_clause = "a.last_seen >= :cutoff"
 
-        # Aircraft-level WHERE clauses
-        aircraft_where: list[str] = []
+        # Check if we need to join positions (expensive)
+        needs_positions = bool(callsign or min_altitude is not None or max_altitude is not None or (polygon and len(polygon) >= 3))
+
+        # Aircraft WHERE clauses
+        where: list[str] = [time_clause]
         if hex_filter:
-            aircraft_where.append("a.hex = ANY(:hex_filter)")
+            where.append("a.hex = ANY(:hex_filter)")
             params["hex_filter"] = list(hex_filter)
         if aircraft_type:
-            aircraft_where.append("a.icao_type ILIKE :aircraft_type")
+            where.append("a.icao_type ILIKE :aircraft_type")
             params["aircraft_type"] = f"%{aircraft_type}%"
 
-        # Lateral join WHERE clauses (positions)
-        lateral_where: list[str] = [time_clause]
-        if callsign:
-            lateral_where.append("flight ILIKE :callsign")
-            params["callsign"] = f"%{callsign}%"
-        if min_altitude is not None:
-            lateral_where.append("alt_baro >= :min_altitude")
-            params["min_altitude"] = float(min_altitude)
-        if max_altitude is not None:
-            lateral_where.append("alt_baro <= :max_altitude")
-            params["max_altitude"] = float(max_altitude)
+        if not needs_positions:
+            # Fast path: aircraft-only query
+            where_sql = " AND ".join(where)
+            sql = f"""
+                SELECT a.hex, a.registration, a.icao_type, a.type_description, a.category
+                FROM public.aircraft a
+                WHERE {where_sql}
+                LIMIT 5000
+            """
+        else:
+            # Slow path: join positions for callsign/altitude/polygon filters
+            # Build positions time filter
+            if start_time is not None and end_time is not None:
+                pos_time = "p.ts BETWEEN :ts_start AND :ts_end"
+            else:
+                pos_time = "p.ts >= :cutoff"
 
-        # Polygon: derive bbox for lateral pre-filter
-        if polygon and len(polygon) >= 3:
-            poly_lats = [pt[0] for pt in polygon]
-            poly_lons = [pt[1] for pt in polygon]
-            lateral_where.append(
-                "lat BETWEEN :poly_min_lat AND :poly_max_lat "
-                "AND lon BETWEEN :poly_min_lon AND :poly_max_lon"
-            )
-            params.update({
-                "poly_min_lat": min(poly_lats),
-                "poly_max_lat": max(poly_lats),
-                "poly_min_lon": min(poly_lons),
-                "poly_max_lon": max(poly_lons),
-            })
+            pos_where: list[str] = [pos_time]
+            if callsign:
+                pos_where.append("p.flight ILIKE :callsign")
+                params["callsign"] = f"%{callsign}%"
+            if min_altitude is not None:
+                pos_where.append("p.alt_baro >= :min_altitude")
+                params["min_altitude"] = float(min_altitude)
+            if max_altitude is not None:
+                pos_where.append("p.alt_baro <= :max_altitude")
+                params["max_altitude"] = float(max_altitude)
+            if polygon and len(polygon) >= 3:
+                poly_lats = [pt[0] for pt in polygon]
+                poly_lons = [pt[1] for pt in polygon]
+                pos_where.append(
+                    "p.lat BETWEEN :poly_min_lat AND :poly_max_lat "
+                    "AND p.lon BETWEEN :poly_min_lon AND :poly_max_lon"
+                )
+                params.update({
+                    "poly_min_lat": min(poly_lats),
+                    "poly_max_lat": max(poly_lats),
+                    "poly_min_lon": min(poly_lons),
+                    "poly_max_lon": max(poly_lons),
+                })
 
-        aircraft_filter = (" AND " + " AND ".join(aircraft_where)) if aircraft_where else ""
-        lateral_filter = " AND ".join(lateral_where)
+            pos_filter = " AND ".join(pos_where)
+            where_sql = " AND ".join(where)
 
-        # Start from aircraft (35K rows), CROSS JOIN LATERAL to get distinct
-        # callsigns from positions. Produces one row per (hex, callsign) pair.
-        # Only aircraft with matching position rows are returned.
-        sql = f"""
-            SELECT a.hex, a.registration, a.icao_type, a.type_description, a.category,
-                   p.callsign
-            FROM public.aircraft a
-            CROSS JOIN LATERAL (
-                SELECT DISTINCT flight AS callsign
-                FROM public.positions
-                WHERE hex = a.hex
-                  AND {lateral_filter}
-                  AND flight IS NOT NULL
-            ) p
-            WHERE 1=1{aircraft_filter}
-            LIMIT 5000
-        """
+            # Use EXISTS to check if aircraft has matching positions
+            # without exploding rows — much faster than JOIN
+            sql = f"""
+                SELECT a.hex, a.registration, a.icao_type, a.type_description, a.category
+                FROM public.aircraft a
+                WHERE {where_sql}
+                  AND EXISTS (
+                      SELECT 1 FROM public.positions p
+                      WHERE p.hex = a.hex AND {pos_filter}
+                  )
+                LIMIT 5000
+            """
 
         debug_sql = sql
         for k, v in params.items():
@@ -206,7 +220,7 @@ class AlisonFlightsCube(BaseCube):
             columns = list(result.keys())
             rows = [dict(zip(columns, row)) for row in result.fetchall()]
 
-        # Polygon post-filter (Python ray-casting)
+        # Polygon post-filter (Python ray-casting) for precise boundary check
         if polygon and len(polygon) >= 3 and rows:
             candidate_hexes = [row["hex"] for row in rows]
             async with engine.connect() as conn:

@@ -119,13 +119,42 @@ async def delete_workflow(
     return {"detail": "Workflow deleted"}
 
 
+@router.post("/run/stream")
+async def stream_graph_adhoc(
+    graph: WorkflowGraph,
+    request: Request,
+) -> EventSourceResponse:
+    """Execute an ad-hoc workflow graph and stream progress as SSE.
+
+    Accepts the full graph in the request body — no saved workflow required.
+    Returns 400 if the graph contains a cycle.
+    """
+    try:
+        topological_sort(graph.nodes, graph.edges)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    async def event_publisher():
+        async for event in stream_graph(graph, request):
+            yield ServerSentEvent(
+                data=event.model_dump_json(exclude_none=True),
+                event="cube_status",
+            )
+
+    return EventSourceResponse(
+        event_publisher(),
+        ping=15,
+        headers={"X-Accel-Buffering": "no"},
+    )
+
+
 @router.get("/{workflow_id}/run/stream")
 async def stream_workflow(
     workflow_id: uuid.UUID,
     request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> EventSourceResponse:
-    """Stream workflow execution progress as Server-Sent Events.
+    """Stream saved workflow execution progress as Server-Sent Events.
 
     Yields one 'cube_status' SSE event per cube state transition:
     pending (all nodes up-front), then running/done/error/skipped per node.
@@ -140,7 +169,6 @@ async def stream_workflow(
 
     graph = WorkflowGraph.model_validate(wf.graph_json)
 
-    # Validate graph BEFORE starting SSE so we can still return HTTP error codes
     try:
         topological_sort(graph.nodes, graph.edges)
     except ValueError as exc:

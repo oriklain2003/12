@@ -13,6 +13,7 @@
  */
 
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { ResultsTable } from './ResultsTable';
 import { ResultsMap } from './ResultsMap';
 import { GeoPlaybackWidget } from '../Visualization/GeoPlaybackWidget';
@@ -82,10 +83,12 @@ export function ResultsDrawer() {
     const node = s.nodes.find((n) => n.id === s.selectedResultNodeId);
     return node?.data.cubeDef.widget ?? null;
   });
-  const cubeParams = useFlowStore((s) => {
-    const node = s.nodes.find((n) => n.id === s.selectedResultNodeId);
-    return node?.data.params ?? {};
-  });
+  const cubeParams = useFlowStore(
+    useShallow((s) => {
+      const node = s.nodes.find((n) => n.id === s.selectedResultNodeId);
+      return node?.data.params ?? {};
+    })
+  );
 
   // Derived
   const geoInfo: GeoInfo | null = useMemo(

@@ -3,8 +3,8 @@
  *
  * - Fetches cube catalog from backend on mount, stores in Zustand
  * - Groups cubes by CubeCategory
- * - Drag handle on each cube card (not the whole card) initiates drag
- * - Collapses to a ~48px icon strip showing one icon per category
+ * - Entire cube card is draggable
+ * - Collapses to a ~48px icon strip showing SVG icons per category
  */
 
 import { useEffect, useState } from 'react';
@@ -24,13 +24,49 @@ const CATEGORY_LABELS: Record<CubeCategory, string> = {
   [CubeCategory.OUTPUT]: 'Output',
 };
 
-const CATEGORY_ICONS: Record<CubeCategory, string> = {
-  [CubeCategory.DATA_SOURCE]: 'DS',
-  [CubeCategory.FILTER]: 'F',
-  [CubeCategory.ANALYSIS]: 'A',
-  [CubeCategory.AGGREGATION]: 'Ag',
-  [CubeCategory.OUTPUT]: 'O',
-};
+// SVG category icons
+function CategoryIcon({ category, size = 18 }: { category: CubeCategory; size?: number }) {
+  const props = { width: size, height: size, viewBox: '0 0 18 18', fill: 'none', stroke: 'currentColor', strokeWidth: 1.4, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+
+  switch (category) {
+    case CubeCategory.DATA_SOURCE:
+      return (
+        <svg {...props}>
+          <ellipse cx="9" cy="5" rx="6" ry="2.5" />
+          <path d="M3 5v8c0 1.38 2.69 2.5 6 2.5s6-1.12 6-2.5V5" />
+          <path d="M3 9c0 1.38 2.69 2.5 6 2.5s6-1.12 6-2.5" />
+        </svg>
+      );
+    case CubeCategory.FILTER:
+      return (
+        <svg {...props}>
+          <path d="M2 3h14l-5 6v5l-4 2V9L2 3z" />
+        </svg>
+      );
+    case CubeCategory.ANALYSIS:
+      return (
+        <svg {...props}>
+          <polyline points="2,14 6,8 10,11 16,3" />
+          <polyline points="12,3 16,3 16,7" />
+        </svg>
+      );
+    case CubeCategory.AGGREGATION:
+      return (
+        <svg {...props}>
+          <rect x="2" y="10" width="3" height="6" rx="0.5" />
+          <rect x="7.5" y="6" width="3" height="10" rx="0.5" />
+          <rect x="13" y="2" width="3" height="14" rx="0.5" />
+        </svg>
+      );
+    case CubeCategory.OUTPUT:
+      return (
+        <svg {...props}>
+          <rect x="2" y="3" width="14" height="10" rx="2" />
+          <line x1="6" y1="15" x2="12" y2="15" />
+        </svg>
+      );
+  }
+}
 
 // Fixed category order for consistent display
 const CATEGORY_ORDER: CubeCategory[] = [
@@ -95,7 +131,7 @@ export function CubeCatalog() {
   // ── Drag handler for cube cards ────────────────────────────────────────────
 
   const handleDragStart = (
-    event: React.DragEvent<HTMLSpanElement>,
+    event: React.DragEvent<HTMLDivElement>,
     cubeId: string
   ) => {
     event.dataTransfer.setData('application/cube-id', cubeId);
@@ -113,7 +149,9 @@ export function CubeCatalog() {
           title="Expand sidebar"
           aria-label="Expand sidebar"
         >
-          {'>>'}
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
         <div className="sidebar__icon-strip">
           {CATEGORY_ORDER.map((cat) => (
@@ -122,7 +160,7 @@ export function CubeCatalog() {
               className="sidebar__category-icon"
               title={CATEGORY_LABELS[cat]}
             >
-              {CATEGORY_ICONS[cat]}
+              <CategoryIcon category={cat} size={18} />
             </div>
           ))}
         </div>
@@ -142,11 +180,17 @@ export function CubeCatalog() {
           title="Collapse sidebar"
           aria-label="Collapse sidebar"
         >
-          {'<<'}
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M9 3l-4 4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
       </div>
 
       <div className="sidebar__search-wrapper">
+        <svg className="sidebar__search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.3" />
+          <path d="M9 9l3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        </svg>
         <input
           type="text"
           placeholder="Search cubes..."
@@ -154,6 +198,17 @@ export function CubeCatalog() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        {search && (
+          <button
+            className="sidebar__search-clear"
+            onClick={() => setSearch('')}
+            aria-label="Clear search"
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+            </svg>
+          </button>
+        )}
       </div>
 
       <div className="sidebar__catalog">
@@ -175,15 +230,12 @@ export function CubeCatalog() {
                 {CATEGORY_LABELS[cat]}
               </div>
               {cubes.map((cube) => (
-                <div key={cube.cube_id} className="sidebar__cube-card">
-                  <span
-                    className="sidebar__drag-handle"
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, cube.cube_id)}
-                    title="Drag to canvas"
-                  >
-                    &#8942;&#8942;
-                  </span>
+                <div
+                  key={cube.cube_id}
+                  className="sidebar__cube-card"
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, cube.cube_id)}
+                >
                   <div className="sidebar__cube-info">
                     <span className="sidebar__cube-name">{cube.name}</span>
                     <span className="sidebar__cube-desc">{cube.description}</span>
