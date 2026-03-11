@@ -13,9 +13,10 @@
   border-radius: 0;
   gap: 12px;
   position: relative;
+  z-index: 20;
 }
 
-/* Gradient glow bottom edge */
+/* Gradient glow bottom edge — animated hue shift */
 .toolbar::after {
   content: '';
   position: absolute;
@@ -23,7 +24,9 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(99, 102, 241, 0.2) 20%, rgba(99, 102, 241, 0.35) 50%, rgba(99, 102, 241, 0.2) 80%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(var(--accent-rgb), 0.25) 20%, rgba(168, 85, 247, 0.35) 50%, rgba(59, 130, 246, 0.25) 80%, transparent 100%);
+  background-size: 200% 100%;
+  animation: gradient-shift 8s ease-in-out infinite;
   pointer-events: none;
 }
 
@@ -111,6 +114,36 @@
   border-bottom-color: var(--color-accent);
 }
 
+/* Loading skeleton for workflow name */
+.toolbar__name-skeleton {
+  width: 180px;
+  height: 20px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  position: relative;
+}
+
+.toolbar__name-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 40%,
+    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.06) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: toolbar-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes toolbar-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* Right section: action buttons */
 .toolbar__actions {
   display: flex;
@@ -180,13 +213,13 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(139, 142, 255, 0.12) 0%, rgba(99, 102, 241, 0.04) 40%, transparent 70%);
+  background: linear-gradient(135deg, rgba(var(--accent-hover-rgb), 0.12) 0%, rgba(var(--accent-rgb), 0.04) 40%, transparent 70%);
   pointer-events: none;
 }
 
 .toolbar__btn--run:hover {
-  background: rgba(99, 102, 241, 0.25);
-  border-top-color: rgba(139, 142, 255, 0.4);
+  background: rgba(var(--accent-rgb), 0.25);
+  border-top-color: rgba(var(--accent-hover-rgb), 0.4);
   box-shadow: var(--shadow-glow-accent);
   transform: translateY(-0.5px);
 }
@@ -203,8 +236,8 @@
 }
 
 @keyframes toolbar-pulse {
-  0%, 100% { box-shadow: 0 0 0 rgba(99, 102, 241, 0); }
-  50% { box-shadow: 0 0 24px rgba(99, 102, 241, 0.35), 0 0 48px rgba(99, 102, 241, 0.1); }
+  0%, 100% { box-shadow: 0 0 0 rgba(var(--accent-rgb), 0); }
+  50% { box-shadow: 0 0 24px rgba(var(--accent-rgb), 0.35), 0 0 48px rgba(var(--accent-rgb), 0.1); }
 }
 
 /* Disabled state for all buttons */
@@ -251,4 +284,115 @@
   font-size: 11px;
   color: var(--color-text-muted);
   white-space: nowrap;
+}
+
+/* ── Help / Keyboard shortcuts ──────────────────────────── */
+
+.toolbar__help-wrapper {
+  position: relative;
+}
+
+.toolbar__help-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--btn-glass-border);
+  background: var(--btn-glass-bg);
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration-fast);
+  padding: 0;
+  line-height: 1;
+}
+
+.toolbar__help-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--color-text);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.toolbar__shortcuts {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 100;
+  min-width: 240px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: shortcuts-fade-in 0.15s ease-out;
+}
+
+@keyframes shortcuts-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.toolbar__shortcuts-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 10px;
+}
+
+.toolbar__shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.toolbar__shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--color-text-dim);
+}
+
+.toolbar__shortcut-keys {
+  display: flex;
+  gap: 3px;
+}
+
+.toolbar__shortcut-keys kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 11px;
+  font-family: inherit;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+/* ── Take Tour button in shortcuts panel ───────────────── */
+
+.toolbar__tour-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 7px 0;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--color-text-dim);
+  text-align: center;
+  line-height: 1;
 }

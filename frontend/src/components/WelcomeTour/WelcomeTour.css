@@ -1,0 +1,254 @@
+/* ── Tour Overlay ──────────────────────────────────────────── */
+
+.tour-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9000;
+  pointer-events: all;
+  animation: tour-backdrop-in 400ms ease-out both;
+}
+
+.tour-overlay--no-spotlight {
+  cursor: default;
+}
+
+.tour-overlay--interactive {
+  animation: tour-backdrop-in 400ms ease-out both;
+}
+
+.tour-wrapper--exiting .tour-overlay--interactive {
+  animation: tour-backdrop-out 300ms ease-in forwards;
+}
+
+.tour-overlay__cutout {
+  transition: x 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              y 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tour-overlay__glow {
+  transition: x 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              y 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: tour-glow-pulse 2s ease-in-out infinite;
+}
+
+/* ── Tour Tooltip ─────────────────────────────────────────── */
+
+.tour-tooltip {
+  position: fixed;
+  z-index: 9001;
+  padding: 20px 24px;
+  background: rgba(10, 12, 18, 0.92);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top-color: rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-md, 14px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.92);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  animation: tour-tooltip-in 300ms ease-out both;
+  pointer-events: all;
+}
+
+.tour-tooltip--hero {
+  text-align: center;
+  padding: 32px 36px;
+}
+
+.tour-tooltip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* ── Step label ───────────────────────────────────────────── */
+
+.tour-tooltip__step-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(var(--accent-rgb), 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+/* ── Title ────────────────────────────────────────────────── */
+
+.tour-tooltip__title {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.3;
+}
+
+.tour-tooltip__title--hero {
+  font-size: 26px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #fff 0%, rgba(var(--accent-hover-rgb), 0.9) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Description ──────────────────────────────────────────── */
+
+.tour-tooltip__description {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 18px;
+  white-space: pre-line;
+}
+
+/* ── Connection illustration ──────────────────────────────── */
+
+.tour-tooltip__connection-illustration {
+  display: block;
+  margin: 0 auto 16px;
+  opacity: 0.85;
+}
+
+/* ── Navigation ───────────────────────────────────────────── */
+
+.tour-tooltip__nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.tour-tooltip__nav-group {
+  display: flex;
+  gap: 8px;
+}
+
+.tour-tooltip__btn {
+  padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1;
+}
+
+/* ── Step dots ────────────────────────────────────────────── */
+
+.tour-tooltip__dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.tour-tooltip__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+.tour-tooltip__dot--active {
+  background: rgba(var(--accent-rgb), 0.9);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.4);
+  transform: scale(1.3);
+  animation: tour-step-dot-fill 200ms ease-out;
+}
+
+.tour-tooltip__dot--done {
+  background: rgba(var(--accent-rgb), 0.4);
+}
+
+/* ── Particle burst (finish step) ─────────────────────────── */
+
+.tour-tooltip--hero .tour-tooltip__particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.tour-tooltip__particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(var(--accent-rgb), 0.7);
+  top: 50%;
+  left: 50%;
+  animation: tour-particle-burst 1s ease-out forwards;
+}
+
+/* ── Wrapper for exit animation ───────────────────────────── */
+
+.tour-wrapper--exiting .tour-overlay {
+  animation: tour-backdrop-out 300ms ease-in forwards;
+}
+
+.tour-wrapper--exiting .tour-tooltip {
+  animation: tour-tooltip-out 200ms ease-in forwards;
+}
+
+/* ── Keyframes ────────────────────────────────────────────── */
+
+@keyframes tour-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes tour-backdrop-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes tour-tooltip-in {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes tour-tooltip-out {
+  from {
+    opacity: 1;
+    translate: 0 0;
+  }
+  to {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+}
+
+@keyframes tour-glow-pulse {
+  0%, 100% { stroke-opacity: 0.2; }
+  50%      { stroke-opacity: 0.6; }
+}
+
+@keyframes tour-step-dot-fill {
+  from { transform: scale(0); }
+  to   { transform: scale(1.3); }
+}
+
+@keyframes tour-particle-burst {
+  0% {
+    transform: scale(0) translate(0, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translate(var(--tx), var(--ty));
+    opacity: 0;
+  }
+}

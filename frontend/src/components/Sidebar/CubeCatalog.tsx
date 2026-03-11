@@ -7,11 +7,13 @@
  * - Collapses to a ~48px icon strip showing SVG icons per category
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { CubeCategory } from '../../types/cube';
 import type { CubeDefinition } from '../../types/cube';
 import { useFlowStore } from '../../store/flowStore';
 import { getCatalog } from '../../api/cubes';
+import { Skeleton } from '../ui/Skeleton';
+import { NodePreview } from './NodePreview';
 import './CubeCatalog.css';
 
 // ─── Category display helpers ─────────────────────────────────────────────────
@@ -87,6 +89,25 @@ export function CubeCatalog() {
 
   const [collapsed, setCollapsed] = useState(false);
   const [search, setSearch] = useState('');
+
+  // Hover preview state
+  const [hoveredCube, setHoveredCube] = useState<CubeDefinition | null>(null);
+  const [hoverRect, setHoverRect] = useState<DOMRect | null>(null);
+  const hoverTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const handleCubeMouseEnter = useCallback((cube: CubeDefinition, e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    hoverTimeout.current = setTimeout(() => {
+      setHoveredCube(cube);
+      setHoverRect(rect);
+    }, 300);
+  }, []);
+
+  const handleCubeMouseLeave = useCallback(() => {
+    clearTimeout(hoverTimeout.current);
+    setHoveredCube(null);
+    setHoverRect(null);
+  }, []);
 
   // Fetch catalog on mount
   useEffect(() => {
@@ -171,7 +192,7 @@ export function CubeCatalog() {
   // ── Expanded state ─────────────────────────────────────────────────────────
 
   return (
-    <div className="sidebar sidebar--expanded glass">
+    <div className="sidebar sidebar--expanded glass" data-tour="cube-catalog">
       <div className="sidebar__header">
         <span className="sidebar__title">Cubes</span>
         <button
@@ -213,14 +234,21 @@ export function CubeCatalog() {
 
       <div className="sidebar__catalog">
         {catalogLoading && (
-          <div className="sidebar__loading">Loading...</div>
+          <div style={{ padding: '0 6px' }}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="sidebar__cube-card" style={{ flexDirection: 'column', gap: 6 }}>
+                <Skeleton height={14} width="70%" />
+                <Skeleton height={10} width="90%" />
+              </div>
+            ))}
+          </div>
         )}
 
         {!catalogLoading && catalog.length === 0 && (
           <div className="sidebar__empty">No cubes available</div>
         )}
 
-        {CATEGORY_ORDER.map((cat) => {
+        {(() => { let firstCard = true; return CATEGORY_ORDER.map((cat) => {
           const cubes = grouped.get(cat) ?? [];
           if (cubes.length === 0) return null;
 
@@ -229,23 +257,34 @@ export function CubeCatalog() {
               <div className="sidebar__category-header">
                 {CATEGORY_LABELS[cat]}
               </div>
-              {cubes.map((cube) => (
+              {cubes.map((cube) => {
+                const isFirstCard = firstCard;
+                if (firstCard) firstCard = false;
+                return (
                 <div
                   key={cube.cube_id}
                   className="sidebar__cube-card"
                   draggable
                   onDragStart={(e) => handleDragStart(e, cube.cube_id)}
+                  onMouseEnter={(e) => handleCubeMouseEnter(cube, e)}
+                  onMouseLeave={handleCubeMouseLeave}
+                  {...(isFirstCard ? { 'data-tour': 'cube-card' } : {})}
                 >
                   <div className="sidebar__cube-info">
                     <span className="sidebar__cube-name">{cube.name}</span>
                     <span className="sidebar__cube-desc">{cube.description}</span>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           );
-        })}
+        }); })()}
       </div>
+
+      {hoveredCube && hoverRect && (
+        <NodePreview cube={hoveredCube} rect={hoverRect} />
+      )}
     </div>
   );
 }

@@ -9,7 +9,8 @@
  *  - Running glow: subtle box-shadow when the node is actively running
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import { CubeCategory, ParamType } from '../../types/cube';
@@ -66,12 +67,56 @@ function ErrorBanner({ error }: { error: string }) {
   );
 }
 
+// ─── Info Popover ─────────────────────────────────────────────────────────────
+
+function CubeInfoPopover({ description, buttonRect, onClose }: {
+  description: string;
+  buttonRect: DOMRect;
+  onClose: () => void;
+}) {
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handlePointerDown(e: PointerEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+    }
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, true);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
+  // Position below the button, clamped to viewport
+  const top = Math.min(buttonRect.bottom + 8, window.innerHeight - 320);
+  const left = Math.max(8, Math.min(buttonRect.left, window.innerWidth - 268));
+
+  return createPortal(
+    <div
+      ref={popoverRef}
+      className="cube-info-popover"
+      style={{ top, left }}
+    >
+      <p className="cube-info-popover__text">{description}</p>
+    </div>,
+    document.body
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function CubeNode({ id, data, selected, isConnectable }: NodeProps<CubeFlowNode>) {
   const { cubeDef } = data;
   const categoryColor = CATEGORY_COLORS[cubeDef.category] ?? '#6b7280';
   const removeNode = useFlowStore((s) => s.removeNode);
+  const [showInfo, setShowInfo] = useState(false);
+  const infoButtonRef = useRef<HTMLButtonElement>(null);
 
   // Execution state from store — per-node status
   const executionStatus = useFlowStore((s) => s.executionStatus[id]);
@@ -81,18 +126,25 @@ export function CubeNode({ id, data, selected, isConnectable }: NodeProps<CubeFl
   const setSelectedResultNodeId = useFlowStore((s) => s.setSelectedResultNodeId);
   const hasResults = useFlowStore((s) => !!s.results[id]);
 
+  // Node entrance animation
+  const clearNodeNew = useFlowStore((s) => s.clearNodeNew);
+
   // Build class list for the root node div
   const nodeClasses = [
     'cube-node',
     'glass--node',
     selected ? 'cube-node--selected' : '',
     executionStatus?.status === 'running' ? 'cube-node--running' : '',
+    data.isNew ? 'cube-node--entering' : '',
   ]
     .filter(Boolean)
     .join(' ');
 
   return (
-    <div className={nodeClasses}>
+    <div
+      className={nodeClasses}
+      onAnimationEnd={() => { if (data.isNew) clearNodeNew(id); }}
+    >
       {/* Error banner — absolute positioned ABOVE the node (bottom: calc(100% + 6px)) */}
       {executionStatus?.status === 'error' && executionStatus.error && (
         <ErrorBanner error={executionStatus.error} />
@@ -109,6 +161,34 @@ export function CubeNode({ id, data, selected, isConnectable }: NodeProps<CubeFl
             <path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
         </button>
+      )}
+
+      {/* Info button — shows cube description popover */}
+      {cubeDef.description && (
+        <button
+          ref={infoButtonRef}
+          className={`cube-node__info nodrag nopan${showInfo ? ' cube-node__info--active' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowInfo((prev) => !prev);
+          }}
+          aria-label="Cube info"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2" />
+            <path d="M7 6.5V10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+            <circle cx="7" cy="4.5" r="0.75" fill="currentColor" />
+          </svg>
+        </button>
+      )}
+
+      {/* Info popover */}
+      {showInfo && cubeDef.description && infoButtonRef.current && (
+        <CubeInfoPopover
+          description={cubeDef.description}
+          buttonRect={infoButtonRef.current.getBoundingClientRect()}
+          onClose={() => setShowInfo(false)}
+        />
       )}
 
       {/* Header — click to open results drawer (only when results exist) */}

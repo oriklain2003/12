@@ -3,7 +3,7 @@
 .dashboard {
   min-height: 100vh;
   background: var(--color-bg);
-  background-image: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(99, 102, 241, 0.06) 0%, transparent 70%);
+  background-image: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(var(--accent-rgb), 0.06) 0%, transparent 70%);
   color: var(--color-text);
   padding: 40px 32px;
 }
@@ -83,13 +83,13 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(139, 142, 255, 0.12) 0%, rgba(99, 102, 241, 0.04) 40%, transparent 70%);
+  background: linear-gradient(135deg, rgba(var(--accent-hover-rgb), 0.12) 0%, rgba(var(--accent-rgb), 0.04) 40%, transparent 70%);
   pointer-events: none;
 }
 
 .dashboard__new-btn:hover {
-  background: rgba(99, 102, 241, 0.25);
-  border-top-color: rgba(139, 142, 255, 0.4);
+  background: rgba(var(--accent-rgb), 0.25);
+  border-top-color: rgba(var(--accent-hover-rgb), 0.4);
   box-shadow: var(--shadow-glow-accent);
   transform: translateY(-0.5px);
 }

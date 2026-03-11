@@ -1,13 +1,12 @@
 /**
- * Custom React Flow edge for type-mismatched connections.
- * Renders as a dashed orange straight line to visually indicate
- * that the source and target param types do not match.
+ * Straight edge with param label overlay.
+ * Replaces the built-in 'straight' edge type to add EdgeLabel support.
  */
 
 import { getStraightPath, BaseEdge, type EdgeProps } from '@xyflow/react';
 import { EdgeLabel } from './EdgeLabel';
 
-export function MismatchEdge({
+export function LabeledStraightEdge({
   id,
   sourceX,
   sourceY,
@@ -16,7 +15,6 @@ export function MismatchEdge({
   targetY,
   targetHandleId: targetHandle,
   selected,
-  // Destructure React Flow internal props to prevent them from being spread onto DOM elements
   selectable: _selectable,
   deletable: _deletable,
   sourcePosition: _sourcePosition,
@@ -31,11 +29,7 @@ export function MismatchEdge({
       <BaseEdge
         id={id}
         path={edgePath}
-        style={{
-          stroke: 'var(--color-warning)',
-          strokeDasharray: '6 3',
-          strokeWidth: 2,
-        }}
+        style={{ stroke: 'rgba(255, 255, 255, 0.15)' }}
         {...rest}
       />
       <EdgeLabel

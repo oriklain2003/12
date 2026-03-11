@@ -155,7 +155,7 @@
 
 .geo-playback__play-btn:hover:not(:disabled) {
   border-color: var(--accent, #6366f1);
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(var(--accent-rgb), 0.1);
 }
 
 .geo-playback__play-btn:disabled {

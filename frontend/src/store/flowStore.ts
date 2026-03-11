@@ -20,6 +20,7 @@ export type CubeNodeData = {
   cube_id: string;
   cubeDef: CubeDefinition;
   params: Record<string, unknown>;
+  isNew?: boolean;
 };
 
 export type CubeFlowNode = Node<CubeNodeData, 'cube'>;
@@ -100,11 +101,18 @@ interface FlowState {
   catalog: CubeDefinition[];
   results: Record<string, { rows: unknown[]; truncated: boolean }>;
   catalogLoading: boolean;
+  isLoadingWorkflow: boolean;
 
   // Workflow metadata
   workflowId: string | null;
   workflowName: string;
   isDirty: boolean;
+
+  // Undo/Redo history
+  history: { nodes: CubeFlowNode[]; edges: Edge[] }[];
+  historyIndex: number;
+  savedHistoryIndex: number;
+  _isUndoRedo: boolean;
 
   // Execution state
   isRunning: boolean;
@@ -125,6 +133,15 @@ interface FlowState {
   addCubeNode: (cubeId: string, position: { x: number; y: number }) => void;
   removeNode: (nodeId: string) => void;
   updateNodeParam: (nodeId: string, paramName: string, value: unknown) => void;
+  clearNodeNew: (nodeId: string) => void;
+
+  // Edge actions
+  addTypedEdge: (edge: Edge) => void;
+
+  // Undo/Redo actions
+  pushSnapshot: () => void;
+  undo: () => void;
+  redo: () => void;
 
   // Results actions
   setResults: (nodeId: string, rows: unknown[], truncated: boolean) => void;
@@ -147,6 +164,24 @@ interface FlowState {
   startExecution: () => void;
   stopExecution: () => void;
   setNodeExecutionStatus: (nodeId: string, event: CubeStatusEvent) => void;
+
+  // Connection drag state (for magnetic handles)
+  connectionDrag: {
+    sourceNodeId: string;
+    sourceHandleId: string;
+    sourceParamType: ParamType | null;
+    mouseX: number;
+    mouseY: number;
+  } | null;
+  startConnectionDrag: (nodeId: string, handleId: string) => void;
+  updateConnectionDragPosition: (x: number, y: number) => void;
+  endConnectionDrag: () => void;
+
+  // Magnetic guide lines — compatible handles register their screen position
+  magneticTargets: Record<string, { screenX: number; screenY: number; color: string }>;
+  registerMagneticTarget: (handleId: string, screenX: number, screenY: number, color: string) => void;
+  unregisterMagneticTarget: (handleId: string) => void;
+  clearMagneticTargets: () => void;
 }
 
 // ─── Default param value helper ──────────────────────────────────────────────
@@ -170,17 +205,28 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
   catalog: [],
   results: {},
   catalogLoading: false,
+  isLoadingWorkflow: false,
 
   // Initial workflow metadata
   workflowId: null,
   workflowName: 'Untitled Workflow',
   isDirty: false,
 
+  // Undo/Redo history
+  history: [{ nodes: [], edges: [] }],
+  historyIndex: 0,
+  savedHistoryIndex: 0,
+  _isUndoRedo: false,
+
   // Initial execution state
   isRunning: false,
   executionStatus: {},
   completedCount: 0,
   totalCount: 0,
+
+  // Connection drag state
+  connectionDrag: null,
+  magneticTargets: {},
 
   // Results drawer selection state
   selectedResultNodeId: null,
@@ -192,33 +238,100 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
   setCatalog: (catalog) => set({ catalog }),
   setCatalogLoading: (loading) => set({ catalogLoading: loading }),
 
+  // ── Undo/Redo ─────────────────────────────────────────────────────────────
+
+  pushSnapshot: () => {
+    const { nodes, edges, history, historyIndex } = get();
+    const snapshot = { nodes: structuredClone(nodes), edges: structuredClone(edges) };
+    const truncated = history.slice(0, historyIndex + 1);
+    truncated.push(snapshot);
+    // Cap at 50 entries
+    if (truncated.length > 50) truncated.shift();
+    set({
+      history: truncated,
+      historyIndex: truncated.length - 1,
+    });
+  },
+
+  undo: () => {
+    const { historyIndex, history, savedHistoryIndex } = get();
+    if (historyIndex <= 0) return;
+    const newIndex = historyIndex - 1;
+    const snapshot = history[newIndex];
+    set({
+      _isUndoRedo: true,
+      nodes: structuredClone(snapshot.nodes),
+      edges: structuredClone(snapshot.edges),
+      historyIndex: newIndex,
+      isDirty: newIndex !== savedHistoryIndex,
+    });
+    // Reset flag after React Flow processes the changes
+    queueMicrotask(() => set({ _isUndoRedo: false }));
+  },
+
+  redo: () => {
+    const { historyIndex, history, savedHistoryIndex } = get();
+    if (historyIndex >= history.length - 1) return;
+    const newIndex = historyIndex + 1;
+    const snapshot = history[newIndex];
+    set({
+      _isUndoRedo: true,
+      nodes: structuredClone(snapshot.nodes),
+      edges: structuredClone(snapshot.edges),
+      historyIndex: newIndex,
+      isDirty: newIndex !== savedHistoryIndex,
+    });
+    // Reset flag after React Flow processes the changes
+    queueMicrotask(() => set({ _isUndoRedo: false }));
+  },
+
+  addTypedEdge: (edge) => {
+    get().pushSnapshot();
+    set((state) => ({ edges: [...state.edges, edge], isDirty: true }));
+  },
+
   // React Flow change handlers — delegate to xyflow utilities, mark dirty
   // Only substantive changes (position, add, remove, replace) set isDirty.
   // Selection and dimension changes are internal React Flow bookkeeping.
-  onNodesChange: (changes) =>
+  onNodesChange: (changes) => {
+    if (!get()._isUndoRedo) {
+      const hasStructural = changes.some(
+        (c) => c.type === 'add' || c.type === 'remove' || c.type === 'replace'
+      );
+      if (hasStructural) get().pushSnapshot();
+    }
     set((state) => {
       const substantive = changes.some(
         (c) => c.type !== 'select' && c.type !== 'dimensions'
       );
       return {
         nodes: applyNodeChanges(changes, state.nodes),
-        ...(substantive ? { isDirty: true } : {}),
+        ...(substantive && !get()._isUndoRedo ? { isDirty: true } : {}),
       };
-    }),
+    });
+  },
 
-  onEdgesChange: (changes) =>
+  onEdgesChange: (changes) => {
+    if (!get()._isUndoRedo) {
+      get().pushSnapshot();
+    }
     set((state) => ({
       edges: applyEdgeChanges(changes, state.edges),
-      isDirty: true,
-    })),
+      ...(get()._isUndoRedo ? {} : { isDirty: true }),
+    }));
+  },
 
-  onConnect: (connection) =>
+  onConnect: (connection) => {
+    get().pushSnapshot();
     set((state) => ({
       edges: addEdge(connection, state.edges),
-    })),
+      isDirty: true,
+    }));
+  },
 
   // Add a new cube node from the catalog
   addCubeNode: (cubeId, position) => {
+    get().pushSnapshot();
     const { catalog } = get();
     const cubeDef = catalog.find((c) => c.cube_id === cubeId);
     if (!cubeDef) {
@@ -240,14 +353,26 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
         cube_id: cubeId,
         cubeDef,
         params,
+        isNew: true,
       },
     };
 
     set((state) => ({ nodes: [...state.nodes, newNode], isDirty: true }));
   },
 
+  // Clear the isNew flag after entrance animation completes
+  clearNodeNew: (nodeId) =>
+    set((state) => ({
+      nodes: state.nodes.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, isNew: false } }
+          : node
+      ),
+    })),
+
   // Remove a node, its connected edges, and its results in one atomic update
-  removeNode: (nodeId) =>
+  removeNode: (nodeId) => {
+    get().pushSnapshot();
     set((state) => ({
       nodes: state.nodes.filter((n) => n.id !== nodeId),
       edges: state.edges.filter((e) => e.source !== nodeId && e.target !== nodeId),
@@ -255,10 +380,12 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
         Object.entries(state.results).filter(([id]) => id !== nodeId)
       ),
       isDirty: true,
-    })),
+    }));
+  },
 
   // Update a single param value inside a node's data — immutable, marks dirty
-  updateNodeParam: (nodeId, paramName, value) =>
+  updateNodeParam: (nodeId, paramName, value) => {
+    get().pushSnapshot();
     set((state) => ({
       nodes: state.nodes.map((node) =>
         node.id === nodeId
@@ -275,7 +402,8 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
           : node
       ),
       isDirty: true,
-    })),
+    }));
+  },
 
   // Results management
   setResults: (nodeId, rows, truncated) =>
@@ -305,38 +433,46 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
       response = await updateWorkflow(workflowId, workflowName, graph);
     }
 
-    set({ workflowId: response.id, isDirty: false });
+    set({ workflowId: response.id, isDirty: false, savedHistoryIndex: get().historyIndex });
     return response.id;
   },
 
   // Load a workflow from API and restore canvas state
   loadWorkflow: async (id) => {
-    const state = get();
-    let { catalog } = state;
+    set({ isLoadingWorkflow: true, workflowName: '' });
+    try {
+      const state = get();
+      let { catalog } = state;
 
-    // Guard: ensure catalog is loaded before deserializing
-    if (catalog.length === 0) {
-      state.setCatalogLoading(true);
-      try {
-        catalog = await getCatalog();
-        get().setCatalog(catalog);
-      } finally {
-        get().setCatalogLoading(false);
+      // Guard: ensure catalog is loaded before deserializing
+      if (catalog.length === 0) {
+        state.setCatalogLoading(true);
+        try {
+          catalog = await getCatalog();
+          get().setCatalog(catalog);
+        } finally {
+          get().setCatalogLoading(false);
+        }
       }
+
+      const response = await getWorkflow(id);
+      const { nodes, edges } = deserializeGraph(response.graph_json, catalog);
+
+      set({
+        nodes,
+        edges,
+        workflowId: response.id,
+        workflowName: response.name,
+        isDirty: false,
+        results: {},
+        executionStatus: {},
+        history: [{ nodes: structuredClone(nodes), edges: structuredClone(edges) }],
+        historyIndex: 0,
+        savedHistoryIndex: 0,
+      });
+    } finally {
+      set({ isLoadingWorkflow: false });
     }
-
-    const response = await getWorkflow(id);
-    const { nodes, edges } = deserializeGraph(response.graph_json, catalog);
-
-    set({
-      nodes,
-      edges,
-      workflowId: response.id,
-      workflowName: response.name,
-      isDirty: false,
-      results: {},
-      executionStatus: {},
-    });
   },
 
   // Reset to empty state for a new workflow
@@ -353,6 +489,9 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
       completedCount: 0,
       totalCount: 0,
       selectedResultNodeId: null,
+      history: [{ nodes: [], edges: [] }],
+      historyIndex: 0,
+      savedHistoryIndex: 0,
     }),
 
   // Execution actions
@@ -365,6 +504,57 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
     }),
 
   stopExecution: () => set({ isRunning: false }),
+
+  // Connection drag actions (for magnetic handles)
+  startConnectionDrag: (nodeId, handleId) => {
+    const { nodes } = get();
+    const node = nodes.find((n) => n.id === nodeId);
+    let sourceParamType: ParamType | null = null;
+    if (node) {
+      if (handleId === '__full_result__') {
+        sourceParamType = ParamType.JSON_OBJECT;
+      } else {
+        const param = node.data.cubeDef.outputs.find((p) => p.name === handleId);
+        sourceParamType = param?.type ?? null;
+      }
+    }
+    set({
+      connectionDrag: {
+        sourceNodeId: nodeId,
+        sourceHandleId: handleId,
+        sourceParamType,
+        mouseX: 0,
+        mouseY: 0,
+      },
+    });
+  },
+
+  updateConnectionDragPosition: (x, y) =>
+    set((state) => {
+      if (!state.connectionDrag) return {};
+      return {
+        connectionDrag: { ...state.connectionDrag, mouseX: x, mouseY: y },
+      };
+    }),
+
+  endConnectionDrag: () => set({ connectionDrag: null, magneticTargets: {} }),
+
+  // Magnetic guide line targets
+  registerMagneticTarget: (handleId, screenX, screenY, color) =>
+    set((state) => ({
+      magneticTargets: {
+        ...state.magneticTargets,
+        [handleId]: { screenX, screenY, color },
+      },
+    })),
+
+  unregisterMagneticTarget: (handleId) =>
+    set((state) => {
+      const { [handleId]: _, ...rest } = state.magneticTargets;
+      return { magneticTargets: rest };
+    }),
+
+  clearMagneticTargets: () => set({ magneticTargets: {} }),
 
   setNodeExecutionStatus: (nodeId, event) =>
     set((state) => {

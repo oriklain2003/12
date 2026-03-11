@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Toaster, toast } from 'sonner';
 import { getWorkflows, deleteWorkflow, updateWorkflow } from '../api/workflows';
 import type { WorkflowResponse } from '../types/workflow';
+import { Skeleton } from '../components/ui/Skeleton';
+import { useThemeStore } from '../store/themeStore';
 import './DashboardPage.css';
 
 export function DashboardPage() {
@@ -13,6 +15,11 @@ export function DashboardPage() {
   const [renameValue, setRenameValue] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    document.title = 'ONYX 12';
+    useThemeStore.getState().applyTheme();
+  }, []);
 
   useEffect(() => {
     getWorkflows()
@@ -109,8 +116,14 @@ export function DashboardPage() {
       </div>
 
       {loading && (
-        <div className="dashboard__empty">
-          <p>Loading workflows...</p>
+        <div className="dashboard__grid">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="dashboard__card glass">
+              <Skeleton height={18} width="60%" />
+              <Skeleton height={12} width="45%" />
+              <Skeleton height={12} width="40%" />
+            </div>
+          ))}
         </div>
       )}
 

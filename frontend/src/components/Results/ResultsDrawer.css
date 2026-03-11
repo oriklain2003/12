@@ -18,7 +18,7 @@
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.7);
 }
 
-/* Gradient glow top edge */
+/* Gradient glow top edge — animated hue shift */
 .results-drawer::before {
   content: '';
   position: absolute;
@@ -26,7 +26,9 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(99, 102, 241, 0.2) 20%, rgba(99, 102, 241, 0.35) 50%, rgba(99, 102, 241, 0.2) 80%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(var(--accent-rgb), 0.25) 20%, rgba(168, 85, 247, 0.35) 50%, rgba(59, 130, 246, 0.25) 80%, transparent 100%);
+  background-size: 200% 100%;
+  animation: gradient-shift 8s ease-in-out infinite;
   pointer-events: none;
 }
 
