@@ -17,8 +17,9 @@ import { useFlowStore } from '../../store/flowStore';
 import './WelcomeTour.css';
 
 /** Step indices for interactive steps */
-const DRAG_STEP = 2;
+const DRAG_STEP = 3;
 const CMD_K_STEP = 6;
+const RUN_STEP = 9;
 
 export function WelcomeTour() {
   const { isActive, currentStep, hasCompleted, startTour, nextStep, prevStep, closeTour } =
@@ -100,6 +101,63 @@ export function WelcomeTour() {
         }, 400);
         unsub();
       }
+    });
+
+    return unsub;
+  }, [isActive, currentStep, nextStep]);
+
+  // ── Auto-advance on RUN step when execution completes ──────────────────────
+  useEffect(() => {
+    if (!isActive || currentStep !== RUN_STEP) return;
+
+    // Capture initial result count so we know when NEW results arrive
+    const initialResultCount = Object.keys(useFlowStore.getState().results).length;
+    // Check if execution is already running (in case it started before subscription)
+    let sawRunning = useFlowStore.getState().isRunning;
+    let advanced = false;
+
+    const unsub = useFlowStore.subscribe((state) => {
+      if (advanced) return;
+
+      // Track if execution has started
+      if (state.isRunning) {
+        sawRunning = true;
+        return;
+      }
+
+      // Only proceed after we've seen execution start AND it's now stopped
+      if (!sawRunning) return;
+
+      // Check that new results appeared (any node, not just get_anomalies)
+      const resultKeys = Object.keys(state.results);
+      if (resultKeys.length <= initialResultCount) return;
+
+      advanced = true;
+
+      // Find the best node to show results for (prefer get_anomalies, fall back to last node with results)
+      const anomalyNode = state.nodes.find((n) => n.data.cube_id === 'get_anomalies');
+      const targetNodeId = anomalyNode && state.results[anomalyNode.id]
+        ? anomalyNode.id
+        : resultKeys[resultKeys.length - 1];
+
+      if (!targetNodeId) return;
+
+      // Open the results drawer
+      useFlowStore.getState().setSelectedResultNodeId(targetNodeId);
+
+      // Wait for the drawer to actually render open before advancing
+      const waitForDrawer = () => {
+        const drawer = document.querySelector('[data-tour="results-drawer"]');
+        if (drawer && drawer.classList.contains('results-drawer--open')) {
+          setTimeout(() => {
+            nextStep(TOUR_STEPS.length);
+          }, 400);
+        } else {
+          requestAnimationFrame(waitForDrawer);
+        }
+      };
+      requestAnimationFrame(waitForDrawer);
+      unsub();
     });
 
     return unsub;

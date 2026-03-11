@@ -11,7 +11,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Handle, Position } from '@xyflow/react';
+import { Handle, Position, useUpdateNodeInternals } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import { CubeCategory, ParamType } from '../../types/cube';
 import type { CubeFlowNode } from '../../store/flowStore';
@@ -115,6 +115,15 @@ export function CubeNode({ id, data, selected, isConnectable }: NodeProps<CubeFl
   const { cubeDef } = data;
   const categoryColor = CATEGORY_COLORS[cubeDef.category] ?? '#6b7280';
   const removeNode = useFlowStore((s) => s.removeNode);
+
+  // Recalculate handle positions when connections change (row height may shift)
+  const updateNodeInternals = useUpdateNodeInternals();
+  const connectedHandles = useFlowStore(
+    (s) => s.edges.filter((e) => e.source === id || e.target === id).map((e) => e.id).join(',')
+  );
+  useEffect(() => {
+    updateNodeInternals(id);
+  }, [connectedHandles, id, updateNodeInternals]);
   const [showInfo, setShowInfo] = useState(false);
   const infoButtonRef = useRef<HTMLButtonElement>(null);
 

@@ -103,10 +103,11 @@ export function ParamHandle({ param, type, isConnectable }: ParamHandleProps) {
       className={`nodrag cube-node__handle ${magneticClass}`}
       style={{
         background: color,
-        width: 12,
-        height: 12,
-        borderRadius: 4,
-        border: '2px solid rgba(0,0,0,0.3)',
+        width: 10,
+        height: 10,
+        borderRadius: '50%',
+        border: '2px solid rgba(0, 0, 0, 0.5)',
+        boxShadow: `0 0 6px ${color}44`,
         '--glow-color': color,
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
       } as React.CSSProperties}

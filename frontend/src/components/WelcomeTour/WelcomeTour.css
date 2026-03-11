@@ -109,9 +109,9 @@
   white-space: pre-line;
 }
 
-/* ── Connection illustration ──────────────────────────────── */
+/* ── Illustrations ────────────────────────────────────────── */
 
-.tour-tooltip__connection-illustration {
+.tour-tooltip__illustration {
   display: block;
   margin: 0 auto 16px;
   opacity: 0.85;

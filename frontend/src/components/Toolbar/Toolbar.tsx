@@ -202,6 +202,7 @@ export function Toolbar() {
               onChange={(e) => setWorkflowName(e.target.value)}
               aria-label="Workflow name"
               spellCheck={false}
+              data-tour="workflow-name"
             />
             {isDirty && (
               <span className="toolbar__dirty-dot" aria-label="Unsaved changes" title="Unsaved changes" />

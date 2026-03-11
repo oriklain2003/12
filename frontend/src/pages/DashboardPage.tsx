@@ -14,6 +14,7 @@ export function DashboardPage() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -80,6 +81,7 @@ export function DashboardPage() {
 
   async function handleDeleteConfirm(id: string, e: React.MouseEvent) {
     e.stopPropagation();
+    setDeleteLoading(true);
     try {
       await deleteWorkflow(id);
       setWorkflows((prev) => prev.filter((w) => w.id !== id));
@@ -87,6 +89,7 @@ export function DashboardPage() {
     } catch {
       toast.error('Failed to delete workflow');
     }
+    setDeleteLoading(false);
     setDeletingId(null);
   }
 
@@ -178,16 +181,19 @@ export function DashboardPage() {
 
               {deletingId === wf.id ? (
                 <div className="dashboard__delete-confirm" onClick={(e) => e.stopPropagation()}>
-                  <span>Delete this workflow?</span>
+                  <span>{deleteLoading ? 'Deleting...' : 'Delete this workflow?'}</span>
                   <button
-                    className="dashboard__card-action-btn dashboard__card-action-btn--danger"
+                    className={`dashboard__card-action-btn dashboard__card-action-btn--danger${deleteLoading ? ' dashboard__card-action-btn--loading' : ''}`}
                     onClick={(e) => void handleDeleteConfirm(wf.id, e)}
+                    disabled={deleteLoading}
                   >
-                    Confirm
+                    {deleteLoading && <span className="dashboard__btn-spinner" />}
+                    {deleteLoading ? 'Deleting' : 'Confirm'}
                   </button>
                   <button
                     className="dashboard__card-action-btn"
                     onClick={handleDeleteCancel}
+                    disabled={deleteLoading}
                   >
                     Cancel
                   </button>

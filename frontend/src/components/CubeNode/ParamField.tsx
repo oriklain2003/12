@@ -98,12 +98,16 @@ export function ParamField({ nodeId, param }: ParamFieldProps) {
 
       case ParamType.BOOLEAN:
         return (
-          <input
-            type="checkbox"
-            className="nodrag nowheel"
-            checked={(currentValue as boolean) ?? false}
-            onChange={(e) => updateParam(e.target.checked)}
-          />
+          <label className="param-toggle nodrag nowheel">
+            <input
+              type="checkbox"
+              checked={(currentValue as boolean) ?? false}
+              onChange={(e) => updateParam(e.target.checked)}
+            />
+            <span className="param-toggle__track">
+              <span className="param-toggle__knob" />
+            </span>
+          </label>
         );
 
       case ParamType.LIST_OF_STRINGS:

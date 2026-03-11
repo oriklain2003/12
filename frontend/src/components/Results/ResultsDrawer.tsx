@@ -104,7 +104,7 @@ export function ResultsDrawer() {
   }, [selectedNodeId]);
 
   return (
-    <div className={`results-drawer${isOpen ? ' results-drawer--open' : ''}`}>
+    <div className={`results-drawer${isOpen ? ' results-drawer--open' : ''}`} data-tour="results-drawer">
       {/* Handle / grip — click to close */}
       <div className="results-drawer__handle" onClick={() => setSelectedResultNodeId(null)}>
         <div className="results-drawer__grip" />

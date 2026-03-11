@@ -105,6 +105,128 @@ function computePosition(
   }
 }
 
+// ── Inline SVG illustrations ─────────────────────────────────────────────────
+
+function TimeRangeIllustration() {
+  return (
+    <svg className="tour-tooltip__illustration" width="200" height="52" viewBox="0 0 200 52">
+      <rect x="10" y="6" width="180" height="40" rx="10" fill="rgba(99, 102, 241, 0.08)" stroke="rgba(99, 102, 241, 0.25)" strokeWidth="1" />
+      {/* clock icon */}
+      <circle cx="40" cy="26" r="11" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
+      <line x1="40" y1="26" x2="40" y2="18" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="40" y1="26" x2="46" y2="26" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
+      {/* sweeping second hand animation */}
+      <line x1="40" y1="26" x2="40" y2="17" stroke="rgba(99, 102, 241, 0.6)" strokeWidth="1" strokeLinecap="round">
+        <animateTransform attributeName="transform" type="rotate" from="0 40 26" to="360 40 26" dur="4s" repeatCount="indefinite" />
+      </line>
+      {/* arrow pointing right */}
+      <line x1="60" y1="26" x2="80" y2="26" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" />
+      <polyline points="76,22 80,26 76,30" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* 90 days label */}
+      <text x="130" y="30" textAnchor="middle" fill="rgba(255,255,255,0.85)" fontSize="15" fontWeight="600" fontFamily="DM Sans, system-ui">90 days</text>
+    </svg>
+  );
+}
+
+function ToggleAnomalyIllustration() {
+  return (
+    <svg className="tour-tooltip__illustration" width="180" height="48" viewBox="0 0 180 48">
+      <rect x="10" y="6" width="160" height="36" rx="10" fill="rgba(99, 102, 241, 0.08)" stroke="rgba(99, 102, 241, 0.25)" strokeWidth="1" />
+      {/* toggle track */}
+      <rect x="28" y="15" width="36" height="18" rx="9" fill="rgba(34, 197, 94, 0.5)" />
+      {/* toggle knob with slide animation */}
+      <circle cx="46" cy="24" r="6" fill="#fff">
+        <animate attributeName="cx" values="37;55;55" dur="1.5s" begin="0.3s" fill="freeze" />
+      </circle>
+      {/* track fill animation */}
+      <rect x="28" y="15" width="36" height="18" rx="9" fill="rgba(34, 197, 94, 0.5)">
+        <animate attributeName="fill" values="rgba(120,120,140,0.3);rgba(34, 197, 94, 0.5);rgba(34, 197, 94, 0.5)" dur="1.5s" begin="0.3s" fill="freeze" />
+      </rect>
+      {/* label */}
+      <text x="80" y="22" fill="rgba(255,255,255,0.6)" fontSize="10" fontFamily="DM Sans, system-ui">is_anomaly</text>
+      {/* checkmark appears */}
+      <text x="80" y="34" fill="rgba(34, 197, 94, 0.8)" fontSize="11" fontWeight="500" fontFamily="DM Sans, system-ui">
+        <tspan opacity="0">
+          <animate attributeName="opacity" values="0;0;1" dur="1.5s" begin="0.3s" fill="freeze" />
+          true
+        </tspan>
+      </text>
+    </svg>
+  );
+}
+
+function ConnectPipelineIllustration() {
+  return (
+    <svg className="tour-tooltip__illustration" width="320" height="70" viewBox="0 0 320 70">
+      {/* All Flights cube */}
+      <rect x="5" y="12" width="110" height="46" rx="10" fill="rgba(99, 102, 241, 0.12)" stroke="rgba(99, 102, 241, 0.35)" strokeWidth="1" />
+      <text x="60" y="30" textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize="11" fontWeight="500" fontFamily="DM Sans, system-ui">All Flights</text>
+      <text x="60" y="48" textAnchor="middle" fill="rgba(34, 197, 94, 0.7)" fontSize="9" fontFamily="DM Sans, system-ui">flight_ids</text>
+      {/* source handle */}
+      <circle cx="115" cy="44" r="5" fill="#22c55e" stroke="rgba(34, 197, 94, 0.3)" strokeWidth="2" />
+
+      {/* animated connection line */}
+      <line x1="120" y1="44" x2="200" y2="44" stroke="rgba(34, 197, 94, 0.35)" strokeWidth="2" strokeDasharray="6 4">
+        <animate attributeName="stroke-dashoffset" from="0" to="-20" dur="1.2s" repeatCount="indefinite" />
+      </line>
+      {/* flow arrow */}
+      <polygon points="196,39 206,44 196,49" fill="rgba(34, 197, 94, 0.4)">
+        <animate attributeName="opacity" values="0.3;0.7;0.3" dur="1.2s" repeatCount="indefinite" />
+      </polygon>
+
+      {/* target handle */}
+      <circle cx="205" cy="44" r="5" fill="#22c55e" stroke="rgba(34, 197, 94, 0.3)" strokeWidth="2" />
+      {/* Get Anomalies cube */}
+      <rect x="205" y="12" width="110" height="46" rx="10" fill="rgba(99, 102, 241, 0.12)" stroke="rgba(99, 102, 241, 0.35)" strokeWidth="1" />
+      <text x="260" y="30" textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize="11" fontWeight="500" fontFamily="DM Sans, system-ui">Get Anomalies</text>
+      <text x="260" y="48" textAnchor="middle" fill="rgba(34, 197, 94, 0.7)" fontSize="9" fontFamily="DM Sans, system-ui">flight_ids</text>
+    </svg>
+  );
+}
+
+function ResultsTableIllustration() {
+  return (
+    <svg className="tour-tooltip__illustration" width="280" height="78" viewBox="0 0 280 78">
+      <rect x="10" y="4" width="260" height="70" rx="10" fill="rgba(99, 102, 241, 0.06)" stroke="rgba(99, 102, 241, 0.2)" strokeWidth="1" />
+      {/* header row */}
+      <rect x="10" y="4" width="260" height="18" rx="10" fill="rgba(99, 102, 241, 0.1)" />
+      <rect x="10" y="14" width="260" height="8" fill="rgba(99, 102, 241, 0.1)" />
+      <text x="50" y="16" fill="rgba(255,255,255,0.5)" fontSize="8" fontWeight="500" fontFamily="DM Sans, system-ui">flight_id</text>
+      <text x="120" y="16" fill="rgba(255,255,255,0.5)" fontSize="8" fontWeight="500" fontFamily="DM Sans, system-ui">callsign</text>
+      <text x="190" y="16" fill="rgba(255,255,255,0.5)" fontSize="8" fontWeight="500" fontFamily="DM Sans, system-ui">severity</text>
+      <text x="245" y="16" fill="rgba(255,255,255,0.5)" fontSize="8" fontWeight="500" fontFamily="DM Sans, system-ui">anomaly</text>
+      {/* divider */}
+      <line x1="10" y1="22" x2="270" y2="22" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+      {/* row 1 */}
+      <text x="50" y="35" fill="rgba(255,255,255,0.4)" fontSize="8" fontFamily="DM Sans, system-ui">FL-28471</text>
+      <text x="120" y="35" fill="rgba(255,255,255,0.4)" fontSize="8" fontFamily="DM Sans, system-ui">UAL412</text>
+      <text x="195" y="35" fill="rgba(251, 191, 36, 0.8)" fontSize="8" fontFamily="DM Sans, system-ui">0.87</text>
+      <circle cx="255" cy="32" r="4" fill="rgba(34, 197, 94, 0.6)" />
+      <line x1="10" y1="42" x2="270" y2="42" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+      {/* row 2 */}
+      <text x="50" y="55" fill="rgba(255,255,255,0.4)" fontSize="8" fontFamily="DM Sans, system-ui">FL-91835</text>
+      <text x="120" y="55" fill="rgba(255,255,255,0.4)" fontSize="8" fontFamily="DM Sans, system-ui">DAL201</text>
+      <text x="195" y="55" fill="rgba(239, 68, 68, 0.8)" fontSize="8" fontFamily="DM Sans, system-ui">0.94</text>
+      <circle cx="255" cy="52" r="4" fill="rgba(34, 197, 94, 0.6)" />
+      <line x1="10" y1="62" x2="270" y2="62" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+      {/* row 3 faded */}
+      <text x="50" y="72" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="DM Sans, system-ui">FL-44029</text>
+      <text x="120" y="72" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="DM Sans, system-ui">SWA789</text>
+      <text x="195" y="72" fill="rgba(251, 191, 36, 0.5)" fontSize="8" fontFamily="DM Sans, system-ui">0.72</text>
+      <circle cx="255" cy="69" r="4" fill="rgba(34, 197, 94, 0.3)" />
+    </svg>
+  );
+}
+
+const ILLUSTRATION_MAP: Record<string, () => React.JSX.Element> = {
+  'time-range': TimeRangeIllustration,
+  'toggle-anomaly': ToggleAnomalyIllustration,
+  'connect-pipeline': ConnectPipelineIllustration,
+  'results-table': ResultsTableIllustration,
+};
+
+// ── TourTooltip ──────────────────────────────────────────────────────────────
+
 export function TourTooltip({
   step,
   stepIndex,
@@ -129,7 +251,7 @@ export function TourTooltip({
   const tooltipWidth = step.hero ? 440 : TOOLTIP_WIDTH;
 
   // For the command palette step, offset to the right so the palette doesn't cover it
-  const isCommandPaletteStep = stepIndex === 6;
+  const isCommandPaletteStep = stepIndex === 5;
   let style: React.CSSProperties;
   if (isCommandPaletteStep) {
     style = {
@@ -141,6 +263,9 @@ export function TourTooltip({
   } else {
     style = computePosition(step.position, spotlight, tooltipHeight);
   }
+
+  // Resolve illustration component
+  const IllustrationComponent = step.illustration ? ILLUSTRATION_MAP[step.illustration] : null;
 
   return (
     <div
@@ -164,22 +289,8 @@ export function TourTooltip({
         {step.description}
       </p>
 
-      {/* Connection illustration for step 4 */}
-      {stepIndex === 4 && (
-        <svg className="tour-tooltip__connection-illustration" width="240" height="60" viewBox="0 0 240 60">
-          <rect x="10" y="15" width="70" height="30" rx="8" fill="rgba(99, 102, 241, 0.15)" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="1" />
-          <text x="45" y="34" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="10" fontFamily="DM Sans">Source</text>
-          <circle cx="80" cy="30" r="4" fill="#6366f1" />
-
-          <line x1="84" y1="30" x2="156" y2="30" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="1.5" strokeDasharray="4 3">
-            <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1s" repeatCount="indefinite" />
-          </line>
-
-          <rect x="160" y="15" width="70" height="30" rx="8" fill="rgba(99, 102, 241, 0.15)" stroke="rgba(99, 102, 241, 0.4)" strokeWidth="1" />
-          <text x="195" y="34" textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize="10" fontFamily="DM Sans">Target</text>
-          <circle cx="160" cy="30" r="4" fill="#3b82f6" />
-        </svg>
-      )}
+      {/* Illustration */}
+      {IllustrationComponent && <IllustrationComponent />}
 
       {/* Navigation */}
       <div className="tour-tooltip__nav">
