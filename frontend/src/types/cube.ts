@@ -32,6 +32,7 @@ export interface ParamDefinition {
   default: string | number | boolean | unknown[] | null;
   accepts_full_result: boolean;
   widget_hint?: string | null;
+  options?: string[] | null;
 }
 
 export interface CubeDefinition {

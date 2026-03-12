@@ -199,6 +199,31 @@
   box-shadow: 0 0 0 3px var(--color-accent-glow);
 }
 
+/* Select dropdown (widget_hint="select") */
+.param-field > select {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border);
+  border-top-color: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: var(--color-text);
+  padding: 6px 10px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.param-field > select:focus {
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px var(--color-accent-glow);
+}
+
+.param-field > select:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
 /* Datetime input */
 .datetime-input input[type='datetime-local'] {
   width: 100%;

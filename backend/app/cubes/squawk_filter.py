@@ -74,6 +74,7 @@ class SquawkFilterCube(BaseCube):
             required=False,
             default="fr",
             widget_hint="select",
+            options=["fr", "alison"],
             description=(
                 "Data provider to query. "
                 "Options: 'fr' (research.normal_tracks, uses flight_ids) or "
@@ -86,6 +87,7 @@ class SquawkFilterCube(BaseCube):
             required=False,
             default="custom",
             widget_hint="select",
+            options=["custom", "emergency"],
             description=(
                 "Filter mode. "
                 "Options: 'custom' (user-specified squawk_codes) or "

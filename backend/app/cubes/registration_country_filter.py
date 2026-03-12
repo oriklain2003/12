@@ -67,6 +67,7 @@ class RegistrationCountryFilterCube(BaseCube):
             required=False,
             default="include",
             widget_hint="select",
+            options=["include", "exclude"],
             description=(
                 "Filter mode. "
                 "'include' keeps only aircraft matching target countries; "
@@ -88,6 +89,7 @@ class RegistrationCountryFilterCube(BaseCube):
             type=ParamType.LIST_OF_STRINGS,
             required=False,
             widget_hint="tags",
+            options=["black", "gray"],
             description=(
                 "Region group tags to expand to country sets "
                 "(e.g., ['black', 'gray']). "
@@ -167,10 +169,15 @@ class RegistrationCountryFilterCube(BaseCube):
                         "region": None,
                         "match_type": "unknown",
                     }
+            rows = [
+                {"hex": h, **info}
+                for h, info in resolved_countries.items()
+            ]
             return {
                 "flight_ids": list(hex_list),
                 "count": len(hex_list),
                 "country_details": resolved_countries,
+                "rows": rows,
             }
 
         # ----------------------------------------------------------------
@@ -299,8 +306,14 @@ class RegistrationCountryFilterCube(BaseCube):
             len(hex_list),
         )
 
+        # Build rows for table display — only passing hexes with their details
+        rows = [
+            {"hex": h, **resolved_countries.get(h, {})}
+            for h in passing_hexes
+        ]
         return {
             "flight_ids": passing_hexes,
             "count": len(passing_hexes),
             "country_details": resolved_countries,
+            "rows": rows,
         }

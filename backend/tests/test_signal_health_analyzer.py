@@ -37,7 +37,7 @@ def test_cube_metadata(cube):
 def test_cube_inputs(cube):
     """Cube has hex_list, full_result, target_phase, classify_mode inputs."""
     input_names = {p.name for p in cube.inputs}
-    assert input_names == {"hex_list", "full_result", "target_phase", "classify_mode"}
+    assert input_names == {"hex_list", "full_result", "target_phase", "classify_mode", "lookback_hours"}
 
 
 def test_cube_outputs(cube):
@@ -202,7 +202,7 @@ async def test_classify_mode_anomaly(cube):
     jamming_event = {**SAMPLE_INTEGRITY_EVENT, "category": "gps_jamming", "jamming_score": 5}
     normal_event = {**SAMPLE_INTEGRITY_EVENT, "hex": "def456", "category": "coverage_hole"}
 
-    async def mock_analyze(hex_code, baseline, phase):
+    async def mock_analyze(hex_code, baseline, phase, lookback_hours=24):
         if hex_code == "abc123":
             return [jamming_event]
         elif hex_code == "def456":
@@ -225,7 +225,7 @@ async def test_classify_mode_anomaly(cube):
 async def test_classify_mode_stable(cube):
     """classify_mode=['Stable'] returns hexes with zero non-normal events."""
     # abc123 has events, def456 has none (stable)
-    async def mock_analyze(hex_code, baseline, phase):
+    async def mock_analyze(hex_code, baseline, phase, lookback_hours=24):
         if hex_code == "abc123":
             return [{"hex": "abc123", "category": "gps_jamming"}]
         return []  # def456 is stable
@@ -301,7 +301,7 @@ async def test_stats_summary(cube):
         {"hex": "c", "category": "gps_spoofing"},
     ]
 
-    async def mock_analyze(hex_code, baseline, phase):
+    async def mock_analyze(hex_code, baseline, phase, lookback_hours=24):
         idx = {"a": 0, "b": 1, "c": 2}.get(hex_code)
         if idx is not None:
             return [events[idx]]

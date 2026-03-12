@@ -47,18 +47,41 @@ _baseline_ts: float = 0.0
 _BASELINE_TTL = 3600.0  # 1 hour
 
 
-async def get_coverage_baseline(lookback_days: int = 7) -> dict[tuple[float, float], dict[str, Any]]:
-    """Return the coverage baseline, building it if stale (1-hour TTL).
+_baseline_building = False
 
-    Default lookback of 7 days (vs. 30 in CLI script) is recommended for
-    interactive cube use to avoid excessive query time.
+
+async def get_coverage_baseline(lookback_days: int = 3) -> dict[tuple[float, float], dict[str, Any]]:
+    """Return the coverage baseline if cached, otherwise trigger a background build.
+
+    Returns an empty dict immediately if the baseline hasn't been built yet,
+    so detection is never blocked by the expensive full-table scan.
+    The baseline will be available for subsequent runs once built.
     """
-    global _baseline_cache, _baseline_ts
+    global _baseline_cache, _baseline_ts, _baseline_building
     now = time.monotonic()
-    if _baseline_cache is None or (now - _baseline_ts) > _BASELINE_TTL:
-        _baseline_cache = await build_coverage_baseline_async(lookback_days)
-        _baseline_ts = now
-    return _baseline_cache
+
+    if _baseline_cache is not None and (now - _baseline_ts) <= _BASELINE_TTL:
+        return _baseline_cache
+
+    # If not cached, kick off background build and return empty for now
+    if not _baseline_building:
+        _baseline_building = True
+        import asyncio
+
+        async def _build():
+            global _baseline_cache, _baseline_ts, _baseline_building
+            try:
+                _baseline_cache = await build_coverage_baseline_async(lookback_days)
+                _baseline_ts = time.monotonic()
+                log.info("Coverage baseline built in background (%d cells)", len(_baseline_cache))
+            except Exception as exc:
+                log.warning("Coverage baseline build failed: %s", exc)
+            finally:
+                _baseline_building = False
+
+        asyncio.create_task(_build())
+
+    return _baseline_cache if _baseline_cache is not None else {}
 
 
 # ---------------------------------------------------------------------------

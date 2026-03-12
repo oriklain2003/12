@@ -8,6 +8,7 @@ from app.config import settings
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    force=True,
 )
 from app.routers.cubes import router as cubes_router
 from app.routers.workflows import router as workflows_router
@@ -27,6 +28,17 @@ app.add_middleware(
 
 app.include_router(cubes_router)
 app.include_router(workflows_router)
+
+
+@app.on_event("startup")
+async def warm_db_pool():
+    """Pre-warm the DB connection pool so first workflow doesn't pay cold-start penalty."""
+    from app.database import engine
+    from sqlalchemy import text
+
+    async with engine.connect() as conn:
+        await conn.execute(text("SELECT 1"))
+    logging.getLogger(__name__).info("DB connection pool warmed")
 
 
 @app.get("/health")

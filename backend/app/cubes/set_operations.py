@@ -40,6 +40,7 @@ class SetOperationsCube(BaseCube):
             required=False,
             default="intersection",
             widget_hint="select",
+            options=["intersection", "union", "difference"],
         ),
     ]
 

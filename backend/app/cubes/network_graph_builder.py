@@ -34,6 +34,7 @@ class NetworkGraphBuilderCube(BaseCube):
             required=False,
             default="route",
             widget_hint="select",
+            options=["route"],
             description="Graph type",
         ),
         ParamDefinition(

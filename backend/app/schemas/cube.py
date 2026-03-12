@@ -29,6 +29,7 @@ class ParamDefinition(BaseModel):
     description: str = ""
     accepts_full_result: bool = False
     widget_hint: str | None = None
+    options: list[str] | None = None
 
 
 class CubeDefinition(BaseModel):

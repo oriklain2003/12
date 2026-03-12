@@ -1,0 +1,16 @@
+# Agent OS Standards Index
+
+python:
+  package-manager:
+    description: Use uv for all Python package and project management
+    file: python/package-manager.md
+
+node:
+  package-manager:
+    description: Use pnpm for all Node.js/JavaScript/TypeScript package management
+    file: node/package-manager.md
+
+database:
+  engine:
+    description: Use PostgreSQL as the database engine for all projects
+    file: database/engine.md

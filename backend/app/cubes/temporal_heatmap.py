@@ -31,7 +31,8 @@ class TemporalHeatmapCube(BaseCube):
             type=ParamType.STRING,
             default="hourly",
             widget_hint="select",
-            description='Time bucket granularity: "hourly" (hour of day) or "daily" (day of week).',
+            options=["hourly", "daily"],
+            description="Time bucket granularity",
         ),
     ]
 

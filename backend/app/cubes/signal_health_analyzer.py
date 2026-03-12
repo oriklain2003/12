@@ -10,6 +10,7 @@ Outputs: flight_ids, count, events, stats_summary
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from collections import Counter
@@ -153,17 +154,23 @@ class SignalHealthAnalyzerCube(BaseCube):
             default="any",
             description="Flight phase to analyze: takeoff / cruise / landing / any",
             widget_hint="select",
+            options=["any", "takeoff", "cruise", "landing"],
         ),
         ParamDefinition(
             name="classify_mode",
             type=ParamType.LIST_OF_STRINGS,
             required=False,
             default=["all"],
-            description=(
-                "Filter output by user-facing classification label: "
-                "Stable, Jamming, Spoofing, Dark Target, Technical Gaps, all"
-            ),
+            description="Filter output by user-facing classification label",
             widget_hint="tags",
+            options=["all", "Stable", "Jamming", "Spoofing", "Dark Target", "Technical Gaps"],
+        ),
+        ParamDefinition(
+            name="lookback_hours",
+            type=ParamType.NUMBER,
+            required=False,
+            default=24,
+            description="How many hours back to analyze (default 24). Increase for historical analysis.",
         ),
     ]
 
@@ -208,10 +215,11 @@ class SignalHealthAnalyzerCube(BaseCube):
 
         classify_mode: list[str] = inputs.get("classify_mode") or ["all"]
         target_phase: str = (inputs.get("target_phase") or "any").lower().strip()
+        lookback_hours: float = float(inputs.get("lookback_hours") or 24)
 
         log.info(
-            "SignalHealthAnalyzer: analyzing %d hexes, classify_mode=%s, target_phase=%s",
-            len(hex_list), classify_mode, target_phase,
+            "SignalHealthAnalyzer: analyzing %d hexes, classify_mode=%s, target_phase=%s, lookback=%.0fh",
+            len(hex_list), classify_mode, target_phase, lookback_hours,
         )
 
         # ------------------------------------------------------------------
@@ -220,28 +228,34 @@ class SignalHealthAnalyzerCube(BaseCube):
         coverage_baseline = await get_coverage_baseline()
 
         # ------------------------------------------------------------------
-        # 3. Per-hex analysis
+        # 3. Per-hex analysis (parallel with bounded concurrency)
         # ------------------------------------------------------------------
-        # Maps hex -> list[event dict] (all non-normal events before filtering)
         hex_events: dict[str, list[dict]] = {}
-        # Track hexes with zero non-normal events (for "Stable" mode)
         stable_hexes: set[str] = set()
 
-        for hex_code in hex_list:
-            try:
-                hex_code = str(hex_code).strip().lower()
-                events_for_hex = await self._analyze_hex(
-                    hex_code, coverage_baseline, target_phase
-                )
-                if events_for_hex:
-                    hex_events[hex_code] = events_for_hex
-                else:
-                    stable_hexes.add(hex_code)
-            except Exception as exc:
-                log.warning(
-                    "SignalHealthAnalyzer: error analyzing hex=%s: %s — skipping",
-                    hex_code, exc, exc_info=True,
-                )
+        sem = asyncio.Semaphore(8)  # limit concurrent DB connections
+
+        async def _run_hex(raw_hex: str) -> tuple[str, list[dict] | None]:
+            hx = str(raw_hex).strip().lower()
+            async with sem:
+                try:
+                    evts = await self._analyze_hex(hx, coverage_baseline, target_phase, lookback_hours)
+                    return hx, evts
+                except Exception as exc:
+                    log.warning(
+                        "SignalHealthAnalyzer: error analyzing hex=%s: %s — skipping",
+                        hx, exc, exc_info=True,
+                    )
+                    return hx, None
+
+        results = await asyncio.gather(*[_run_hex(h) for h in hex_list])
+        for hx, evts in results:
+            if evts is None:
+                continue  # error — already logged
+            if evts:
+                hex_events[hx] = evts
+            else:
+                stable_hexes.add(hx)
 
         # ------------------------------------------------------------------
         # 4. Apply classify_mode filtering
@@ -301,41 +315,36 @@ class SignalHealthAnalyzerCube(BaseCube):
         hex_code: str,
         coverage_baseline: dict,
         target_phase: str,
+        lookback_hours: float = 24,
     ) -> list[dict]:
         """Run both detection layers for a single hex. Returns list of events."""
         # Auto-detect time range for this hex
-        time_range = await fetch_time_range_async(hex_code)
+        time_range = await fetch_time_range_async(hex_code, lookback_hours=lookback_hours)
         if time_range is None:
             log.debug("SignalHealthAnalyzer: no positions for hex=%s, skipping", hex_code)
             return []
 
         start_ts, end_ts = time_range
 
-        # target_phase filtering — v1 uses post-hoc event filtering approach
-        # (documented as a tunable; altitude-based window segmentation deferred to v2)
-        # For now: pass full time range to detection functions and filter events by phase
-        # after detection. This is simpler and correct for most interactive use cases.
+        # ---- Run all detection layers concurrently ----
+        integrity_events, shutdown_events, kalman_result = await asyncio.gather(
+            detect_integrity_events_async(hex_code, start_ts, end_ts),
+            detect_transponder_shutdowns_async(hex_code, start_ts, end_ts),
+            classify_flight_async(hex_code, start_ts, end_ts),
+        )
 
-        # ---- Rule-based layer ----
         rule_events: list[dict] = []
-
-        integrity_events = await detect_integrity_events_async(hex_code, start_ts, end_ts)
         for ev in integrity_events:
             scored = score_event(ev, coverage_baseline)
             category = classify_event(scored)
             scored["category"] = category
             rule_events.append(scored)
 
-        shutdown_events = await detect_transponder_shutdowns_async(hex_code, start_ts, end_ts)
         for ev in shutdown_events:
-            # Transponder shutdowns are already classified; score_event handles them
             scored = score_event(ev, coverage_baseline)
             category = classify_event(scored)
             scored["category"] = category
             rule_events.append(scored)
-
-        # ---- Kalman layer ----
-        kalman_result = await classify_flight_async(hex_code, start_ts, end_ts)
         kalman_events: list[dict] = []
         if kalman_result.get("classification") not in ("normal", None):
             ev = kalman_event_from_result(hex_code, kalman_result)

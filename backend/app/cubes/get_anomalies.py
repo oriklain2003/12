@@ -40,7 +40,24 @@ class GetAnomaliesCube(BaseCube):
             name="matched_rule_name",
             type=ParamType.STRING,
             required=False,
-            description="Filter rows where this rule name appears in the matched_rule_names array.",
+            description="Filter rows where this rule name appears in matched_rule_names.",
+            widget_hint="select",
+            options=[
+                "ביצוע פנייה 180° או 360°",
+                "הליכה סביב (Go-Around)",
+                "התקרבות מסוכנת",
+                "טיסה שהמריאה וחזרה לנחיתה",
+                "טיסה מעגלית לא-מסחרית מחוץ למסלול",
+                "טיסה מתחת לגובה מינימלי",
+                "שינוי גובה קיצוני",
+                "ביצועים חריגים - קצב פנייה",
+                "מגמת התרחקות מיעד (DTD)",
+                "חריגת סיבולת זמן טיסה (ETB)",
+                "למידת נתיבי טיסה (DBSCAN)",
+                "נחיתה לא מתוכננת בישראל",
+                "אי-התאמת ביצועים וזהות (PIM)",
+                "היעדר טביעה מסחרית (CFA)",
+            ],
         ),
     ]
 
@@ -91,7 +108,7 @@ class GetAnomaliesCube(BaseCube):
             params["is_anomaly"] = bool(is_anomaly)
 
         if matched_rule_name:
-            sql_parts.append("AND :matched_rule_name = ANY(matched_rule_names)")
+            sql_parts.append("AND matched_rule_names LIKE '%' || :matched_rule_name || '%'")
             params["matched_rule_name"] = str(matched_rule_name)
 
         sql_parts.append("LIMIT 5000")

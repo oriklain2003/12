@@ -64,6 +64,19 @@ export function ParamField({ nodeId, param }: ParamFieldProps) {
         />
       );
     }
+    if (param.widget_hint === 'select' && param.options) {
+      return (
+        <select
+          className="nodrag nowheel"
+          value={(currentValue as string) ?? param.default ?? ''}
+          onChange={(e) => updateParam(e.target.value)}
+        >
+          {param.options.map((opt) => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
+      );
+    }
     if (param.widget_hint === 'polygon') {
       return (
         <PolygonField

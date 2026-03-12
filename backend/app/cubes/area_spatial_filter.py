@@ -157,6 +157,7 @@ class AreaSpatialFilterCube(BaseCube):
             required=False,
             default="fr",
             widget_hint="select",
+            options=["fr", "alison"],
             description=(
                 "Data provider to query. "
                 "Options: 'fr' (research.normal_tracks, uses flight_ids) or "
@@ -191,7 +192,8 @@ class AreaSpatialFilterCube(BaseCube):
             default=24,
             description=(
                 "How far back to search for positions (hours). "
-                "Only used with Alison provider. Default: 24 hours."
+                "Used with Alison provider always; also used with FR provider "
+                "to enable partition pruning on the timestamp column. Default: 24 hours."
             ),
         ),
     ]
@@ -311,75 +313,182 @@ class AreaSpatialFilterCube(BaseCube):
         )
 
         # ----------------------------------------------------------------
-        # Step 5: Query positions by provider
+        # Step 5: Query positions by provider (two-phase: discover + fetch)
+        #
+        # Phase 1: Find which flight IDs actually have positions inside the
+        #          bounding box.  This is a lightweight DISTINCT query that
+        #          avoids fetching full position rows for flights that never
+        #          enter the area.
+        # Phase 2: Fetch full position data only for the confirmed IDs.
+        #
+        # Both phases include a timestamp filter when available so that
+        # Postgres can prune partitions (normal_tracks is range-partitioned
+        # on the timestamp column).
         # ----------------------------------------------------------------
         rows: list[Any] = []
 
         if provider == "fr":
-            async with engine.connect() as conn:
-                result = await conn.execute(
-                    text(
-                        """
-                        SELECT flight_id, timestamp, lat, lon, alt, vspeed
-                        FROM research.normal_tracks
-                        WHERE flight_id = ANY(:ids)
-                          AND lat IS NOT NULL AND lon IS NOT NULL
-                          AND lat BETWEEN :min_lat AND :max_lat
-                          AND lon BETWEEN :min_lon AND :max_lon
-                        ORDER BY flight_id, timestamp
-                        LIMIT 200000
-                        """
-                    ),
-                    {
-                        "ids": ids,
-                        "min_lat": bbox_min_lat,
-                        "max_lat": bbox_max_lat,
-                        "min_lon": bbox_min_lon,
-                        "max_lon": bbox_max_lon,
-                    },
-                )
-                rows = result.fetchall()
-
-            if len(rows) >= 200000:
-                logger.warning(
-                    "AreaSpatialFilter (FR): hit 200000 position LIMIT — some positions may be missing"
-                )
-
-        else:
-            # Alison provider — MUST include time filter to avoid full-table scan on 46M+ rows
+            # Compute timestamp cutoff for partition pruning
             cutoff_epoch = int(time.time() - time_window_hours * 3600)
 
+            # Use LATERAL join to force per-flight index lookups via the
+            # (flight_id, timestamp) composite index, avoiding the planner's
+            # tendency to pick the standalone flight_id index which fetches
+            # all positions across all time then post-filters.
+            fr_params = {
+                "ids": ids,
+                "ts_cutoff": cutoff_epoch,
+                "min_lat": bbox_min_lat,
+                "max_lat": bbox_max_lat,
+                "min_lon": bbox_min_lon,
+                "max_lon": bbox_max_lon,
+            }
+
             async with engine.connect() as conn:
-                result = await conn.execute(
+                # Phase 1: discover which flights have ANY position in the bbox
+                phase1 = await conn.execute(
                     text(
                         """
-                        SELECT hex, ts, lat, lon, alt_baro, baro_rate, on_ground
-                        FROM public.positions
-                        WHERE hex = ANY(:ids)
-                          AND ts >= to_timestamp(:cutoff)
-                          AND lat BETWEEN :min_lat AND :max_lat
-                          AND lon BETWEEN :min_lon AND :max_lon
-                        ORDER BY hex, ts
-                        LIMIT 200000
+                        SELECT DISTINCT t.flight_id
+                        FROM unnest(CAST(:ids AS text[])) AS fid(id)
+                        JOIN LATERAL (
+                            SELECT flight_id
+                            FROM research.normal_tracks
+                            WHERE flight_id = fid.id
+                              AND "timestamp" >= :ts_cutoff
+                              AND lat BETWEEN :min_lat AND :max_lat
+                              AND lon BETWEEN :min_lon AND :max_lon
+                            LIMIT 1
+                        ) t ON true
                         """
-                        # NOTE: No lat IS NOT NULL filter here — on_ground=True rows with
-                        # null lat/lon are needed for movement classification signal
                     ),
-                    {
-                        "ids": ids,
-                        "cutoff": cutoff_epoch,
-                        "min_lat": bbox_min_lat,
-                        "max_lat": bbox_max_lat,
-                        "min_lon": bbox_min_lon,
-                        "max_lon": bbox_max_lon,
-                    },
+                    fr_params,
                 )
-                rows = result.fetchall()
+                confirmed_ids = [row[0] for row in phase1]
 
-            if len(rows) >= 200000:
-                logger.warning(
-                    "AreaSpatialFilter (Alison): hit 200000 position LIMIT — some positions may be missing"
+            logger.info(
+                "AreaSpatialFilter (FR): phase 1 narrowed %d -> %d flight IDs in bbox",
+                len(ids),
+                len(confirmed_ids),
+            )
+
+            if confirmed_ids:
+                async with engine.connect() as conn:
+                    # Phase 2: fetch full positions only for confirmed flights
+                    # No ORDER BY — Python groups by flight_id and sorts per-flight
+                    result = await conn.execute(
+                        text(
+                            """
+                            SELECT t.flight_id, t."timestamp", t.lat, t.lon, t.alt, t.vspeed
+                            FROM unnest(CAST(:ids AS text[])) AS fid(id)
+                            JOIN LATERAL (
+                                SELECT flight_id, "timestamp", lat, lon, alt, vspeed
+                                FROM research.normal_tracks
+                                WHERE flight_id = fid.id
+                                  AND "timestamp" >= :ts_cutoff
+                                  AND lat IS NOT NULL AND lon IS NOT NULL
+                                  AND lat BETWEEN :min_lat AND :max_lat
+                                  AND lon BETWEEN :min_lon AND :max_lon
+                            ) t ON true
+                            LIMIT 200000
+                            """
+                        ),
+                        {
+                            "ids": confirmed_ids,
+                            "ts_cutoff": cutoff_epoch,
+                            "min_lat": bbox_min_lat,
+                            "max_lat": bbox_max_lat,
+                            "min_lon": bbox_min_lon,
+                            "max_lon": bbox_max_lon,
+                        },
+                    )
+                    rows = result.fetchall()
+
+                if len(rows) >= 200000:
+                    logger.warning(
+                        "AreaSpatialFilter (FR): hit 200000 position LIMIT — some positions may be missing"
+                    )
+
+        else:
+            # Alison provider — MUST include time filter to avoid full-table scan on 135M+ rows
+            cutoff_epoch = int(time.time() - time_window_hours * 3600)
+
+            alison_params = {
+                "ids": ids,
+                "cutoff": cutoff_epoch,
+                "min_lat": bbox_min_lat,
+                "max_lat": bbox_max_lat,
+                "min_lon": bbox_min_lon,
+                "max_lon": bbox_max_lon,
+            }
+
+            async with engine.connect() as conn:
+                # Phase 1: discover which hexes have positions in the bbox
+                # LATERAL join forces per-hex index lookup via (hex, ts) composite
+                phase1 = await conn.execute(
+                    text(
+                        """
+                        SELECT DISTINCT t.hex
+                        FROM unnest(CAST(:ids AS text[])) AS hid(id)
+                        JOIN LATERAL (
+                            SELECT hex
+                            FROM public.positions
+                            WHERE hex = hid.id
+                              AND ts >= to_timestamp(:cutoff)
+                              AND lat BETWEEN :min_lat AND :max_lat
+                              AND lon BETWEEN :min_lon AND :max_lon
+                            LIMIT 1
+                        ) t ON true
+                        """
+                    ),
+                    alison_params,
                 )
+                confirmed_ids = [row[0] for row in phase1]
+
+            logger.info(
+                "AreaSpatialFilter (Alison): phase 1 narrowed %d -> %d hex IDs in bbox",
+                len(ids),
+                len(confirmed_ids),
+            )
+
+            if confirmed_ids:
+                async with engine.connect() as conn:
+                    # Phase 2: fetch full positions only for confirmed hexes
+                    # No ORDER BY — Python groups by hex and sorts per-flight
+                    # LATERAL join for efficient per-hex index usage
+                    result = await conn.execute(
+                        text(
+                            """
+                            SELECT t.hex, t.ts, t.lat, t.lon, t.alt_baro, t.baro_rate, t.on_ground
+                            FROM unnest(CAST(:ids AS text[])) AS hid(id)
+                            JOIN LATERAL (
+                                SELECT hex, ts, lat, lon, alt_baro, baro_rate, on_ground
+                                FROM public.positions
+                                WHERE hex = hid.id
+                                  AND ts >= to_timestamp(:cutoff)
+                                  AND lat BETWEEN :min_lat AND :max_lat
+                                  AND lon BETWEEN :min_lon AND :max_lon
+                            ) t ON true
+                            LIMIT 200000
+                            """
+                            # NOTE: No lat IS NOT NULL filter — on_ground=True rows with
+                            # null lat/lon are needed for movement classification signal
+                        ),
+                        {
+                            "ids": confirmed_ids,
+                            "cutoff": cutoff_epoch,
+                            "min_lat": bbox_min_lat,
+                            "max_lat": bbox_max_lat,
+                            "min_lon": bbox_min_lon,
+                            "max_lon": bbox_max_lon,
+                        },
+                    )
+                    rows = result.fetchall()
+
+                if len(rows) >= 200000:
+                    logger.warning(
+                        "AreaSpatialFilter (Alison): hit 200000 position LIMIT — some positions may be missing"
+                    )
 
         logger.info("AreaSpatialFilter: fetched %d position rows from DB", len(rows))
 
@@ -400,6 +509,9 @@ class AreaSpatialFilterCube(BaseCube):
                         "vspeed": row[5],
                     }
                 )
+            # Sort per-flight positions by timestamp (ORDER BY removed from SQL)
+            for fid in positions_by_id:
+                positions_by_id[fid].sort(key=lambda p: p["timestamp"])
         else:
             for row in rows:
                 fid = str(row[0])
@@ -413,6 +525,9 @@ class AreaSpatialFilterCube(BaseCube):
                         "on_ground": row[6],
                     }
                 )
+            # Sort per-flight positions by ts (ORDER BY removed from SQL)
+            for fid in positions_by_id:
+                positions_by_id[fid].sort(key=lambda p: p["ts"])
 
         # ----------------------------------------------------------------
         # Step 7 & 8: Find polygon-inside positions and compute entry/exit times
@@ -515,9 +630,15 @@ class AreaSpatialFilterCube(BaseCube):
             len(ids),
         )
 
+        # Build rows for table display — flatten per_flight_details dict into array
+        rows = [
+            {"flight_id": fid, **details}
+            for fid, details in per_flight_details.items()
+        ]
         return {
             "flight_ids": matching_ids,
             "hex_list": matching_ids,  # alias for Alison downstream consumers
             "count": len(matching_ids),
             "per_flight_details": per_flight_details,
+            "rows": rows,
         }

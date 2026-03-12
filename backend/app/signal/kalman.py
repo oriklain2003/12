@@ -61,8 +61,15 @@ def latlon_to_enu(lat, lon, ref_lat, ref_lon):
 
 async def fetch_positions_async(hex_code: str,
                                  start_ts: datetime,
-                                 end_ts: datetime) -> list[dict]:
-    """Fetch airborne ADS-B position reports for a given hex and time window."""
+                                 end_ts: datetime,
+                                 max_rows: int = 10_000) -> list[dict]:
+    """Fetch airborne ADS-B position reports for a given hex and time window.
+
+    Args:
+        max_rows: Safety cap on returned rows. For a 7-day window an active
+            hex can have 50k+ positions; the Kalman filter and physics checks
+            work fine on a capped set since anomalies are density-independent.
+    """
     async with engine.connect() as conn:
         result = await conn.execute(
             text("""
@@ -75,8 +82,9 @@ async def fetch_positions_async(hex_code: str,
                   AND lat IS NOT NULL
                   AND ts >= :start AND ts <= :end
                 ORDER BY ts
+                LIMIT :max_rows
             """),
-            {"hex": hex_code, "start": start_ts, "end": end_ts},
+            {"hex": hex_code, "start": start_ts, "end": end_ts, "max_rows": max_rows},
         )
         cols = list(result.keys())
         rows = []
@@ -87,14 +95,14 @@ async def fetch_positions_async(hex_code: str,
 
 async def fetch_time_range_async(
     hex_code: str,
-    lookback_hours: float = 168,
+    lookback_hours: float = 24,
 ) -> tuple[datetime, datetime] | None:
     """Fetch the min and max timestamps for a given hex within a lookback window.
 
     Args:
         hex_code: ICAO24 hex address.
-        lookback_hours: Only consider positions from the last N hours (default 168 = 7 days).
-            Prevents full table scans on the 46M-row positions table.
+        lookback_hours: Only consider positions from the last N hours (default 24).
+            Controlled by the cube's lookback_hours param for interactive use.
     """
     cutoff = datetime.now(timezone.utc) - timedelta(hours=lookback_hours)
     async with engine.connect() as conn:
@@ -477,6 +485,7 @@ async def classify_flight_async(
             end_ts = detected_end
 
     positions = await fetch_positions_async(hex_code, start_ts, end_ts)
+
     if not positions:
         return {
             "hex": hex_code,
