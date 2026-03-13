@@ -9,12 +9,17 @@ Async port of scripts/detect_kalman.py — DB access uses async SQLAlchemy;
 pure computation functions remain synchronous.
 
 Public API (used by SignalHealthAnalyzerCube in Plan 03):
-    classify_flight_async(hex_code, start_ts=None, end_ts=None) -> dict
-    fetch_positions_async(hex_code, start_ts, end_ts) -> list[dict]
+    fetch_positions_batch_async(hex_list, start_ts, end_ts, chunk_size=200) -> dict[str, list[dict]]
+    classify_flight_async(hex_code, start_ts, end_ts, positions=None) -> dict
+    fetch_positions_async(hex_code, start_ts, end_ts) -> list[dict]   (legacy per-hex)
+    fetch_time_range_async(hex_code, lookback_hours=24) -> tuple | None (legacy)
+
+Note: classify_flight_async now requires start_ts and end_ts (no None defaults).
 """
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import math
 from datetime import datetime, timedelta, timezone
@@ -59,11 +64,55 @@ def latlon_to_enu(lat, lon, ref_lat, ref_lon):
 # 2. Database access (async)
 # ---------------------------------------------------------------------------
 
+async def fetch_positions_batch_async(
+    hex_list: list[str],
+    start_ts: datetime,
+    end_ts: datetime,
+    chunk_size: int = 200,
+) -> dict[str, list[dict]]:
+    """Fetch airborne ADS-B position reports for a batch of hex codes.
+
+    Iterates hex_list in chunks of chunk_size (default 200) to avoid
+    overly large ANY() arrays. Returns dict keyed by hex -> list of position dicts.
+
+    The same column list as fetch_positions_async is used so results are
+    compatible with all downstream computation functions.
+    """
+    by_hex: dict[str, list[dict]] = {}
+
+    for i in range(0, len(hex_list), chunk_size):
+        chunk = hex_list[i : i + chunk_size]
+        async with engine.connect() as conn:
+            result = await conn.execute(
+                text("""
+                    SELECT hex, ts, lat, lon, alt_baro, alt_geom, gs, tas, track,
+                           true_heading, nac_p, nic, baro_rate, geom_rate, on_ground
+                    FROM positions
+                    WHERE hex = ANY(:hexes)
+                      AND source_type = 'adsb_icao'
+                      AND on_ground = false
+                      AND lat IS NOT NULL
+                      AND ts >= :start AND ts <= :end
+                    ORDER BY hex, ts
+                """),
+                {"hexes": chunk, "start": start_ts, "end": end_ts},
+            )
+            cols = list(result.keys())
+            for row in result.fetchall():
+                d = dict(zip(cols, row))
+                hex_val = d.pop("hex")
+                by_hex.setdefault(hex_val, []).append(d)
+
+    return by_hex
+
+
 async def fetch_positions_async(hex_code: str,
                                  start_ts: datetime,
                                  end_ts: datetime,
                                  max_rows: int = 10_000) -> list[dict]:
     """Fetch airborne ADS-B position reports for a given hex and time window.
+
+    Legacy per-hex — kept for compatibility.
 
     Args:
         max_rows: Safety cap on returned rows. For a 7-day window an active
@@ -98,6 +147,8 @@ async def fetch_time_range_async(
     lookback_hours: float = 24,
 ) -> tuple[datetime, datetime] | None:
     """Fetch the min and max timestamps for a given hex within a lookback window.
+
+    Legacy per-hex — kept for compatibility.
 
     Args:
         hex_code: ICAO24 hex address.
@@ -442,21 +493,11 @@ def classify_flight(kalman_results: list[dict],
 # 8. Async orchestration
 # ---------------------------------------------------------------------------
 
-def _serialize_datetimes(obj):
-    """Recursively convert datetime objects to ISO strings for JSON serialization."""
-    if isinstance(obj, datetime):
-        return obj.isoformat()
-    if isinstance(obj, dict):
-        return {k: _serialize_datetimes(v) for k, v in obj.items()}
-    if isinstance(obj, list):
-        return [_serialize_datetimes(item) for item in obj]
-    return obj
-
-
 async def classify_flight_async(
     hex_code: str,
-    start_ts: datetime | None = None,
-    end_ts: datetime | None = None,
+    start_ts: datetime,
+    end_ts: datetime,
+    positions: list[dict] | None = None,
 ) -> dict:
     """Run all detection steps for a single flight and return results.
 
@@ -464,8 +505,11 @@ async def classify_flight_async(
 
     Args:
         hex_code: ICAO24 hex address (e.g. '717ce7')
-        start_ts: Start of analysis window (timezone-aware). If None, auto-detect.
-        end_ts: End of analysis window (timezone-aware). If None, auto-detect.
+        start_ts: Start of analysis window (timezone-aware). Required.
+        end_ts: End of analysis window (timezone-aware). Required.
+        positions: Pre-fetched position list (from fetch_positions_batch_async).
+            If provided, skips the per-hex fetch step. If None, fetches
+            via fetch_positions_async (single hex fallback).
 
     Returns:
         dict with keys:
@@ -473,18 +517,8 @@ async def classify_flight_async(
             classification ('normal'|'anomalous'|'gps_spoofing'),
             kalman_results, jumps, alt_divergence, physics, summary
     """
-    # Auto-detect time range if not supplied
-    if start_ts is None or end_ts is None:
-        time_range = await fetch_time_range_async(hex_code)
-        if time_range is None:
-            return {"error": f"No positions found for hex={hex_code}"}
-        detected_start, detected_end = time_range
-        if start_ts is None:
-            start_ts = detected_start
-        if end_ts is None:
-            end_ts = detected_end
-
-    positions = await fetch_positions_async(hex_code, start_ts, end_ts)
+    if positions is None:
+        positions = await fetch_positions_async(hex_code, start_ts, end_ts)
 
     if not positions:
         return {
@@ -500,10 +534,13 @@ async def classify_flight_async(
             "summary": "No qualifying positions found.",
         }
 
-    kalman_results = kalman_filter(positions)
-    jumps = detect_position_jumps(positions)
-    alt_div = detect_altitude_divergence(positions)
-    physics = physics_cross_validation(positions)
+    # Wrap CPU-bound work in executor threads to avoid blocking the event loop
+    loop = asyncio.get_event_loop()
+    kalman_results = await loop.run_in_executor(None, kalman_filter, positions)
+    jumps = await loop.run_in_executor(None, detect_position_jumps, positions)
+    alt_div = await loop.run_in_executor(None, detect_altitude_divergence, positions)
+    physics = await loop.run_in_executor(None, physics_cross_validation, positions)
+
     classification = classify_flight(kalman_results, jumps, alt_div, physics)
 
     n_flagged = sum(1 for r in kalman_results if r["flagged"])
@@ -517,10 +554,10 @@ async def classify_flight_async(
         f"Alt divergence: {len(alt_div)}"
     )
 
-    result = {
+    return {
         "hex": hex_code,
-        "start": start_ts,
-        "end": end_ts,
+        "start": start_ts.isoformat() if isinstance(start_ts, datetime) else start_ts,
+        "end": end_ts.isoformat() if isinstance(end_ts, datetime) else end_ts,
         "n_positions": len(positions),
         "classification": classification,
         "kalman_results": kalman_results,
@@ -529,6 +566,3 @@ async def classify_flight_async(
         "physics": physics,
         "summary": summary,
     }
-
-    # Convert all datetime objects to ISO strings for JSON serializability
-    return _serialize_datetimes(result)
