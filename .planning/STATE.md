@@ -117,6 +117,7 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-08:** Phase 14 Plan 02 executed — `backend/app/signal/kalman.py` created (constant-velocity Kalman filter, chi-squared innovation testing, position jump detection, altitude divergence, physics cross-validation, async flight classification)
 - **2026-03-09:** Phase 14 Plan 03 executed — `backend/app/cubes/signal_health_analyzer.py` created (SignalHealthAnalyzerCube orchestrating both detection layers, classify_mode filtering, unified event schema); phase 14 complete
 - Phase 15 added: Cube unit tests and integration tests for current and future cubes
+- Phase 16 added: Fix signal health cube bugs and performance (based on docs/signal_health_analysis.md audit)
 
 ### Key Decisions (Phase 15 / Plan 01)
 
