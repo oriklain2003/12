@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Advanced Flight Analysis Cubes
-status: unknown
-last_updated: "2026-03-13T14:16:09.415Z"
+status: in-progress
+last_updated: "2026-03-13T14:30:00.000Z"
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 19
-  completed_plans: 17
+  completed_plans: 19
 ---
 
 # Project State: Project 12
@@ -158,10 +158,16 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-13:** Kalman skipped for hexes with empty positions in batch result — avoids empty-set Kalman runs
 - **2026-03-13:** Test file fully rewritten to mock batch APIs (detect_integrity_events_batch_async, detect_shutdowns_batch_async, fetch_positions_batch_async)
 
+### Key Decisions (Phase 16 / Plan 03)
+
+- **2026-03-13:** Test files were already updated in Plan 02 commit — all 58 signal tests passed without modification in Plan 03 verification
+- **2026-03-13:** 9 pre-existing failures in test_area_spatial_filter.py (8) and test_stream_graph.py (1) are out-of-scope for Phase 16 — documented in deferred-items.md
+
 ### Roadmap Evolution (Phase 16)
 
 - **2026-03-13:** Phase 16 Plan 01 executed — batch detection functions added to rule_based.py and kalman.py, coverage baseline simplified to startup-only, lifespan hook added to main.py, Kalman/physics wrapped in run_in_executor
 - **2026-03-13:** Phase 16 Plan 02 executed — SignalHealthAnalyzerCube.execute() restructured with batch architecture (3 queries total vs 4*N), _analyze_hex removed, Semaphore removed, n_severe_alt_div added to Kalman events; 18 tests passing
+- **2026-03-13:** Phase 16 Plan 03 executed — 58 signal tests verified passing (18 SignalHealthAnalyzer + 14 rule_based + 26 kalman); test files already correct from Plan 02; phase 16 complete
 
 ### Key Decisions (Phase 17 / Plan 01)
 
@@ -175,4 +181,4 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-13:** Phase 17 Plan 01 executed — SquawkFilterCube optimized with SQL pushdown, set accumulation, and loop hoisting; 3 test mocks updated to reflect new SQL contract; all 14 tests pass
 
 ---
-*Last session: 2026-03-13 — Phase 17 Plan 01 complete (SQL pushdown + set accumulation + loop hoisting for SquawkFilterCube)*
+*Last session: 2026-03-13 — Phase 16 Plan 03 complete (signal test verification — all 58 signal tests passing; phase 16 complete)*
