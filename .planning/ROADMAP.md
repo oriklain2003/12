@@ -124,13 +124,13 @@ Plans:
 
 ### Phase 17: Optimize squawk filter cube performance
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** Apply SQL pushdown, set-based accumulation, and loop hoisting optimizations to SquawkFilterCube to eliminate unnecessary network bandwidth and reduce per-row CPU overhead.
+**Requirements**: SQ-SQL-PUSHDOWN, SQ-SET-ACCUM, SQ-LOOP-HOIST, SQ-TEST-UPDATE
 **Depends on:** Phase 16
-**Plans:** 0 plans
+**Plans:** 1 plan
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 17 to break down)
+- [ ] 17-01-PLAN.md — SQL pushdown + set accumulation + loop hoisting + test updates
 
 ---
 *Roadmap created: 2026-03-03*
