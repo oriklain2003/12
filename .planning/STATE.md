@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Advanced Flight Analysis Cubes
 status: unknown
-last_updated: "2026-03-13T14:13:51.470Z"
+last_updated: "2026-03-13T14:14:48.359Z"
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 19
-  completed_plans: 16
+  completed_plans: 17
 ---
 
 # Project State: Project 12
@@ -163,5 +163,16 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-13:** Phase 16 Plan 01 executed — batch detection functions added to rule_based.py and kalman.py, coverage baseline simplified to startup-only, lifespan hook added to main.py, Kalman/physics wrapped in run_in_executor
 - **2026-03-13:** Phase 16 Plan 02 executed — SignalHealthAnalyzerCube.execute() restructured with batch architecture (3 queries total vs 4*N), _analyze_hex removed, Semaphore removed, n_severe_alt_div added to Kalman events; 18 tests passing
 
+### Key Decisions (Phase 17 / Plan 01)
+
+- **2026-03-13:** SQL pushdown via `squawk = ANY(:codes)` for FR (both custom and emergency modes) and Alison custom mode eliminates network transfer of non-matching rows
+- **2026-03-13:** Set-based accumulation (codes_seen_set, matched_codes_set, emergency_values_set) with `sorted()` at output replaces O(N) list membership guards — O(N²) → O(N) per flight
+- **2026-03-13:** Loop-hoisted `is_emergency` and `is_alison` booleans replace per-row string comparisons; Python match check simplified to `len(position_rows) > 0` for all SQL-pushdown paths
+- **2026-03-13:** Alison emergency mode SQL unchanged — filters by `emergency IS NOT NULL AND emergency != 'none'`; `squawk = ANY(:codes)` not applicable
+
+### Roadmap Evolution (Phase 17)
+
+- **2026-03-13:** Phase 17 Plan 01 executed — SquawkFilterCube optimized with SQL pushdown, set accumulation, and loop hoisting; 3 test mocks updated to reflect new SQL contract; all 14 tests pass
+
 ---
-*Last session: 2026-03-13 — Phase 16 Plan 02 complete (batch query architecture for SignalHealthAnalyzerCube — core performance fix)*
+*Last session: 2026-03-13 — Phase 17 Plan 01 complete (SQL pushdown + set accumulation + loop hoisting for SquawkFilterCube)*

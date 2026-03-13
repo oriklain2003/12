@@ -127,7 +127,7 @@ Plans:
 **Goal:** Apply SQL pushdown, set-based accumulation, and loop hoisting optimizations to SquawkFilterCube to eliminate unnecessary network bandwidth and reduce per-row CPU overhead.
 **Requirements**: SQ-SQL-PUSHDOWN, SQ-SET-ACCUM, SQ-LOOP-HOIST, SQ-TEST-UPDATE
 **Depends on:** Phase 16
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 17-01-PLAN.md — SQL pushdown + set accumulation + loop hoisting + test updates
