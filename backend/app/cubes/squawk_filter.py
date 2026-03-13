@@ -199,6 +199,8 @@ class SquawkFilterCube(BaseCube):
         )
 
         if provider == "fr":
+            # Optimization: SQL pushdown — fetch only rows matching target squawk codes.
+            # Works for both custom mode (user codes) and emergency mode (EMERGENCY_CODES_FR).
             async with engine.connect() as conn:
                 result = await conn.execute(
                     text(
@@ -209,12 +211,12 @@ class SquawkFilterCube(BaseCube):
                                timestamp AS ts
                         FROM research.normal_tracks
                         WHERE flight_id = ANY(:ids)
-                          AND squawk IS NOT NULL
+                          AND squawk = ANY(:codes)
                         ORDER BY flight_id, timestamp
                         LIMIT 100000
                         """
                     ),
-                    {"ids": ids},
+                    {"ids": ids, "codes": list(target_codes)},
                 )
                 rows = result.fetchall()
 
@@ -242,7 +244,7 @@ class SquawkFilterCube(BaseCube):
                     )
                     rows = result.fetchall()
             else:
-                # Custom mode for Alison
+                # Optimization: SQL pushdown — custom mode fetches only matching squawk rows.
                 async with engine.connect() as conn:
                     result = await conn.execute(
                         text(
@@ -254,12 +256,12 @@ class SquawkFilterCube(BaseCube):
                             FROM public.positions
                             WHERE hex = ANY(:ids)
                               AND ts >= to_timestamp(:cutoff)
-                              AND squawk IS NOT NULL
+                              AND squawk = ANY(:codes)
                             ORDER BY hex, ts
                             LIMIT 100000
                             """
                         ),
-                        {"ids": ids, "cutoff": cutoff_epoch},
+                        {"ids": ids, "cutoff": cutoff_epoch, "codes": list(target_codes)},
                     )
                     rows = result.fetchall()
 
@@ -280,24 +282,15 @@ class SquawkFilterCube(BaseCube):
         passing_ids: set[str] = set()
         per_flight_details: dict[str, dict[str, Any]] = {}
 
+        # Optimization: hoist invariant comparisons before per-flight loop
+        is_emergency = (mode == "emergency")
+        is_alison = (provider == "alison")
+
         for fid, position_rows in history.items():
-            matched = False
-
-            if mode == "emergency":
-                if provider == "fr":
-                    # FR emergency: match squawk codes 7500/7600/7700
-                    matched = any(
-                        r["squawk"] in target_codes for r in position_rows if r["squawk"]
-                    )
-                else:
-                    # Alison emergency: any row has emergency != 'none' (already filtered by SQL)
-                    matched = len(position_rows) > 0
-
-            else:
-                # Custom mode: any row squawk in target_codes
-                matched = any(
-                    r["squawk"] in target_codes for r in position_rows if r["squawk"]
-                )
+            # Optimization: SQL pushdown guarantees only matching rows returned
+            # for FR (both modes) and Alison custom mode. Alison emergency mode
+            # also pre-filters by SQL (emergency IS NOT NULL AND != 'none').
+            matched = len(position_rows) > 0
 
             if not matched:
                 continue
@@ -307,10 +300,11 @@ class SquawkFilterCube(BaseCube):
             # ----------------------------------------------------------------
             # Step 5: Code-change detection for matching flights
             # ----------------------------------------------------------------
-            codes_seen: list[str] = []
+            # Optimization: use sets for O(1) membership, convert to sorted list at output
+            codes_seen_set: set[str] = set()
+            matched_codes_set: set[str] = set()
+            emergency_values_set: set[str] = set()
             code_changes: list[dict[str, Any]] = []
-            matched_codes: list[str] = []
-            emergency_values: list[str] = []
 
             prev_code: str | None = None
             for r in position_rows:
@@ -319,11 +313,9 @@ class SquawkFilterCube(BaseCube):
                 ts = r["ts"]
 
                 if code is not None:
-                    if code not in codes_seen:
-                        codes_seen.append(code)
-                    if code in target_codes or mode == "emergency":
-                        if code not in matched_codes:
-                            matched_codes.append(code)
+                    codes_seen_set.add(code)
+                    if is_emergency or code in target_codes:
+                        matched_codes_set.add(code)
 
                     # Detect code change (skip first — establishes baseline)
                     if prev_code is not None and code != prev_code:
@@ -337,16 +329,15 @@ class SquawkFilterCube(BaseCube):
                     prev_code = code
 
                 if em and em != "none":
-                    if em not in emergency_values:
-                        emergency_values.append(em)
+                    emergency_values_set.add(em)
 
             detail: dict[str, Any] = {
-                "codes_seen": codes_seen,
+                "codes_seen": sorted(codes_seen_set),
                 "code_changes": code_changes,
-                "matched_codes": matched_codes,
+                "matched_codes": sorted(matched_codes_set),
             }
-            if provider == "alison" and emergency_values:
-                detail["emergency_values"] = emergency_values
+            if is_alison and emergency_values_set:
+                detail["emergency_values"] = sorted(emergency_values_set)
 
             per_flight_details[fid] = detail
 
