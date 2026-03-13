@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Advanced Flight Analysis Cubes
 status: unknown
-last_updated: "2026-03-09T12:24:11.498Z"
+last_updated: "2026-03-13T16:07:20Z"
 progress:
-  total_phases: 5
+  total_phases: 7
   completed_phases: 3
-  total_plans: 15
-  completed_plans: 14
+  total_plans: 18
+  completed_plans: 16
 ---
 
 # Project State: Project 12
@@ -144,5 +144,17 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-09:** Phase 15 Plan 04 executed -- 42 unit tests for filter cubes (SquawkFilter 14, RegistrationCountryFilter 13, AreaSpatialFilter 15), all passing
 - **2026-03-09:** Phase 15 Plan 07 executed -- 21 tests: 13 SignalHealthAnalyzerCube unit tests + 8 integration pipeline tests through WorkflowExecutor; phase 15 complete (236 total tests, all passing)
 
+### Key Decisions (Phase 16 / Plan 01)
+
+- **2026-03-13:** Batch ANY(:hex_list) detection functions replace per-hex loops — reduces 4*N queries to 3 total for Plan 02 consumption
+- **2026-03-13:** Coverage baseline simplified: startup-only with 48-hour lookback via lifespan hook, no TTL invalidation
+- **2026-03-13:** Kalman/physics CPU work wrapped in run_in_executor — classify_flight_async now non-blocking
+- **2026-03-13:** _serialize_datetimes removed; start/end serialized inline in classify_flight_async return dict
+- **2026-03-13:** classify_flight_async requires timestamps (no None defaults); accepts optional pre-fetched positions argument
+
+### Roadmap Evolution (Phase 16)
+
+- **2026-03-13:** Phase 16 Plan 01 executed — batch detection functions added to rule_based.py and kalman.py, coverage baseline simplified to startup-only, lifespan hook added to main.py, Kalman/physics wrapped in run_in_executor
+
 ---
-*Last session: 2026-03-09 — Phase 15 Plan 07 complete (signal health analyzer + integration pipeline tests — 21 tests across 2 files, phase 15 complete)*
+*Last session: 2026-03-13 — Phase 16 Plan 01 complete (batch async APIs, startup baseline, executor threading — foundational changes for Plan 02 signal health restructure)*
