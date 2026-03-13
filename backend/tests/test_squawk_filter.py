@@ -128,11 +128,10 @@ async def test_custom_mode_fr_provider():
     ts = datetime(2025, 6, 1, 12, 0, 0)
 
     # Rows: (id, squawk, emergency, ts)
+    # SQL pushdown: squawk = ANY(:codes) with codes=["7700"] — only "7700" rows returned.
+    # FL001 has a matching row; FL002 has no matching rows so it won't appear.
     rows = [
         ("FL001", "7700", None, ts),
-        ("FL001", "1200", None, ts),
-        ("FL002", "1200", None, ts),
-        ("FL002", "1200", None, ts),
     ]
 
     mock_engine = make_mock_engine(rows)
@@ -165,9 +164,10 @@ async def test_custom_mode_alison_provider():
     ts = datetime(2025, 6, 1, 12, 0, 0)
 
     # Rows: (hex, squawk, emergency, ts)
+    # SQL pushdown: squawk = ANY(:codes) with codes=["7600"] — only "7600" rows returned.
+    # DEF456 has no matching rows so it won't appear in results.
     rows = [
         ("ABC123", "7600", None, ts),
-        ("DEF456", "1200", None, ts),
     ]
 
     mock_engine = make_mock_engine(rows)
@@ -220,9 +220,10 @@ async def test_emergency_mode_fr():
     cube = SquawkFilterCube()
     ts = datetime(2025, 6, 1, 12, 0, 0)
 
+    # SQL pushdown: squawk = ANY(:codes) with codes=EMERGENCY_CODES_FR {"7500","7600","7700"}.
+    # Only rows with emergency squawk codes are returned; "1200" is excluded by SQL.
     rows = [
         ("FL001", "7500", None, ts),  # hijack
-        ("FL002", "1200", None, ts),  # normal VFR
         ("FL003", "7700", None, ts),  # general emergency
     ]
 
