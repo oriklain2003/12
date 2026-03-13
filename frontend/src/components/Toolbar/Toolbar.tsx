@@ -41,7 +41,7 @@ export function Toolbar() {
   const shortcutsRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
 
-  const { startStream } = useWorkflowSSE();
+  const { startStream, stopStream } = useWorkflowSSE();
 
   // ── Save handler ────────────────────────────────────────────────────────────
 
@@ -89,6 +89,13 @@ export function Toolbar() {
     startStream(graph);
   }, [isRunning, workflowId, handleSave, startStream]);
 
+  // ── Cancel handler ──────────────────────────────────────────────────────────
+
+  const handleCancel = useCallback(() => {
+    stopStream();
+    toast('Run cancelled');
+  }, [stopStream]);
+
   // ── Keyboard shortcuts ──────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -121,7 +128,11 @@ export function Toolbar() {
         return;
       }
       if (e.key === 'Escape') {
-        setShowShortcuts(false);
+        if (useFlowStore.getState().isRunning) {
+          handleCancel();
+        } else {
+          setShowShortcuts(false);
+        }
         return;
       }
 
@@ -144,7 +155,7 @@ export function Toolbar() {
 
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [handleSave, handleRun]);
+  }, [handleSave, handleRun, handleCancel]);
 
   // ── Close shortcuts on outside click ────────────────────────────────────────
 
@@ -279,6 +290,12 @@ export function Toolbar() {
                 </div>
                 <div className="toolbar__shortcut-row">
                   <span className="toolbar__shortcut-keys">
+                    <kbd>Esc</kbd>
+                  </span>
+                  <span>Cancel run</span>
+                </div>
+                <div className="toolbar__shortcut-row">
+                  <span className="toolbar__shortcut-keys">
                     <kbd>{isMac ? '⌘' : 'Ctrl'}</kbd><kbd>K</kbd>
                   </span>
                   <span>Command palette</span>
@@ -318,15 +335,26 @@ export function Toolbar() {
         >
           Save
         </button>
-        <button
-          className={`toolbar__btn toolbar__btn--run${isRunning ? ' toolbar__btn--running' : ''}`}
-          onClick={handleRun}
-          disabled={isRunning || isLoadingWorkflow}
-          title={`Run (${isMac ? '⌘' : 'Ctrl+'}⏎)`}
-          data-tour="run-btn"
-        >
-          {isRunning ? 'Running...' : 'Run'}
-        </button>
+        {isRunning ? (
+          <button
+            className="toolbar__btn toolbar__btn--cancel"
+            onClick={handleCancel}
+            title="Cancel run (Esc)"
+            data-tour="run-btn"
+          >
+            Cancel
+          </button>
+        ) : (
+          <button
+            className="toolbar__btn toolbar__btn--run"
+            onClick={handleRun}
+            disabled={isLoadingWorkflow}
+            title={`Run (${isMac ? '⌘' : 'Ctrl+'}⏎)`}
+            data-tour="run-btn"
+          >
+            Run
+          </button>
+        )}
       </div>
     </header>
   );

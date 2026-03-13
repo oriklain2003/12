@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.version import BUILD
 
 logging.basicConfig(
     level=logging.INFO,
@@ -49,3 +50,8 @@ async def health() -> dict[str, str]:
 @app.get("/api")
 async def api_root() -> dict[str, str]:
     return {"message": "Project 12 API"}
+
+
+@app.get("/api/version")
+async def version() -> dict[str, int]:
+    return {"build": BUILD}

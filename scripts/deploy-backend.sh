@@ -7,6 +7,12 @@ REPO="12-flow-api"
 REGISTRY="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
 IMAGE="${REGISTRY}/${REPO}:latest"
 
+VERSION_FILE="backend/app/version.py"
+CURRENT=$(awk -F' = ' '/^BUILD/ {print $2}' "$VERSION_FILE")
+NEXT=$((CURRENT + 1))
+printf 'BUILD = %d\n' "$NEXT" > "$VERSION_FILE"
+echo "==> Bumped build number: ${CURRENT} → ${NEXT}"
+
 echo "==> Logging in to ECR..."
 aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$REGISTRY"
 

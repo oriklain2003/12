@@ -110,6 +110,16 @@ Plans:
 - [ ] 15-06-PLAN.md — Signal module tests (rule_based, kalman)
 - [ ] 15-07-PLAN.md — SignalHealthAnalyzerCube tests + integration pipeline tests
 
+### Phase 16: Fix signal health cube bugs and performance
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 15
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 16 to break down)
+
 ---
 *Roadmap created: 2026-03-03*
 *v1.0 shipped: 2026-03-06*
