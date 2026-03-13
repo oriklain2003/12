@@ -118,6 +118,7 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-09:** Phase 14 Plan 03 executed — `backend/app/cubes/signal_health_analyzer.py` created (SignalHealthAnalyzerCube orchestrating both detection layers, classify_mode filtering, unified event schema); phase 14 complete
 - Phase 15 added: Cube unit tests and integration tests for current and future cubes
 - Phase 16 added: Fix signal health cube bugs and performance (based on docs/signal_health_analysis.md audit)
+- Phase 17 added: Optimize squawk filter cube performance
 
 ### Key Decisions (Phase 15 / Plan 01)
 
