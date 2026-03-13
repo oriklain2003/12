@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Advanced Flight Analysis Cubes
 status: unknown
-last_updated: "2026-03-13T16:07:20Z"
+last_updated: "2026-03-13T14:13:51.470Z"
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 18
+  total_plans: 19
   completed_plans: 16
 ---
 
@@ -152,9 +152,16 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-13:** _serialize_datetimes removed; start/end serialized inline in classify_flight_async return dict
 - **2026-03-13:** classify_flight_async requires timestamps (no None defaults); accepts optional pre-fetched positions argument
 
+### Key Decisions (Phase 16 / Plan 02)
+
+- **2026-03-13:** Pre-fetched positions passed to classify_flight_async via positions= param — skips per-hex DB fetch entirely
+- **2026-03-13:** Kalman skipped for hexes with empty positions in batch result — avoids empty-set Kalman runs
+- **2026-03-13:** Test file fully rewritten to mock batch APIs (detect_integrity_events_batch_async, detect_shutdowns_batch_async, fetch_positions_batch_async)
+
 ### Roadmap Evolution (Phase 16)
 
 - **2026-03-13:** Phase 16 Plan 01 executed — batch detection functions added to rule_based.py and kalman.py, coverage baseline simplified to startup-only, lifespan hook added to main.py, Kalman/physics wrapped in run_in_executor
+- **2026-03-13:** Phase 16 Plan 02 executed — SignalHealthAnalyzerCube.execute() restructured with batch architecture (3 queries total vs 4*N), _analyze_hex removed, Semaphore removed, n_severe_alt_div added to Kalman events; 18 tests passing
 
 ---
-*Last session: 2026-03-13 — Phase 16 Plan 01 complete (batch async APIs, startup baseline, executor threading — foundational changes for Plan 02 signal health restructure)*
+*Last session: 2026-03-13 — Phase 16 Plan 02 complete (batch query architecture for SignalHealthAnalyzerCube — core performance fix)*

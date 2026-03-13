@@ -115,7 +115,7 @@ Plans:
 **Goal:** Fix performance (4*N queries to 3 batch queries), bugs (missing n_severe_alt_div, _serialize_datetimes overhead, TTL baseline), and architecture issues (event loop blocking, startup baseline) in the signal health detection system.
 **Requirements**: SH-BATCH, SH-BASELINE, SH-KALMAN, SH-ORCHESTRATOR, SH-NSEVERE, SH-TESTS
 **Depends on:** Phase 15
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 16-01-PLAN.md — Batch query functions in rule_based.py + kalman.py + lifespan hook
