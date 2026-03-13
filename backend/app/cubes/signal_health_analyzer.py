@@ -14,15 +14,16 @@ import asyncio
 import logging
 import time
 from collections import Counter
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from app.cubes.base import BaseCube
 from app.schemas.cube import CubeCategory, ParamDefinition, ParamType
-from app.signal.kalman import classify_flight_async, fetch_time_range_async
+from app.signal.kalman import classify_flight_async, fetch_positions_batch_async
 from app.signal.rule_based import (
     classify_event,
-    detect_integrity_events_async,
-    detect_transponder_shutdowns_async,
+    detect_integrity_events_batch_async,
+    detect_shutdowns_batch_async,
     get_coverage_baseline,
     score_event,
 )
@@ -57,6 +58,7 @@ def kalman_event_from_result(hex_code: str, result: dict) -> dict:
     n_kalman = len(kr)
     flag_pct = (n_flagged / n_kalman * 100) if n_kalman else 0.0
     alt_div = result.get("alt_divergence", [])
+    n_severe = sum(1 for a in alt_div if a.get("severe"))
 
     # start/end are already ISO strings (serialized by classify_flight_async)
     start_str = result.get("start")
@@ -80,6 +82,7 @@ def kalman_event_from_result(hex_code: str, result: dict) -> dict:
         "flag_pct": round(flag_pct, 2),
         "n_jumps": len(result.get("jumps", [])),
         "n_alt_divergence": len(alt_div),
+        "n_severe_alt_div": n_severe,
         "physics_confidence": result.get("physics", {}).get("confidence", 0.0),
         # Rule-based fields (null for Kalman events)
         "jamming_score": None,
@@ -124,7 +127,7 @@ class SignalHealthAnalyzerCube(BaseCube):
     """Analysis cube: GPS anomaly detection — rule-based + Kalman filter.
 
     Accepts hex_list from upstream AlisonFlights (or any cube providing hex_list).
-    Runs both detection layers per hex, merges events, filters by classify_mode,
+    Runs batch detection (3 queries total), then processes per-hex in memory,
     and returns flight_ids + events + stats.
     """
 
@@ -198,7 +201,7 @@ class SignalHealthAnalyzerCube(BaseCube):
     ]
 
     async def execute(self, **inputs: Any) -> dict[str, Any]:
-        """Orchestrate rule-based + Kalman detection for each hex in hex_list."""
+        """Orchestrate rule-based + Kalman detection using batch queries."""
         t0 = time.monotonic()
 
         # ------------------------------------------------------------------
@@ -223,42 +226,80 @@ class SignalHealthAnalyzerCube(BaseCube):
         )
 
         # ------------------------------------------------------------------
-        # 2. Build coverage baseline once (cached with 1-hour TTL)
+        # 2. Compute time range in Python (no per-hex DB fetch needed)
+        # ------------------------------------------------------------------
+        end_ts = datetime.now(timezone.utc)
+        start_ts = end_ts - timedelta(hours=lookback_hours)
+
+        # ------------------------------------------------------------------
+        # 3. Get coverage baseline (startup-loaded, cached)
         # ------------------------------------------------------------------
         coverage_baseline = await get_coverage_baseline()
 
         # ------------------------------------------------------------------
-        # 3. Per-hex analysis (parallel with bounded concurrency)
+        # 4. Batch queries — 3 total, run concurrently
+        # ------------------------------------------------------------------
+        # Normalize hex codes once for consistent lookup
+        hex_list_normalized = [str(h).strip().lower() for h in hex_list]
+
+        integrity_by_hex, shutdown_by_hex, positions_by_hex = await asyncio.gather(
+            detect_integrity_events_batch_async(hex_list_normalized, start_ts, end_ts),
+            detect_shutdowns_batch_async(hex_list_normalized, start_ts, end_ts),
+            fetch_positions_batch_async(hex_list_normalized, start_ts, end_ts),
+        )
+
+        # ------------------------------------------------------------------
+        # 5. Per-hex processing loop (in-memory, no DB calls)
         # ------------------------------------------------------------------
         hex_events: dict[str, list[dict]] = {}
         stable_hexes: set[str] = set()
 
-        sem = asyncio.Semaphore(8)  # limit concurrent DB connections
-
-        async def _run_hex(raw_hex: str) -> tuple[str, list[dict] | None]:
+        for raw_hex in hex_list:
             hx = str(raw_hex).strip().lower()
-            async with sem:
-                try:
-                    evts = await self._analyze_hex(hx, coverage_baseline, target_phase, lookback_hours)
-                    return hx, evts
-                except Exception as exc:
-                    log.warning(
-                        "SignalHealthAnalyzer: error analyzing hex=%s: %s — skipping",
-                        hx, exc, exc_info=True,
-                    )
-                    return hx, None
+            try:
+                rule_events: list[dict] = []
 
-        results = await asyncio.gather(*[_run_hex(h) for h in hex_list])
-        for hx, evts in results:
-            if evts is None:
-                continue  # error — already logged
-            if evts:
-                hex_events[hx] = evts
-            else:
-                stable_hexes.add(hx)
+                # Score + classify integrity events
+                for ev in integrity_by_hex.get(hx, []):
+                    scored = score_event(ev, coverage_baseline)
+                    scored["category"] = classify_event(scored)
+                    rule_events.append(scored)
+
+                # Score + classify shutdown events
+                for ev in shutdown_by_hex.get(hx, []):
+                    scored = score_event(ev, coverage_baseline)
+                    scored["category"] = classify_event(scored)
+                    rule_events.append(scored)
+
+                # Run Kalman on pre-fetched positions (skips per-hex DB fetch)
+                kalman_events: list[dict] = []
+                hex_positions = positions_by_hex.get(hx)
+                if hex_positions:
+                    kalman_result = await classify_flight_async(
+                        hx, start_ts, end_ts, positions=hex_positions
+                    )
+                    if kalman_result.get("classification") not in ("normal", None):
+                        kalman_events.append(kalman_event_from_result(hx, kalman_result))
+
+                all_hex_events = rule_events + kalman_events
+
+                # Apply target_phase post-hoc filtering
+                if target_phase != "any" and all_hex_events:
+                    all_hex_events = self._filter_events_by_phase(all_hex_events, target_phase)
+
+                if all_hex_events:
+                    hex_events[hx] = all_hex_events
+                else:
+                    stable_hexes.add(hx)
+
+            except Exception as exc:
+                log.warning(
+                    "SignalHealthAnalyzer: error analyzing hex=%s: %s — skipping",
+                    hx, exc, exc_info=True,
+                )
 
         # ------------------------------------------------------------------
-        # 4. Apply classify_mode filtering
+        # 6. Apply classify_mode filtering
         # ------------------------------------------------------------------
         only_stable = (
             len(classify_mode) == 1
@@ -286,7 +327,7 @@ class SignalHealthAnalyzerCube(BaseCube):
             filtered_flight_ids = sorted(seen_hexes)
 
         # ------------------------------------------------------------------
-        # 5. Build outputs
+        # 7. Build outputs
         # ------------------------------------------------------------------
         stats_summary = dict(Counter(
             ev.get("category") or ev.get("classification") or "unknown"
@@ -309,56 +350,6 @@ class SignalHealthAnalyzerCube(BaseCube):
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
-
-    async def _analyze_hex(
-        self,
-        hex_code: str,
-        coverage_baseline: dict,
-        target_phase: str,
-        lookback_hours: float = 24,
-    ) -> list[dict]:
-        """Run both detection layers for a single hex. Returns list of events."""
-        # Auto-detect time range for this hex
-        time_range = await fetch_time_range_async(hex_code, lookback_hours=lookback_hours)
-        if time_range is None:
-            log.debug("SignalHealthAnalyzer: no positions for hex=%s, skipping", hex_code)
-            return []
-
-        start_ts, end_ts = time_range
-
-        # ---- Run all detection layers concurrently ----
-        integrity_events, shutdown_events, kalman_result = await asyncio.gather(
-            detect_integrity_events_async(hex_code, start_ts, end_ts),
-            detect_transponder_shutdowns_async(hex_code, start_ts, end_ts),
-            classify_flight_async(hex_code, start_ts, end_ts),
-        )
-
-        rule_events: list[dict] = []
-        for ev in integrity_events:
-            scored = score_event(ev, coverage_baseline)
-            category = classify_event(scored)
-            scored["category"] = category
-            rule_events.append(scored)
-
-        for ev in shutdown_events:
-            scored = score_event(ev, coverage_baseline)
-            category = classify_event(scored)
-            scored["category"] = category
-            rule_events.append(scored)
-        kalman_events: list[dict] = []
-        if kalman_result.get("classification") not in ("normal", None):
-            ev = kalman_event_from_result(hex_code, kalman_result)
-            kalman_events.append(ev)
-
-        all_hex_events = rule_events + kalman_events
-
-        # Apply target_phase post-hoc filtering (v1: altitude-based, approx)
-        if target_phase != "any" and all_hex_events:
-            all_hex_events = self._filter_events_by_phase(
-                all_hex_events, target_phase
-            )
-
-        return all_hex_events
 
     def _filter_events_by_phase(
         self,

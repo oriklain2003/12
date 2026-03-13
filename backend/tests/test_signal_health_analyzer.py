@@ -5,16 +5,17 @@ Tests cover:
 - Input/output definitions
 - Empty hex_list guard
 - full_result extraction (hex_list and flight_ids keys)
-- Basic detection orchestration (rule-based + Kalman)
+- Basic detection orchestration (rule-based + Kalman, batch architecture)
 - classify_mode filtering (anomaly, Stable)
 - target_phase filtering (takeoff altitude filter)
 - stats_summary output
+- n_severe_alt_div in kalman events
 """
 
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 
-from app.cubes.signal_health_analyzer import SignalHealthAnalyzerCube
+from app.cubes.signal_health_analyzer import SignalHealthAnalyzerCube, kalman_event_from_result
 from app.schemas.cube import CubeCategory
 
 
@@ -44,6 +45,50 @@ def test_cube_outputs(cube):
     """Cube has flight_ids, count, events, stats_summary outputs."""
     output_names = {p.name for p in cube.outputs}
     assert output_names == {"flight_ids", "count", "events", "stats_summary"}
+
+
+def test_no_analyze_hex_method(cube):
+    """_analyze_hex is removed — batch architecture does not use per-hex method."""
+    assert not hasattr(cube, "_analyze_hex")
+
+
+# ============================================================
+# kalman_event_from_result helper
+# ============================================================
+
+
+def test_kalman_event_n_severe_alt_div():
+    """kalman_event_from_result includes n_severe_alt_div field."""
+    result = {
+        "classification": "anomalous",
+        "alt_divergence": [{"severe": True}, {"severe": False}, {"severe": True}],
+        "kalman_results": [],
+        "jumps": [],
+        "physics": {},
+        "start": "2026-01-01T00:00:00",
+        "end": "2026-01-01T01:00:00",
+    }
+    ev = kalman_event_from_result("abc123", result)
+    assert "n_severe_alt_div" in ev
+    assert ev["n_severe_alt_div"] == 2
+    assert ev["n_alt_divergence"] == 3
+
+
+def test_kalman_event_zero_severe():
+    """n_severe_alt_div is 0 when no severe alt divergences."""
+    result = {
+        "classification": "anomalous",
+        "alt_divergence": [{"severe": False}, {"severe": False}],
+        "kalman_results": [{"flagged": True}],
+        "jumps": [],
+        "physics": {"confidence": 0.3},
+        "start": "x",
+        "end": "y",
+    }
+    ev = kalman_event_from_result("hex1", result)
+    assert ev["n_severe_alt_div"] == 0
+    assert ev["n_alt_divergence"] == 2
+    assert ev["n_flagged"] == 1
 
 
 # ============================================================
@@ -79,8 +124,10 @@ async def test_no_hex_list_returns_empty(cube):
 @pytest.mark.asyncio
 async def test_full_result_extraction_hex_list(cube):
     """full_result with hex_list key extracts hexes correctly."""
-    with patch.object(cube, "_analyze_hex", new_callable=AsyncMock, return_value=[]), \
-         patch("app.cubes.signal_health_analyzer.get_coverage_baseline", new_callable=AsyncMock, return_value={}):
+    with patch("app.cubes.signal_health_analyzer.get_coverage_baseline", new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.detect_integrity_events_batch_async", new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.detect_shutdowns_batch_async", new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.fetch_positions_batch_async", new_callable=AsyncMock, return_value={}):
         result = await cube.execute(
             hex_list=[],
             full_result={"hex_list": ["abc123", "def456"]},
@@ -94,8 +141,10 @@ async def test_full_result_extraction_hex_list(cube):
 @pytest.mark.asyncio
 async def test_full_result_extraction_flight_ids(cube):
     """full_result with flight_ids key (no hex_list) extracts hexes correctly."""
-    with patch.object(cube, "_analyze_hex", new_callable=AsyncMock, return_value=[]), \
-         patch("app.cubes.signal_health_analyzer.get_coverage_baseline", new_callable=AsyncMock, return_value={}):
+    with patch("app.cubes.signal_health_analyzer.get_coverage_baseline", new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.detect_integrity_events_batch_async", new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.detect_shutdowns_batch_async", new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.fetch_positions_batch_async", new_callable=AsyncMock, return_value={}):
         result = await cube.execute(
             hex_list=[],
             full_result={"flight_ids": ["aaa111"]},
@@ -106,14 +155,13 @@ async def test_full_result_extraction_flight_ids(cube):
 
 
 # ============================================================
-# Basic detection orchestration
+# Basic detection orchestration (batch architecture)
 # ============================================================
 
 
 SAMPLE_INTEGRITY_EVENT = {
     "hex": "abc123",
-    "source": "rule_based",
-    "type": "gap_detection",
+    "source": "integrity_drop",
     "start_ts": "2026-01-01T00:00:00",
     "end_ts": "2026-01-01T00:10:00",
     "duration_s": 600,
@@ -122,30 +170,40 @@ SAMPLE_INTEGRITY_EVENT = {
     "exit_lat": 32.1,
     "exit_lon": 34.1,
     "last_alt_baro": 30000,
+    "nacp_zero": True,
+    "nic_zero": False,
+    "nic_low_7": False,
+    "gva_zero": False,
+    "nacv_high": False,
+    "has_gps_ok_before": True,
+    "median_rssi": -10.0,
+    "mean_seen_pos": 3.0,
+    "msg_rate": 1.0,
+    "mean_alt_divergence_ft": None,
+    "max_alt_divergence_ft": None,
+    "version": 2,
+    "region": "LLLL",
+    "n_reports": 5,
 }
 
 
 @pytest.mark.asyncio
 async def test_basic_detection(cube):
     """Cube orchestrates rule-based and Kalman layers, combines results."""
-    # Rule-based mocks
-    mock_integrity = AsyncMock(return_value=[SAMPLE_INTEGRITY_EVENT])
-    mock_shutdowns = AsyncMock(return_value=[])
-    mock_coverage = AsyncMock(return_value={"avg_gap": 10})
-    mock_score = MagicMock(side_effect=lambda ev, _: {**ev, "jamming_score": 5})
+    mock_score = MagicMock(side_effect=lambda ev, _: {**ev, "jamming_score": 5, "spoofing_score": 0, "coverage_score": 0, "in_coverage_hole": False, "evidence": ""})
     mock_classify = MagicMock(return_value="gps_jamming")
-
-    # Kalman mock - returns normal (no event generated)
     mock_kalman_classify = AsyncMock(return_value={"classification": "normal"})
-    mock_fetch_time = AsyncMock(return_value=(1000, 2000))
 
-    with patch("app.cubes.signal_health_analyzer.detect_integrity_events_async", mock_integrity), \
-         patch("app.cubes.signal_health_analyzer.detect_transponder_shutdowns_async", mock_shutdowns), \
-         patch("app.cubes.signal_health_analyzer.get_coverage_baseline", mock_coverage), \
+    with patch("app.cubes.signal_health_analyzer.get_coverage_baseline", new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.detect_integrity_events_batch_async",
+               new_callable=AsyncMock, return_value={"abc123": [SAMPLE_INTEGRITY_EVENT]}), \
+         patch("app.cubes.signal_health_analyzer.detect_shutdowns_batch_async",
+               new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.fetch_positions_batch_async",
+               new_callable=AsyncMock, return_value={}), \
          patch("app.cubes.signal_health_analyzer.score_event", mock_score), \
          patch("app.cubes.signal_health_analyzer.classify_event", mock_classify), \
-         patch("app.cubes.signal_health_analyzer.classify_flight_async", mock_kalman_classify), \
-         patch("app.cubes.signal_health_analyzer.fetch_time_range_async", mock_fetch_time):
+         patch("app.cubes.signal_health_analyzer.classify_flight_async", mock_kalman_classify):
         result = await cube.execute(hex_list=["abc123"])
 
     assert result["count"] == 1
@@ -158,10 +216,6 @@ async def test_basic_detection(cube):
 @pytest.mark.asyncio
 async def test_kalman_non_normal_event(cube):
     """Non-normal Kalman classification generates a kalman event in output."""
-    mock_integrity = AsyncMock(return_value=[])
-    mock_shutdowns = AsyncMock(return_value=[])
-    mock_coverage = AsyncMock(return_value={})
-
     kalman_result = {
         "classification": "gps_spoofing",
         "kalman_results": [{"flagged": True}, {"flagged": False}],
@@ -172,13 +226,15 @@ async def test_kalman_non_normal_event(cube):
         "end": "2026-01-01T01:00:00",
     }
     mock_kalman_classify = AsyncMock(return_value=kalman_result)
-    mock_fetch_time = AsyncMock(return_value=(1000, 2000))
 
-    with patch("app.cubes.signal_health_analyzer.detect_integrity_events_async", mock_integrity), \
-         patch("app.cubes.signal_health_analyzer.detect_transponder_shutdowns_async", mock_shutdowns), \
-         patch("app.cubes.signal_health_analyzer.get_coverage_baseline", mock_coverage), \
-         patch("app.cubes.signal_health_analyzer.classify_flight_async", mock_kalman_classify), \
-         patch("app.cubes.signal_health_analyzer.fetch_time_range_async", mock_fetch_time):
+    with patch("app.cubes.signal_health_analyzer.get_coverage_baseline", new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.detect_integrity_events_batch_async",
+               new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.detect_shutdowns_batch_async",
+               new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.fetch_positions_batch_async",
+               new_callable=AsyncMock, return_value={"abc123": [{"ts": "t", "lat": 1.0, "lon": 1.0}]}), \
+         patch("app.cubes.signal_health_analyzer.classify_flight_async", mock_kalman_classify):
         result = await cube.execute(hex_list=["abc123"])
 
     assert result["count"] == 1
@@ -189,6 +245,27 @@ async def test_kalman_non_normal_event(cube):
     assert ev["n_flagged"] == 1
     assert ev["n_jumps"] == 1
     assert ev["physics_confidence"] == 0.8
+    assert "n_severe_alt_div" in ev
+
+
+@pytest.mark.asyncio
+async def test_kalman_skipped_when_no_positions(cube):
+    """Kalman analysis is skipped for hexes with no pre-fetched positions."""
+    mock_kalman_classify = AsyncMock(return_value={"classification": "gps_spoofing"})
+
+    with patch("app.cubes.signal_health_analyzer.get_coverage_baseline", new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.detect_integrity_events_batch_async",
+               new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.detect_shutdowns_batch_async",
+               new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.fetch_positions_batch_async",
+               new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.classify_flight_async", mock_kalman_classify):
+        result = await cube.execute(hex_list=["abc123"])
+
+    # No positions → Kalman not called → hex is stable
+    mock_kalman_classify.assert_not_called()
+    assert result["count"] == 0
 
 
 # ============================================================
@@ -199,18 +276,30 @@ async def test_kalman_non_normal_event(cube):
 @pytest.mark.asyncio
 async def test_classify_mode_anomaly(cube):
     """classify_mode=['Jamming'] only returns jamming-category events."""
-    jamming_event = {**SAMPLE_INTEGRITY_EVENT, "category": "gps_jamming", "jamming_score": 5}
-    normal_event = {**SAMPLE_INTEGRITY_EVENT, "hex": "def456", "category": "coverage_hole"}
+    jamming_event = {**SAMPLE_INTEGRITY_EVENT, "hex": "abc123"}
+    coverage_event = {**SAMPLE_INTEGRITY_EVENT, "hex": "def456"}
 
-    async def mock_analyze(hex_code, baseline, phase, lookback_hours=24):
-        if hex_code == "abc123":
-            return [jamming_event]
-        elif hex_code == "def456":
-            return [normal_event]
-        return []
+    mock_score = MagicMock(side_effect=lambda ev, _: {**ev, "jamming_score": 5, "spoofing_score": 0, "coverage_score": 0, "in_coverage_hole": False, "evidence": ""})
 
-    with patch.object(cube, "_analyze_hex", side_effect=mock_analyze), \
-         patch("app.cubes.signal_health_analyzer.get_coverage_baseline", new_callable=AsyncMock, return_value={}):
+    def mock_classify_fn(ev):
+        if ev.get("hex") == "abc123":
+            return "gps_jamming"
+        return "coverage_hole"
+
+    mock_classify = MagicMock(side_effect=mock_classify_fn)
+
+    with patch("app.cubes.signal_health_analyzer.get_coverage_baseline", new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.detect_integrity_events_batch_async",
+               new_callable=AsyncMock, return_value={
+                   "abc123": [jamming_event],
+                   "def456": [coverage_event],
+               }), \
+         patch("app.cubes.signal_health_analyzer.detect_shutdowns_batch_async",
+               new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.fetch_positions_batch_async",
+               new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.score_event", mock_score), \
+         patch("app.cubes.signal_health_analyzer.classify_event", mock_classify):
         result = await cube.execute(
             hex_list=["abc123", "def456"],
             classify_mode=["Jamming"],
@@ -224,14 +313,20 @@ async def test_classify_mode_anomaly(cube):
 @pytest.mark.asyncio
 async def test_classify_mode_stable(cube):
     """classify_mode=['Stable'] returns hexes with zero non-normal events."""
-    # abc123 has events, def456 has none (stable)
-    async def mock_analyze(hex_code, baseline, phase, lookback_hours=24):
-        if hex_code == "abc123":
-            return [{"hex": "abc123", "category": "gps_jamming"}]
-        return []  # def456 is stable
+    mock_score = MagicMock(side_effect=lambda ev, _: {**ev, "jamming_score": 5, "spoofing_score": 0, "coverage_score": 0, "in_coverage_hole": False, "evidence": ""})
+    mock_classify = MagicMock(return_value="gps_jamming")
 
-    with patch.object(cube, "_analyze_hex", side_effect=mock_analyze), \
-         patch("app.cubes.signal_health_analyzer.get_coverage_baseline", new_callable=AsyncMock, return_value={}):
+    with patch("app.cubes.signal_health_analyzer.get_coverage_baseline", new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.detect_integrity_events_batch_async",
+               new_callable=AsyncMock, return_value={
+                   "abc123": [SAMPLE_INTEGRITY_EVENT],
+               }), \
+         patch("app.cubes.signal_health_analyzer.detect_shutdowns_batch_async",
+               new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.fetch_positions_batch_async",
+               new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.score_event", mock_score), \
+         patch("app.cubes.signal_health_analyzer.classify_event", mock_classify):
         result = await cube.execute(
             hex_list=["abc123", "def456"],
             classify_mode=["Stable"],
@@ -251,32 +346,25 @@ async def test_classify_mode_stable(cube):
 @pytest.mark.asyncio
 async def test_target_phase_takeoff_filters_high_altitude(cube):
     """target_phase='takeoff' filters out events with altitude >= 5000ft."""
-    high_alt_event = {
-        **SAMPLE_INTEGRITY_EVENT,
-        "last_alt_baro": 30000,
-        "category": "gps_jamming",
-    }
-    low_alt_event = {
-        **SAMPLE_INTEGRITY_EVENT,
-        "last_alt_baro": 3000,
-        "category": "gps_jamming",
-    }
+    high_alt_event = {**SAMPLE_INTEGRITY_EVENT, "last_alt_baro": 30000}
+    low_alt_event = {**SAMPLE_INTEGRITY_EVENT, "last_alt_baro": 3000}
 
-    mock_integrity = AsyncMock(return_value=[high_alt_event, low_alt_event])
-    mock_shutdowns = AsyncMock(return_value=[])
-    mock_coverage = AsyncMock(return_value={})
     mock_score = MagicMock(side_effect=lambda ev, _: ev)
     mock_classify = MagicMock(return_value="gps_jamming")
     mock_kalman = AsyncMock(return_value={"classification": "normal"})
-    mock_fetch_time = AsyncMock(return_value=(1000, 2000))
 
-    with patch("app.cubes.signal_health_analyzer.detect_integrity_events_async", mock_integrity), \
-         patch("app.cubes.signal_health_analyzer.detect_transponder_shutdowns_async", mock_shutdowns), \
-         patch("app.cubes.signal_health_analyzer.get_coverage_baseline", mock_coverage), \
+    with patch("app.cubes.signal_health_analyzer.get_coverage_baseline", new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.detect_integrity_events_batch_async",
+               new_callable=AsyncMock, return_value={
+                   "abc123": [high_alt_event, low_alt_event],
+               }), \
+         patch("app.cubes.signal_health_analyzer.detect_shutdowns_batch_async",
+               new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.fetch_positions_batch_async",
+               new_callable=AsyncMock, return_value={}), \
          patch("app.cubes.signal_health_analyzer.score_event", mock_score), \
          patch("app.cubes.signal_health_analyzer.classify_event", mock_classify), \
-         patch("app.cubes.signal_health_analyzer.classify_flight_async", mock_kalman), \
-         patch("app.cubes.signal_health_analyzer.fetch_time_range_async", mock_fetch_time):
+         patch("app.cubes.signal_health_analyzer.classify_flight_async", mock_kalman):
         result = await cube.execute(
             hex_list=["abc123"],
             target_phase="takeoff",
@@ -295,20 +383,57 @@ async def test_target_phase_takeoff_filters_high_altitude(cube):
 @pytest.mark.asyncio
 async def test_stats_summary(cube):
     """stats_summary includes event counts by category."""
-    events = [
-        {"hex": "a", "category": "gps_jamming"},
-        {"hex": "b", "category": "gps_jamming"},
-        {"hex": "c", "category": "gps_spoofing"},
-    ]
+    event_a = {**SAMPLE_INTEGRITY_EVENT, "hex": "a"}
+    event_b = {**SAMPLE_INTEGRITY_EVENT, "hex": "b"}
+    event_c = {**SAMPLE_INTEGRITY_EVENT, "hex": "c"}
 
-    async def mock_analyze(hex_code, baseline, phase, lookback_hours=24):
-        idx = {"a": 0, "b": 1, "c": 2}.get(hex_code)
-        if idx is not None:
-            return [events[idx]]
-        return []
+    def mock_classify_fn(ev):
+        if ev.get("hex") in ("a", "b"):
+            return "gps_jamming"
+        return "gps_spoofing"
 
-    with patch.object(cube, "_analyze_hex", side_effect=mock_analyze), \
-         patch("app.cubes.signal_health_analyzer.get_coverage_baseline", new_callable=AsyncMock, return_value={}):
+    mock_score = MagicMock(side_effect=lambda ev, _: {**ev, "jamming_score": 5, "spoofing_score": 0, "coverage_score": 0, "in_coverage_hole": False, "evidence": ""})
+    mock_classify = MagicMock(side_effect=mock_classify_fn)
+
+    with patch("app.cubes.signal_health_analyzer.get_coverage_baseline", new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.detect_integrity_events_batch_async",
+               new_callable=AsyncMock, return_value={
+                   "a": [event_a],
+                   "b": [event_b],
+                   "c": [event_c],
+               }), \
+         patch("app.cubes.signal_health_analyzer.detect_shutdowns_batch_async",
+               new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.fetch_positions_batch_async",
+               new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.score_event", mock_score), \
+         patch("app.cubes.signal_health_analyzer.classify_event", mock_classify):
         result = await cube.execute(hex_list=["a", "b", "c"])
 
     assert result["stats_summary"] == {"gps_jamming": 2, "gps_spoofing": 1}
+
+
+# ============================================================
+# Error handling
+# ============================================================
+
+
+@pytest.mark.asyncio
+async def test_per_hex_error_skips_hex(cube):
+    """An error during per-hex processing skips the hex with a warning."""
+    def bad_score(ev, baseline):
+        raise RuntimeError("simulated error")
+
+    with patch("app.cubes.signal_health_analyzer.get_coverage_baseline", new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.detect_integrity_events_batch_async",
+               new_callable=AsyncMock, return_value={"abc123": [SAMPLE_INTEGRITY_EVENT]}), \
+         patch("app.cubes.signal_health_analyzer.detect_shutdowns_batch_async",
+               new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.fetch_positions_batch_async",
+               new_callable=AsyncMock, return_value={}), \
+         patch("app.cubes.signal_health_analyzer.score_event", MagicMock(side_effect=bad_score)):
+        result = await cube.execute(hex_list=["abc123"])
+
+    # Error hex should be silently skipped — returns empty
+    assert result["count"] == 0
+    assert result["events"] == []
