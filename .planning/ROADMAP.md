@@ -112,13 +112,15 @@ Plans:
 
 ### Phase 16: Fix signal health cube bugs and performance
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** Fix performance (4*N queries to 3 batch queries), bugs (missing n_severe_alt_div, _serialize_datetimes overhead, TTL baseline), and architecture issues (event loop blocking, startup baseline) in the signal health detection system.
+**Requirements**: SH-BATCH, SH-BASELINE, SH-KALMAN, SH-ORCHESTRATOR, SH-NSEVERE, SH-TESTS
 **Depends on:** Phase 15
-**Plans:** 0 plans
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 16 to break down)
+- [ ] 16-01-PLAN.md — Batch query functions in rule_based.py + kalman.py + lifespan hook
+- [ ] 16-02-PLAN.md — Restructure SignalHealthAnalyzerCube execute() for batch architecture
+- [ ] 16-03-PLAN.md — Update signal test suite for batch signatures
 
 ---
 *Roadmap created: 2026-03-03*
