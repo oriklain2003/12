@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Advanced Flight Analysis Cubes
 status: unknown
-last_updated: "2026-03-13T14:14:48.359Z"
+last_updated: "2026-03-13T14:16:09.415Z"
 progress:
   total_phases: 7
   completed_phases: 4
