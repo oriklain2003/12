@@ -10,6 +10,7 @@ import { useFlowStore } from '../../store/flowStore';
 import { RelativeTimeInput } from './RelativeTimeInput';
 import { DateTimeInput } from './DateTimeInput';
 import { PolygonField } from './PolygonMapWidget';
+import { MultiSelectChips } from './MultiSelectChips';
 import './ParamField.css';
 
 interface ParamFieldProps {
@@ -75,6 +76,15 @@ export function ParamField({ nodeId, param }: ParamFieldProps) {
             <option key={opt} value={opt}>{opt}</option>
           ))}
         </select>
+      );
+    }
+    if (param.widget_hint === 'tags' && param.options) {
+      return (
+        <MultiSelectChips
+          options={param.options}
+          value={(currentValue as string[]) ?? (param.default as string[]) ?? []}
+          onChange={updateParam}
+        />
       );
     }
     if (param.widget_hint === 'polygon') {

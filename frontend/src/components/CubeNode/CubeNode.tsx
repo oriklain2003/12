@@ -209,39 +209,45 @@ export function CubeNode({ id, data, selected, isConnectable }: NodeProps<CubeFl
         <span className="cube-node__category-dot" style={{ background: categoryColor }} />
         <span className="cube-node__header-name">{cubeDef.name}</span>
 
-        {/* Execution timing + status indicator */}
+        {/* Execution status indicator */}
         {executionStatus && (
-          <>
-            {executionStatus.execution_ms != null && (
-              <span className="cube-node__timing">
-                {executionStatus.execution_ms < 1000
-                  ? `${executionStatus.execution_ms}ms`
-                  : `${(executionStatus.execution_ms / 1000).toFixed(1)}s`}
-              </span>
+          <span className={`cube-node__status cube-node__status--${executionStatus.status}`}>
+            {executionStatus.status === 'running' && (
+              <span className="cube-node__spinner" />
             )}
-            <span className={`cube-node__status cube-node__status--${executionStatus.status}`}>
-              {executionStatus.status === 'running' && (
-                <span className="cube-node__spinner" />
-              )}
-              {executionStatus.status === 'done' && (
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-              {executionStatus.status === 'error' && (
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              )}
-              {executionStatus.status === 'skipped' && (
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              )}
-            </span>
-          </>
+            {executionStatus.status === 'done' && (
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+            {executionStatus.status === 'error' && (
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            )}
+            {executionStatus.status === 'skipped' && (
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            )}
+          </span>
         )}
       </div>
+
+      {/* Execution timing bar — shown after cube finishes */}
+      {executionStatus?.execution_ms != null && (
+        <div className="cube-node__timing-bar">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1" />
+            <path d="M5 3v2.5l1.5 1" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span>
+            {executionStatus.execution_ms < 1000
+              ? `${executionStatus.execution_ms}ms`
+              : `${(executionStatus.execution_ms / 1000).toFixed(1)}s`}
+          </span>
+        </div>
+      )}
 
       <div className="cube-node__body">
         {/* Input params */}

@@ -147,8 +147,20 @@ def ensure_schema(conn: psycopg.Connection) -> None:
             CREATE INDEX IF NOT EXISTS idx_ke_classification
             ON kalman_events (classification, start_ts)
         """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS coverage_baseline (
+                lat_cell        DOUBLE PRECISION NOT NULL,
+                lon_cell        DOUBLE PRECISION NOT NULL,
+                median_rssi     DOUBLE PRECISION,
+                reports_per_hour DOUBLE PRECISION,
+                temporal_coverage DOUBLE PRECISION,
+                is_coverage_hole BOOLEAN NOT NULL DEFAULT false,
+                updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+                PRIMARY KEY (lat_cell, lon_cell)
+            )
+        """)
     conn.commit()
-    log.info("Schema ensured: rule_based_events, kalman_events")
+    log.info("Schema ensured: rule_based_events, kalman_events, coverage_baseline")
 
 
 # ---------------------------------------------------------------------------

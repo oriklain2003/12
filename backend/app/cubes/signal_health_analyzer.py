@@ -42,6 +42,10 @@ CLASSIFY_MODE_MAP: dict[str, set[str]] = {
     "Technical Gaps": {"coverage_hole", "ambiguous"},
 }
 
+# Which classify_mode labels require which detection layers
+_NEEDS_KALMAN = {"Spoofing"}
+_NEEDS_RULE_BASED = {"Jamming", "Dark Target", "Technical Gaps", "Stable"}
+
 
 # ---------------------------------------------------------------------------
 # Unified event schema helper
@@ -232,21 +236,47 @@ class SignalHealthAnalyzerCube(BaseCube):
         start_ts = end_ts - timedelta(hours=lookback_hours)
 
         # ------------------------------------------------------------------
-        # 3. Get coverage baseline (startup-loaded, cached)
-        # ------------------------------------------------------------------
-        coverage_baseline = await get_coverage_baseline()
-
-        # ------------------------------------------------------------------
-        # 4. Batch queries — 3 total, run concurrently
+        # 3. Determine which detection layers are needed
         # ------------------------------------------------------------------
         # Normalize hex codes once for consistent lookup
         hex_list_normalized = [str(h).strip().lower() for h in hex_list]
 
-        integrity_by_hex, shutdown_by_hex, positions_by_hex = await asyncio.gather(
-            detect_integrity_events_batch_async(hex_list_normalized, start_ts, end_ts),
-            detect_shutdowns_batch_async(hex_list_normalized, start_ts, end_ts),
-            fetch_positions_batch_async(hex_list_normalized, start_ts, end_ts),
+        mode_set = set(classify_mode)
+        if "all" in mode_set:
+            need_rule_based = True
+            need_kalman = True
+        else:
+            need_rule_based = bool(mode_set & _NEEDS_RULE_BASED)
+            need_kalman = bool(mode_set & _NEEDS_KALMAN)
+
+        log.info(
+            "SignalHealthAnalyzer: layers rule_based=%s kalman=%s",
+            need_rule_based, need_kalman,
         )
+
+        # ------------------------------------------------------------------
+        # 4. Batch queries — only fetch what's needed
+        # ------------------------------------------------------------------
+        coverage_baseline = await get_coverage_baseline() if need_rule_based else {}
+
+        queries: list = []
+        query_keys: list[str] = []
+
+        if need_rule_based:
+            queries.append(detect_integrity_events_batch_async(hex_list_normalized, start_ts, end_ts))
+            query_keys.append("integrity")
+            queries.append(detect_shutdowns_batch_async(hex_list_normalized, start_ts, end_ts))
+            query_keys.append("shutdown")
+        if need_kalman:
+            queries.append(fetch_positions_batch_async(hex_list_normalized, start_ts, end_ts))
+            query_keys.append("positions")
+
+        results = await asyncio.gather(*queries)
+        result_map = dict(zip(query_keys, results))
+
+        integrity_by_hex: dict = result_map.get("integrity", {})
+        shutdown_by_hex: dict = result_map.get("shutdown", {})
+        positions_by_hex: dict = result_map.get("positions", {})
 
         # ------------------------------------------------------------------
         # 5. Per-hex processing loop (in-memory, no DB calls)
@@ -258,28 +288,30 @@ class SignalHealthAnalyzerCube(BaseCube):
             hx = str(raw_hex).strip().lower()
             try:
                 rule_events: list[dict] = []
-
-                # Score + classify integrity events
-                for ev in integrity_by_hex.get(hx, []):
-                    scored = score_event(ev, coverage_baseline)
-                    scored["category"] = classify_event(scored)
-                    rule_events.append(scored)
-
-                # Score + classify shutdown events
-                for ev in shutdown_by_hex.get(hx, []):
-                    scored = score_event(ev, coverage_baseline)
-                    scored["category"] = classify_event(scored)
-                    rule_events.append(scored)
-
-                # Run Kalman on pre-fetched positions (skips per-hex DB fetch)
                 kalman_events: list[dict] = []
-                hex_positions = positions_by_hex.get(hx)
-                if hex_positions:
-                    kalman_result = await classify_flight_async(
-                        hx, start_ts, end_ts, positions=hex_positions
-                    )
-                    if kalman_result.get("classification") not in ("normal", None):
-                        kalman_events.append(kalman_event_from_result(hx, kalman_result))
+
+                if need_rule_based:
+                    # Score + classify integrity events
+                    for ev in integrity_by_hex.get(hx, []):
+                        scored = score_event(ev, coverage_baseline)
+                        scored["category"] = classify_event(scored)
+                        rule_events.append(scored)
+
+                    # Score + classify shutdown events
+                    for ev in shutdown_by_hex.get(hx, []):
+                        scored = score_event(ev, coverage_baseline)
+                        scored["category"] = classify_event(scored)
+                        rule_events.append(scored)
+
+                if need_kalman:
+                    # Run Kalman on pre-fetched positions (skips per-hex DB fetch)
+                    hex_positions = positions_by_hex.get(hx)
+                    if hex_positions:
+                        kalman_result = await classify_flight_async(
+                            hx, start_ts, end_ts, positions=hex_positions
+                        )
+                        if kalman_result.get("classification") not in ("normal", None):
+                            kalman_events.append(kalman_event_from_result(hx, kalman_result))
 
                 all_hex_events = rule_events + kalman_events
 

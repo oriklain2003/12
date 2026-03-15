@@ -275,13 +275,23 @@
   background: rgba(239, 68, 68, 0.15);
 }
 
-/* ── Execution timing label (in header) ───────────────────── */
+/* ── Execution timing bar (below header) ──────────────────── */
 
-.cube-node__timing {
+.cube-node__timing-bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 14px;
   font-size: 11px;
-  color: var(--color-text-muted);
-  font-weight: 400;
-  flex-shrink: 0;
+  font-weight: 500;
+  color: var(--color-text-dim);
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  letter-spacing: 0.02em;
+}
+
+.cube-node__timing-bar svg {
+  opacity: 0.5;
 }
 
 /* ── Execution status indicator (in header) ───────────────── */

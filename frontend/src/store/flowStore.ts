@@ -562,6 +562,7 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
         status: event.status,
         error: event.error,
         outputs: event.outputs,
+        execution_ms: event.execution_ms,
       };
 
       let { completedCount, totalCount } = state;
