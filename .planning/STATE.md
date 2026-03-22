@@ -1,30 +1,31 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Advanced Flight Analysis Cubes
-status: unknown
-last_updated: "2026-03-13T14:18:10.910Z"
+milestone: v3.0
+milestone_name: AI Workflow Agents
+status: defining_requirements
+last_updated: "2026-03-22"
 progress:
-  total_phases: 7
-  completed_phases: 5
-  total_plans: 19
-  completed_plans: 18
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State: Project 12
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-06)
+See: .planning/PROJECT.md (updated 2026-03-22)
 
 **Core value:** Users can build and run custom flight analysis pipelines visually
-**Current focus:** v2.0 — Advanced Flight Analysis Cubes (6 new cubes across 4 phases)
+**Current focus:** Defining requirements for v3.0 AI Workflow Agents
 
 ## Current Milestone
 
-**v2.0:** 🔲 In Progress — Advanced Flight Analysis Cubes
+**v3.0:** 🔲 Defining Requirements — AI Workflow Agents
 
-4 phases, 3 plans (phase 11 planned, 1 plan executed). Next action: `/gsd:execute-phase 11` plan 02
+Status: Defining requirements
+Last activity: 2026-03-22 — Milestone v3.0 started
 
 ### Phase Overview
 
@@ -36,6 +37,8 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 | 14 | Signal Health Analyzer Placeholder | `signal_health_analyzer` | Complete (3/3 plans) |
 
 ## Previous Milestones
+
+**v2.0:** 🔲 In Progress — Advanced Flight Analysis Cubes (phases 11-17, 6/7 complete, phase 13 deferred)
 
 **v1.0:** ✅ Shipped 2026-03-06
 10 phases, 23 plans, 55 requirements satisfied (53 full, 2 partial).

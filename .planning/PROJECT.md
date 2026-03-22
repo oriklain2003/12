@@ -62,12 +62,22 @@ Users can build and run custom flight analysis pipelines visually — connecting
 
 ### Active
 
-(None — v1.0 shipped. Define v2 requirements via `/gsd:new-milestone`)
+<!-- v3.0 — AI Workflow Agents -->
+
+- [ ] AI Build Agent — wizard-style page with interactive options, discovers user mission, selects cubes, generates complete workflow
+- [ ] AI Canvas Agent — chat panel in editor with 3 modes: optimize, error-fix, general editing
+- [ ] Cube Expert sub-agent — two-tier catalog lookup (summaries → full definitions), suggests best cubes for use case
+- [ ] Validation Agent — pre-execution structural checks (params filled, types compatible, no dangling inputs)
+- [ ] Results Interpreter Agent — post-execution, explains findings in mission context
+- [ ] Agent infrastructure — Gemini LLM integration via FastAPI, skill files (system prompts), system brief, internal function-call tools
+- [ ] Cube catalog tool — two-tier lookup for agents (summary browse → full definition load)
+- [ ] Chat UI component — React chat panel for canvas/error/general agents
+- [ ] Wizard UI component — React step-by-step page for build agent with clickable options
 
 ### Out of Scope
 
 - Authentication/authorization — Tracer 42 handles this, 12 is internal
-- Custom cube creation by end users — v2 feature
+- Custom cube creation by end users — future feature
 - Real-time collaboration — single user per workflow
 - Undo/redo — complexity not justified for v1
 - Cube marketplace/sharing — v2 feature
@@ -113,5 +123,17 @@ Users can build and run custom flight analysis pipelines visually — connecting
 | Two-tier FilterFlights | Tier 1 metadata (fast), Tier 2 track aggregation (slower but accurate) | ✓ Good — balances performance and accuracy |
 | POST SSE (graph-in-body) over GET/{id} | Ad-hoc execution without saving; frontend serializes graph on each run | ⚠️ Revisit — orphaned GET/{id}/run/stream route exists |
 
+## Current Milestone: v3.0 AI Workflow Agents
+
+**Goal:** Build an AI agent system that helps users create, edit, optimize, and debug visual dataflow workflows — making the growing cube ecosystem accessible through conversational and wizard-style interfaces.
+
+**Target features:**
+- Build Agent — wizard page for creating workflows from scratch via guided questions
+- Canvas Agent — chat panel with optimize/error-fix/general modes for live workflow editing
+- Cube Expert — sub-agent for intelligent cube discovery and recommendation
+- Validation Agent — structural pre-flight checks before execution
+- Results Interpreter — post-execution analysis explaining findings in user's mission context
+- Agent infrastructure — Gemini integration, skill files, system brief, internal tools
+
 ---
-*Last updated: 2026-03-06 after v1.0 milestone*
+*Last updated: 2026-03-22 after v3.0 milestone start*
