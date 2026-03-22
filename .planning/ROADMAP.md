@@ -3,7 +3,8 @@
 ## Milestones
 
 - ✅ **v1.0 Visual Dataflow Workflow Builder** — Phases 1-10 (shipped 2026-03-06)
-- 🔲 **v2.0 Advanced Flight Analysis Cubes** — Phases 11-14
+- 🔲 **v2.0 Advanced Flight Analysis Cubes** — Phases 11-17
+- 🔲 **v3.0 AI Workflow Agents** — Phases 18-22
 
 ## Phases
 
@@ -25,7 +26,8 @@
 
 </details>
 
-### v2.0 Advanced Flight Analysis Cubes (Phases 11-14)
+<details>
+<summary>🔲 v2.0 Advanced Flight Analysis Cubes (Phases 11-17) — In Progress</summary>
 
 ### Phase 11: Simple Filters — Squawk and Registration Country Cubes
 
@@ -57,9 +59,6 @@ Plans:
 **Depends on:** Phase 11
 **Plans:** 0 plans
 
-**flight_plans_source:** Query FlightAware AeroAPI v4 for filed flight plans by airport. Add `FLIGHTAWARE_API_KEY` to config.
-**flight_plan_compliance_analyzer:** Match ADS-B flights to filed plans, detect unfiled flights, urgent filings, route deviations.
-
 Plans:
 - [ ] TBD (run /gsd:plan-phase 13 to break down)
 
@@ -74,25 +73,6 @@ Plans:
 - [ ] 14-01-PLAN.md — Rule-based detection module (async port) + numpy/scipy dependencies
 - [ ] 14-02-PLAN.md — Kalman detection module (async port)
 - [ ] 14-03-PLAN.md — SignalHealthAnalyzerCube orchestrating both detection layers
-
-## Progress
-
-| Phase | Milestone | Plans Complete | Status | Completed |
-|-------|-----------|---------------|--------|-----------|
-| 1. Types & Schemas | v1.0 | 2/2 | Complete | 2026-03-03 |
-| 2. Backend Core | v1.0 | 2/2 | Complete | 2026-03-03 |
-| 3. SSE Execution | v1.0 | 1/1 | Complete | 2026-03-03 |
-| 4. Frontend Canvas | v1.0 | 3/3 | Complete | 2026-03-04 |
-| 5. Workflow Mgmt | v1.0 | 3/3 | Complete | 2026-03-04 |
-| 6. Results Display | v1.0 | 2/2 | Complete | 2026-03-04 |
-| 7. Real DB + Docker | v1.0 | 3/3 | Complete | 2026-03-04 |
-| 8. Geo-Temporal | v1.0 | 4/4 | Complete | 2026-03-05 |
-| 9. Filter Flights | v1.0 | 1/1 | Complete | 2026-03-05 |
-| 10. Audit Remediation | v1.0 | 2/2 | Complete | 2026-03-05 |
-| 11. Squawk & Reg Country | 3/3 | Complete   | 2026-03-06 | — |
-| 12. Area Spatial Filter | v2.0 | 2/2 | Complete | 2026-03-08 |
-| 13. Flight Plans & Compliance | v2.0 | 0/0 | Pending | — |
-| 14. Signal Health Analyzer | 3/3 | Complete    | 2026-03-08 | — |
 
 ### Phase 15: Cube unit tests and integration tests for current and future cubes
 
@@ -132,7 +112,105 @@ Plans:
 Plans:
 - [ ] 17-01-PLAN.md — SQL pushdown + set accumulation + loop hoisting + test updates
 
+</details>
+
+### v3.0 AI Workflow Agents (Phases 18-22)
+
+- [ ] **Phase 18: Agent Infrastructure** — Gemini client, SSE streaming, skill files, tool dispatch, context management, mission persistence
+- [ ] **Phase 19: Cube Expert + Validation Agent** — Two-tier catalog sub-agent, structural validation checks, pre-run validation trigger
+- [ ] **Phase 20: Canvas Agent** — Chat panel UI, three modes (optimize/fix/general), canvas diff application, agent streaming
+- [ ] **Phase 21: Build Wizard Agent** — Wizard page with option cards, mission discovery, workflow generation, intent preview
+- [ ] **Phase 22: Results Interpreter** — Post-execution analysis, mission-context explanation, fallback generic framing
+
+## Phase Details
+
+### Phase 18: Agent Infrastructure
+**Goal**: The application has a working Gemini LLM layer that all agents can build on — async client, SSE streaming, tool dispatch, context management, and skill files
+**Depends on**: Phase 17 (existing backend)
+**Requirements**: INFRA-01, INFRA-02, INFRA-03, INFRA-04, INFRA-05, INFRA-06, INFRA-07
+**Success Criteria** (what must be TRUE):
+  1. A developer can send a test prompt to a new `/api/agent/chat` SSE endpoint and receive a streaming Gemini response without blocking the existing workflow execution endpoints
+  2. Agent tool calls resolve via internal Python function dispatch — the Gemini client calls `list_cubes_summary` or `get_cube_detail` and gets back the correct data without making HTTP calls
+  3. A skill file (system prompt) for each agent persona loads from disk at startup and is injected into every agent request without duplication in the request body
+  4. Sending 20 chat turns does not cause a context explosion — history is pruned at the token threshold and the latest turn still receives a coherent response
+  5. Mission context (analysis intent, parameters) persists in the workflow JSONB metadata and is retrievable in subsequent sessions
+**Plans**: TBD
+
+### Phase 19: Cube Expert + Validation Agent
+**Goal**: Analysts can run pre-flight validation before executing a workflow and see human-readable explanations of structural issues; agents have a reliable two-tier catalog tool to look up cubes
+**Depends on**: Phase 18
+**Requirements**: CUBE-01, CUBE-02, CUBE-03, VALID-01, VALID-02, VALID-03
+**Success Criteria** (what must be TRUE):
+  1. Running validation on a workflow with a missing required parameter shows a specific, named explanation of which cube and which parameter is the problem — not a generic error
+  2. Running validation on a structurally correct workflow returns a clean result with zero issues, not a false positive
+  3. Validation runs automatically when the user clicks Run — if issues are found, execution is blocked and the issues panel opens before any cube executes
+  4. The Cube Expert sub-agent, given a description like "I need to filter flights by geographic area", returns the correct cube name (`area_spatial_filter`) with reasoning — not a hallucinated cube name
+  5. The two-tier catalog lookup returns only summaries on the first call (no parameter detail), and loads full parameter definitions only when a specific cube name is requested
+**Plans**: TBD
+
+### Phase 20: Canvas Agent
+**Goal**: Analysts working in the editor can open a chat panel, describe what they want to change, and see the agent apply diffs to the canvas — without breaking existing node connections or workflow state
+**Depends on**: Phase 18, Phase 19
+**Requirements**: CANVAS-01, CANVAS-02, CANVAS-03, CANVAS-04, CANVAS-05, CANVAS-06, CANVAS-07
+**Success Criteria** (what must be TRUE):
+  1. The chat panel opens and closes from the editor without covering the canvas — it appears as a collapsible sidebar with a visible mode badge (Optimize / Fix / General)
+  2. In Error-Fix mode, the agent reads the error output from the last run and suggests a specific corrective action for the failing cube — not a generic "check your parameters" response
+  3. When the agent suggests a canvas change and the user accepts it, the canvas updates atomically — all proposed nodes and edges appear together, or none do, with no partial broken state
+  4. After an agent applies a diff, the user can discard the change by reloading the last saved workflow — the canvas returns to exactly the pre-agent state
+  5. In Optimize mode, the agent reads the current workflow graph and suggests a specific improvement (e.g., removing a redundant filter step) with reasoning tied to the actual cubes present
+**Plans**: TBD
+
+### Phase 21: Build Wizard Agent
+**Goal**: A new analyst with no existing workflow can use the wizard to answer 3-5 guided questions and have a complete, valid workflow generated on the canvas — ready to run without manual parameter editing
+**Depends on**: Phase 18, Phase 19
+**Requirements**: BUILD-01, BUILD-02, BUILD-03, BUILD-04, BUILD-05
+**Success Criteria** (what must be TRUE):
+  1. The wizard page presents clickable option cards at each step — the analyst never types free text to describe what cubes they need
+  2. After completing all wizard steps, the analyst sees an intent preview summarizing what will be built (cube names, connections, key parameters) before any canvas changes occur
+  3. The generated workflow loads onto the canvas with all required parameters pre-filled — the analyst can click Run immediately without touching any parameter editor
+  4. The Validation Agent runs automatically on the generated workflow before it is presented — a workflow with invalid connections is never delivered to the canvas
+  5. The mission description and analysis intent from the wizard are saved to the workflow metadata — visible in the workflow title and accessible to the Results Interpreter later
+**Plans**: TBD
+
+### Phase 22: Results Interpreter
+**Goal**: After a workflow executes, analysts can ask for an interpretation of the results and receive an explanation grounded in their stated mission — not a generic statistical summary
+**Depends on**: Phase 21
+**Requirements**: RESULT-01, RESULT-02, RESULT-03
+**Success Criteria** (what must be TRUE):
+  1. An "Interpret Results" button appears in the results drawer after a successful workflow execution, and clicking it triggers the interpreter without navigating away from the results
+  2. For a workflow created via the Build Wizard, the interpretation references the analyst's original mission intent (e.g., "You were looking for squawk 7700 activity in the Jordan FIR — 3 matching flights were found") rather than just describing the data schema
+  3. For a workflow with no wizard-derived mission context, the interpretation still produces a useful flight-analysis framing (e.g., "This result contains 47 flights with anomaly scores above threshold — the top anomaly type is...") rather than refusing to interpret
+**Plans**: TBD
+
+## Progress
+
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|---------------|--------|-----------|
+| 1. Types & Schemas | v1.0 | 2/2 | Complete | 2026-03-03 |
+| 2. Backend Core | v1.0 | 2/2 | Complete | 2026-03-03 |
+| 3. SSE Execution | v1.0 | 1/1 | Complete | 2026-03-03 |
+| 4. Frontend Canvas | v1.0 | 3/3 | Complete | 2026-03-04 |
+| 5. Workflow Mgmt | v1.0 | 3/3 | Complete | 2026-03-04 |
+| 6. Results Display | v1.0 | 2/2 | Complete | 2026-03-04 |
+| 7. Real DB + Docker | v1.0 | 3/3 | Complete | 2026-03-04 |
+| 8. Geo-Temporal | v1.0 | 4/4 | Complete | 2026-03-05 |
+| 9. Filter Flights | v1.0 | 1/1 | Complete | 2026-03-05 |
+| 10. Audit Remediation | v1.0 | 2/2 | Complete | 2026-03-05 |
+| 11. Squawk & Reg Country | v2.0 | 3/3 | Complete | 2026-03-06 |
+| 12. Area Spatial Filter | v2.0 | 2/2 | Complete | 2026-03-08 |
+| 13. Flight Plans & Compliance | v2.0 | 0/0 | Pending | — |
+| 14. Signal Health Analyzer | v2.0 | 3/3 | Complete | 2026-03-08 |
+| 15. Cube Tests | v2.0 | 7/7 | Complete | 2026-03-09 |
+| 16. Signal Health Fixes | v2.0 | 3/3 | Complete | 2026-03-13 |
+| 17. Squawk Optimization | v2.0 | 1/1 | Complete | 2026-03-13 |
+| 18. Agent Infrastructure | v3.0 | 0/0 | Not started | — |
+| 19. Cube Expert + Validation | v3.0 | 0/0 | Not started | — |
+| 20. Canvas Agent | v3.0 | 0/0 | Not started | — |
+| 21. Build Wizard Agent | v3.0 | 0/0 | Not started | — |
+| 22. Results Interpreter | v3.0 | 0/0 | Not started | — |
+
 ---
 *Roadmap created: 2026-03-03*
 *v1.0 shipped: 2026-03-06*
 *v2.0 roadmap added: 2026-03-06*
+*v3.0 roadmap added: 2026-03-22*

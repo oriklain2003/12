@@ -78,40 +78,40 @@ Requirements for AI Workflow Agents milestone. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | TBD | Pending |
-| INFRA-02 | TBD | Pending |
-| INFRA-03 | TBD | Pending |
-| INFRA-04 | TBD | Pending |
-| INFRA-05 | TBD | Pending |
-| INFRA-06 | TBD | Pending |
-| INFRA-07 | TBD | Pending |
-| CUBE-01 | TBD | Pending |
-| CUBE-02 | TBD | Pending |
-| CUBE-03 | TBD | Pending |
-| BUILD-01 | TBD | Pending |
-| BUILD-02 | TBD | Pending |
-| BUILD-03 | TBD | Pending |
-| BUILD-04 | TBD | Pending |
-| BUILD-05 | TBD | Pending |
-| CANVAS-01 | TBD | Pending |
-| CANVAS-02 | TBD | Pending |
-| CANVAS-03 | TBD | Pending |
-| CANVAS-04 | TBD | Pending |
-| CANVAS-05 | TBD | Pending |
-| CANVAS-06 | TBD | Pending |
-| CANVAS-07 | TBD | Pending |
-| VALID-01 | TBD | Pending |
-| VALID-02 | TBD | Pending |
-| VALID-03 | TBD | Pending |
-| RESULT-01 | TBD | Pending |
-| RESULT-02 | TBD | Pending |
-| RESULT-03 | TBD | Pending |
+| INFRA-01 | Phase 18 | Pending |
+| INFRA-02 | Phase 18 | Pending |
+| INFRA-03 | Phase 18 | Pending |
+| INFRA-04 | Phase 18 | Pending |
+| INFRA-05 | Phase 18 | Pending |
+| INFRA-06 | Phase 18 | Pending |
+| INFRA-07 | Phase 18 | Pending |
+| CUBE-01 | Phase 19 | Pending |
+| CUBE-02 | Phase 19 | Pending |
+| CUBE-03 | Phase 19 | Pending |
+| VALID-01 | Phase 19 | Pending |
+| VALID-02 | Phase 19 | Pending |
+| VALID-03 | Phase 19 | Pending |
+| CANVAS-01 | Phase 20 | Pending |
+| CANVAS-02 | Phase 20 | Pending |
+| CANVAS-03 | Phase 20 | Pending |
+| CANVAS-04 | Phase 20 | Pending |
+| CANVAS-05 | Phase 20 | Pending |
+| CANVAS-06 | Phase 20 | Pending |
+| CANVAS-07 | Phase 20 | Pending |
+| BUILD-01 | Phase 21 | Pending |
+| BUILD-02 | Phase 21 | Pending |
+| BUILD-03 | Phase 21 | Pending |
+| BUILD-04 | Phase 21 | Pending |
+| BUILD-05 | Phase 21 | Pending |
+| RESULT-01 | Phase 22 | Pending |
+| RESULT-02 | Phase 22 | Pending |
+| RESULT-03 | Phase 22 | Pending |
 
 **Coverage:**
 - v3.0 requirements: 28 total
-- Mapped to phases: 0
-- Unmapped: 28
+- Mapped to phases: 28
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-22*
-*Last updated: 2026-03-22 after initial definition*
+*Last updated: 2026-03-22 after v3.0 roadmap creation*
