@@ -75,3 +75,53 @@ async def get_cube_definition(ctx: ToolContext, cube_name: str = "") -> dict:
         "inputs": [p.model_dump() for p in defn.inputs],
         "outputs": [p.model_dump() for p in defn.outputs],
     }
+
+
+@agent_tool(
+    name="find_cubes_for_task",
+    description=(
+        "Search for cubes that match a task description by keyword. "
+        "Returns ranked cube summaries. Use this after list_cubes_summary "
+        "when you have a specific task to match."
+    ),
+    parameters_schema={
+        "type": "object",
+        "properties": {
+            "query": {
+                "type": "string",
+                "description": "Natural language description of the task, e.g. 'filter flights by geographic area'",
+            },
+            "limit": {
+                "type": "number",
+                "description": "Maximum number of results to return (default: 5)",
+            },
+        },
+        "required": ["query"],
+    },
+)
+async def find_cubes_for_task(ctx: ToolContext, query: str = "", limit: int = 5) -> dict:
+    """Search cubes by keyword matching against cube_id, name, description."""
+    if ctx.cube_registry is None:
+        return {"error": "Cube registry not available"}
+    keywords = query.lower().split()
+    if not keywords:
+        return {"results": []}
+    scored = []
+    for cube_def in ctx.cube_registry.catalog():
+        haystack = f"{cube_def.cube_id} {cube_def.name} {cube_def.description}".lower()
+        score = sum(1 for kw in keywords if kw in haystack)
+        if score > 0:
+            scored.append((score, cube_def))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return {
+        "results": [
+            {
+                "cube_id": d.cube_id,
+                "name": d.name,
+                "description": d.description,
+                "category": d.category.value if hasattr(d.category, "value") else str(d.category),
+                "score": s,
+            }
+            for s, d in scored[:limit]
+        ]
+    }
