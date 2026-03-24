@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: AI Workflow Agents
 status: completed
-last_updated: "2026-03-24T17:19:23.090Z"
+last_updated: "2026-03-24T17:38:41.785Z"
 last_activity: 2026-03-24
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 # Project State: Project 12
@@ -33,7 +33,7 @@ Last activity: 2026-03-24
 | Phase | Name | Requirements | Status |
 |-------|------|-------------|--------|
 | 18 | Agent Infrastructure | INFRA-01 through INFRA-07 | Complete (4/4 plans) |
-| 19 | Cube Expert + Validation Agent | CUBE-01..03, VALID-01..03 | In Progress (2/3 plans) |
+| 19 | Cube Expert + Validation Agent | CUBE-01..03, VALID-01..03 | In Progress — awaiting verification (3/3 plans built) |
 | 20 | Canvas Agent | CANVAS-01 through CANVAS-07 | Not started |
 | 21 | Build Wizard Agent | BUILD-01 through BUILD-05 | Not started |
 | 22 | Results Interpreter | RESULT-01 through RESULT-03 | Not started |
@@ -79,6 +79,10 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-24:** `types.Part.from_function_call/from_function_response` in google-genai 1.68.0 do not accept `id` parameter — used `name`+`args` only in router tool dispatch loop
 - **2026-03-24:** Session ID sent as first SSE event (type=session) for frontend capture and reuse across turns
 - **2026-03-24:** Agent lifespan init is conditional on `GEMINI_API_KEY` — graceful degradation when key absent; raises `RuntimeError` at request time
+- **2026-03-24:** validate_graph cycle check returns early — other rules are meaningless in cyclic graphs; single cycle error prevents misleading cascading errors
+- **2026-03-24:** __full_result__ sourceHandle is always exempt from dangling_source_handle check — it's a valid runtime convention, not a param name
+- **2026-03-24:** IssuesPanel placed inside ReactFlowProvider in EditorPage — required for useReactFlow fitView hook to work within the panel
+- **2026-03-24:** handleRun uses finally block for setIsValidating(false) — Run button always re-enables on network error; execution proceeds on validation failure (graceful degradation)
 
 ### Critical Risks (from research)
 
@@ -97,4 +101,4 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-22:** v3.0 roadmap created — 5 phases (18-22), 28/28 requirements mapped
 
 ---
-*Last session: 2026-03-24 — Phase 19 plan 02 complete: CubeExpert sub-agent class, find_cubes_for_task keyword-search tool, 11 TDD tests (mocked Gemini). Stopped at: Completed 19-02-PLAN.md*
+*Last session: 2026-03-24 — Phase 19 plan 03 complete: IssuesPanel component, pre-run validation in Toolbar, node highlighting in CubeNode, Zustand validation state. Stopped at: Checkpoint 19-03 Task 3 — awaiting human-verify*

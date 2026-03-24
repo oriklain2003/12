@@ -117,7 +117,7 @@ Plans:
 ### v3.0 AI Workflow Agents (Phases 18-22)
 
 - [x] **Phase 18: Agent Infrastructure** — Gemini client, SSE streaming, skill files, tool dispatch, context management, mission persistence (completed 2026-03-24)
-- [ ] **Phase 19: Cube Expert + Validation Agent** — Two-tier catalog sub-agent, structural validation checks, pre-run validation trigger
+- [x] **Phase 19: Cube Expert + Validation Agent** — Two-tier catalog sub-agent, structural validation checks, pre-run validation trigger (completed 2026-03-24)
 - [ ] **Phase 20: Canvas Agent** — Chat panel UI, three modes (optimize/fix/general), canvas diff application, agent streaming
 - [ ] **Phase 21: Build Wizard Agent** — Wizard page with option cards, mission discovery, workflow generation, intent preview
 - [ ] **Phase 22: Results Interpreter** — Post-execution analysis, mission-context explanation, fallback generic framing
@@ -157,7 +157,7 @@ Plans:
 Plans:
 - [x] 19-01-PLAN.md — Validation engine + schemas + POST /api/agent/validate endpoint + tests
 - [x] 19-02-PLAN.md — Cube Expert class + find_cubes_for_task tool + tests
-- [ ] 19-03-PLAN.md — Frontend IssuesPanel + pre-run validation trigger + node highlighting
+- [x] 19-03-PLAN.md — Frontend IssuesPanel + pre-run validation trigger + node highlighting
 
 ### Phase 20: Canvas Agent
 **Goal**: Analysts working in the editor can open a chat panel, describe what they want to change, and see the agent apply diffs to the canvas — without breaking existing node connections or workflow state
@@ -215,7 +215,7 @@ Plans:
 | 16. Signal Health Fixes | v2.0 | 3/3 | Complete | 2026-03-13 |
 | 17. Squawk Optimization | v2.0 | 1/1 | Complete | 2026-03-13 |
 | 18. Agent Infrastructure | v3.0 | 4/4 | Complete    | 2026-03-24 |
-| 19. Cube Expert + Validation | v3.0 | 2/3 | In Progress|  |
+| 19. Cube Expert + Validation | v3.0 | 3/3 | Complete   | 2026-03-24 |
 | 20. Canvas Agent | v3.0 | 0/0 | Not started | — |
 | 21. Build Wizard Agent | v3.0 | 0/0 | Not started | — |
 | 22. Results Interpreter | v3.0 | 0/0 | Not started | — |
