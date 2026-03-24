@@ -14,9 +14,10 @@ from app.agents.client import get_gemini_client
 from app.agents.context import ToolContext, prune_history
 from app.agents.dispatcher import dispatch_tool
 from app.agents.registry import get_gemini_tool_declarations
-from app.agents.schemas import AgentChatRequest, AgentSSEEvent
+from app.agents.schemas import AgentChatRequest, AgentSSEEvent, ValidationRequest, ValidationResponse
 from app.agents.sessions import get_or_create_session, update_session, get_session_persona
 from app.agents.skills_loader import get_system_prompt
+from app.agents.validation import validate_graph
 from app.config import settings
 from app.database import get_db
 from app.engine.registry import registry as cube_registry
@@ -230,3 +231,13 @@ async def save_mission(
 
     await db.commit()
     return {"status": "saved", "workflow_id": workflow_id}
+
+
+@router.post("/validate", response_model=ValidationResponse)
+async def validate_workflow(body: ValidationRequest) -> ValidationResponse:
+    """Validate a workflow graph for structural issues.
+
+    Returns issues array. Errors block execution. Warnings are informational.
+    No LLM call -- pure rule-based Python, fast (<100ms).
+    """
+    return validate_graph(body.graph, cube_registry)
