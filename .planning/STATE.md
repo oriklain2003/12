@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: AI Workflow Agents
 status: completed
-last_updated: "2026-03-24T14:13:09.722Z"
+last_updated: "2026-03-24T14:20:30.574Z"
 last_activity: 2026-03-24
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State: Project 12
@@ -32,7 +32,7 @@ Last activity: 2026-03-24
 
 | Phase | Name | Requirements | Status |
 |-------|------|-------------|--------|
-| 18 | Agent Infrastructure | INFRA-01 through INFRA-07 | Not started |
+| 18 | Agent Infrastructure | INFRA-01 through INFRA-07 | Complete (4/4 plans) |
 | 19 | Cube Expert + Validation Agent | CUBE-01..03, VALID-01..03 | Not started |
 | 20 | Canvas Agent | CANVAS-01 through CANVAS-07 | Not started |
 | 21 | Build Wizard Agent | BUILD-01 through BUILD-05 | Not started |
@@ -40,8 +40,8 @@ Last activity: 2026-03-24
 
 ### Current Position
 
-Phase: 18 (agent-infrastructure) — EXECUTING
-Plan: 4 of 4
+Phase: 18 (agent-infrastructure) — COMPLETE
+Plan: 4 of 4 (all plans complete)
 
 ## Previous Milestones
 
@@ -76,6 +76,9 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-22:** Build Wizard uses clickable option cards only — no free text for cube selection; prevents LLM hallucination on analyst input
 - **2026-03-22:** History pruning at 50k tokens; sub-agent (Cube Expert) receives task description only, not orchestrator full history
 - **2026-03-22:** Three agent HTTP endpoints: `POST /api/agent/chat` (SSE), `POST /api/agent/validate` (sync), `POST /api/agent/interpret` (sync)
+- **2026-03-24:** `types.Part.from_function_call/from_function_response` in google-genai 1.68.0 do not accept `id` parameter — used `name`+`args` only in router tool dispatch loop
+- **2026-03-24:** Session ID sent as first SSE event (type=session) for frontend capture and reuse across turns
+- **2026-03-24:** Agent lifespan init is conditional on `GEMINI_API_KEY` — graceful degradation when key absent; raises `RuntimeError` at request time
 
 ### Critical Risks (from research)
 
@@ -94,4 +97,4 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-22:** v3.0 roadmap created — 5 phases (18-22), 28/28 requirements mapped
 
 ---
-*Last session: 2026-03-22 — v3.0 roadmap created (5 phases, 28 requirements, 100% coverage)*
+*Last session: 2026-03-24 — Phase 18 complete (4/4 plans): Gemini client, skills loader, tool registry/dispatcher/context, SSE chat endpoint, sessions, lifespan wiring, 18 integration tests*

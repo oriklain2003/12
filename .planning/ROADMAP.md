@@ -116,7 +116,7 @@ Plans:
 
 ### v3.0 AI Workflow Agents (Phases 18-22)
 
-- [ ] **Phase 18: Agent Infrastructure** — Gemini client, SSE streaming, skill files, tool dispatch, context management, mission persistence
+- [x] **Phase 18: Agent Infrastructure** — Gemini client, SSE streaming, skill files, tool dispatch, context management, mission persistence (completed 2026-03-24)
 - [ ] **Phase 19: Cube Expert + Validation Agent** — Two-tier catalog sub-agent, structural validation checks, pre-run validation trigger
 - [ ] **Phase 20: Canvas Agent** — Chat panel UI, three modes (optimize/fix/general), canvas diff application, agent streaming
 - [ ] **Phase 21: Build Wizard Agent** — Wizard page with option cards, mission discovery, workflow generation, intent preview
@@ -140,7 +140,7 @@ Plans:
 - [x] 18-01-PLAN.md — Gemini client singleton + Settings extension + google-genai install
 - [x] 18-02-PLAN.md — Skill files (system brief + 5 agent personas) + loader module
 - [x] 18-03-PLAN.md — Tool registry + dispatcher + context management + placeholder catalog tools
-- [ ] 18-04-PLAN.md — SSE chat endpoint + sessions + lifespan wiring + integration tests
+- [x] 18-04-PLAN.md — SSE chat endpoint + sessions + lifespan wiring + integration tests
 
 ### Phase 19: Cube Expert + Validation Agent
 **Goal**: Analysts can run pre-flight validation before executing a workflow and see human-readable explanations of structural issues; agents have a reliable two-tier catalog tool to look up cubes
@@ -209,7 +209,7 @@ Plans:
 | 15. Cube Tests | v2.0 | 7/7 | Complete | 2026-03-09 |
 | 16. Signal Health Fixes | v2.0 | 3/3 | Complete | 2026-03-13 |
 | 17. Squawk Optimization | v2.0 | 1/1 | Complete | 2026-03-13 |
-| 18. Agent Infrastructure | v3.0 | 3/4 | In Progress|  |
+| 18. Agent Infrastructure | v3.0 | 4/4 | Complete   | 2026-03-24 |
 | 19. Cube Expert + Validation | v3.0 | 0/0 | Not started | — |
 | 20. Canvas Agent | v3.0 | 0/0 | Not started | — |
 | 21. Build Wizard Agent | v3.0 | 0/0 | Not started | — |
