@@ -13,6 +13,7 @@ import type { CubeStatus, CubeStatusEvent } from '../types/execution';
 import type { WorkflowGraph, WorkflowNode, WorkflowEdge } from '../types/workflow';
 import { getWorkflow, createWorkflow, updateWorkflow } from '../api/workflows';
 import { getCatalog } from '../api/cubes';
+import type { ValidationIssue } from '../api/agent';
 
 // ─── Type definitions (collocated here, not in a separate file) ──────────────
 
@@ -182,6 +183,16 @@ interface FlowState {
   registerMagneticTarget: (handleId: string, screenX: number, screenY: number, color: string) => void;
   unregisterMagneticTarget: (handleId: string) => void;
   clearMagneticTargets: () => void;
+
+  // Validation state
+  validationIssues: ValidationIssue[];
+  showIssuesPanel: boolean;
+  highlightedNodeId: string | null;
+  isValidating: boolean;
+  setValidationIssues: (issues: ValidationIssue[]) => void;
+  setShowIssuesPanel: (show: boolean) => void;
+  setHighlightedNodeId: (nodeId: string | null) => void;
+  setIsValidating: (v: boolean) => void;
 }
 
 // ─── Default param value helper ──────────────────────────────────────────────
@@ -230,6 +241,12 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
 
   // Results drawer selection state
   selectedResultNodeId: null,
+
+  // Validation initial state
+  validationIssues: [],
+  showIssuesPanel: false,
+  highlightedNodeId: null,
+  isValidating: false,
 
   // Results drawer selection
   setSelectedResultNodeId: (nodeId) => set({ selectedResultNodeId: nodeId }),
@@ -555,6 +572,12 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
     }),
 
   clearMagneticTargets: () => set({ magneticTargets: {} }),
+
+  // Validation actions
+  setValidationIssues: (issues) => set({ validationIssues: issues }),
+  setShowIssuesPanel: (show) => set({ showIssuesPanel: show }),
+  setHighlightedNodeId: (nodeId) => set({ highlightedNodeId: nodeId }),
+  setIsValidating: (v) => set({ isValidating: v }),
 
   setNodeExecutionStatus: (nodeId, event) =>
     set((state) => {

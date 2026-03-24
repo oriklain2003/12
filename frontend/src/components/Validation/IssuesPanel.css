@@ -1,0 +1,136 @@
+/* ── IssuesPanel ─────────────────────────────────────────────────────────── */
+
+.issues-panel {
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border, rgba(255, 255, 255, 0.06));
+  flex-shrink: 0;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.issues-panel__header {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  background: var(--color-surface-raised);
+}
+
+.issues-panel__heading {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.issues-panel__count {
+  font-size: 11px;
+}
+
+.issues-panel__count--error {
+  color: var(--color-error);
+}
+
+.issues-panel__count--warning {
+  color: var(--color-warning);
+}
+
+.issues-panel__count-sep {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.issues-panel__toggle {
+  margin-left: auto;
+  height: 28px;
+  padding: 0 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm, 4px);
+  transition: color var(--duration-fast, 0.1s), background var(--duration-fast, 0.1s);
+}
+
+.issues-panel__toggle:hover {
+  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+
+.issues-panel__body {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+/* ── Issue rows ──────────────────────────────────────────────────────────── */
+
+.issues-panel__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-left-width: 2px;
+  border-left-style: solid;
+  outline: none;
+  transition: background var(--duration-fast, 0.1s);
+}
+
+.issues-panel__row--error {
+  border-left-color: var(--color-error);
+}
+
+.issues-panel__row--warning {
+  border-left-color: var(--color-warning);
+}
+
+.issues-panel__row:hover {
+  background: var(--color-surface-hover);
+}
+
+.issues-panel__row:focus-visible {
+  background: var(--color-surface-hover);
+}
+
+/* ── Row content ─────────────────────────────────────────────────────────── */
+
+.issues-panel__icon {
+  font-size: 8px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.issues-panel__cube-name,
+.issues-panel__param-name {
+  font-size: 11px;
+  font-family: var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace);
+  font-weight: 400;
+  color: var(--color-text-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.issues-panel__separator {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.issues-panel__message {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
