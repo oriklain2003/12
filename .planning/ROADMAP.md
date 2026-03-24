@@ -169,7 +169,13 @@ Plans:
   3. When the agent suggests a canvas change and the user accepts it, the canvas updates atomically — all proposed nodes and edges appear together, or none do, with no partial broken state
   4. After an agent applies a diff, the user can discard the change by reloading the last saved workflow — the canvas returns to exactly the pre-agent state
   5. In Optimize mode, the agent reads the current workflow graph and suggests a specific improvement (e.g., removing a redundant filter step) with reasoning tied to the actual cubes present
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 20-01-PLAN.md — Backend canvas tools + ToolContext/schema extension + tests
+- [ ] 20-02-PLAN.md — Frontend store extensions (applyAgentDiff, chat state) + SSE client
+- [ ] 20-03-PLAN.md — ChatPanel UI components (8 components in Chat/ directory)
+- [ ] 20-04-PLAN.md — EditorPage/Toolbar wiring + auto-open Fix mode + skill file update
 
 ### Phase 21: Build Wizard Agent
 **Goal**: A new analyst with no existing workflow can use the wizard to answer 3-5 guided questions and have a complete, valid workflow generated on the canvas — ready to run without manual parameter editing
@@ -216,7 +222,7 @@ Plans:
 | 17. Squawk Optimization | v2.0 | 1/1 | Complete | 2026-03-13 |
 | 18. Agent Infrastructure | v3.0 | 4/4 | Complete    | 2026-03-24 |
 | 19. Cube Expert + Validation | v3.0 | 3/3 | Complete   | 2026-03-24 |
-| 20. Canvas Agent | v3.0 | 0/0 | Not started | — |
+| 20. Canvas Agent | v3.0 | 0/4 | In progress | — |
 | 21. Build Wizard Agent | v3.0 | 0/0 | Not started | — |
 | 22. Results Interpreter | v3.0 | 0/0 | Not started | — |
 
