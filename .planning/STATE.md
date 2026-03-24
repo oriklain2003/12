@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: AI Workflow Agents
 status: completed
-last_updated: "2026-03-24T22:21:31.457Z"
+last_updated: "2026-03-24T22:30:18.996Z"
 last_activity: 2026-03-24
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 11
-  completed_plans: 7
+  completed_plans: 10
 ---
 
 # Project State: Project 12
@@ -41,7 +41,7 @@ Last activity: 2026-03-24
 ### Current Position
 
 Phase: 20 (canvas-agent) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 
 ## Previous Milestones
 
@@ -83,6 +83,8 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-24:** __full_result__ sourceHandle is always exempt from dangling_source_handle check — it's a valid runtime convention, not a param name
 - **2026-03-24:** IssuesPanel placed inside ReactFlowProvider in EditorPage — required for useReactFlow fitView hook to work within the panel
 - **2026-03-24:** handleRun uses finally block for setIsValidating(false) — Run button always re-enables on network error; execution proceeds on validation failure (graceful degradation)
+- **2026-03-24:** useRef(false) guard prevents auto-open Fix mode from firing more than once per failed run; resets when isRunning flips true (new run start)
+- **2026-03-24:** Ctrl+Shift+A keyboard shortcut for chat panel placed before isInputField guard — works even when focus is inside textarea or input fields
 
 ### Critical Risks (from research)
 
@@ -101,4 +103,4 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-22:** v3.0 roadmap created — 5 phases (18-22), 28/28 requirements mapped
 
 ---
-*Last session: 2026-03-24 — Phase 19 plan 03 complete: IssuesPanel, pre-run validation Toolbar, node highlighting, Zustand validation state. Task 3 human-verify approved (all 4 test scenarios passed). Phase 19 fully complete (3/3 plans). Next: Phase 20 Canvas Agent.*
+*Last session: 2026-03-24 — Phase 20 plan 04: ChatPanel wired into EditorPage, toolbar chat toggle button with Ctrl+Shift+A shortcut, auto-open Fix mode on execution errors (useRef guard), canvas_agent.md extended with Optimize/Fix/General mode instructions. Stopped at Task 3 (checkpoint:human-verify).*

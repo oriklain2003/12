@@ -33,12 +33,12 @@ Requirements for AI Workflow Agents milestone. Each maps to roadmap phases.
 
 ### Canvas Agent
 
-- [ ] **CANVAS-01**: Chat panel UI component integrated into editor page
+- [x] **CANVAS-01**: Chat panel UI component integrated into editor page
 - [ ] **CANVAS-02**: Mode switching (optimize / error-fix / general) with visual indicator
 - [x] **CANVAS-03**: Canvas context — agent reads current workflow graph state
-- [ ] **CANVAS-04**: Optimize mode — suggest faster/simpler cube configurations
+- [x] **CANVAS-04**: Optimize mode — suggest faster/simpler cube configurations
 - [x] **CANVAS-05**: Error-fix mode — read cube errors from last run, diagnose pipeline failures
-- [ ] **CANVAS-06**: General mode — find cubes, suggest edits, answer questions
+- [x] **CANVAS-06**: General mode — find cubes, suggest edits, answer questions
 - [ ] **CANVAS-07**: `applyAgentDiff()` Zustand action for atomic canvas updates with snapshot
 
 ### Validation Agent
@@ -91,12 +91,12 @@ Requirements for AI Workflow Agents milestone. Each maps to roadmap phases.
 | VALID-01 | Phase 19 | Complete |
 | VALID-02 | Phase 19 | Complete |
 | VALID-03 | Phase 19 | Complete |
-| CANVAS-01 | Phase 20 | Pending |
+| CANVAS-01 | Phase 20 | Complete |
 | CANVAS-02 | Phase 20 | Pending |
 | CANVAS-03 | Phase 20 | Complete |
-| CANVAS-04 | Phase 20 | Pending |
+| CANVAS-04 | Phase 20 | Complete |
 | CANVAS-05 | Phase 20 | Complete |
-| CANVAS-06 | Phase 20 | Pending |
+| CANVAS-06 | Phase 20 | Complete |
 | CANVAS-07 | Phase 20 | Pending |
 | BUILD-01 | Phase 21 | Pending |
 | BUILD-02 | Phase 21 | Pending |
