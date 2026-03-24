@@ -118,7 +118,7 @@ Plans:
 
 - [x] **Phase 18: Agent Infrastructure** — Gemini client, SSE streaming, skill files, tool dispatch, context management, mission persistence (completed 2026-03-24)
 - [x] **Phase 19: Cube Expert + Validation Agent** — Two-tier catalog sub-agent, structural validation checks, pre-run validation trigger (completed 2026-03-24)
-- [ ] **Phase 20: Canvas Agent** — Chat panel UI, three modes (optimize/fix/general), canvas diff application, agent streaming
+- [x] **Phase 20: Canvas Agent** — Chat panel UI, three modes (optimize/fix/general), canvas diff application, agent streaming (completed 2026-03-24)
 - [ ] **Phase 21: Build Wizard Agent** — Wizard page with option cards, mission discovery, workflow generation, intent preview
 - [ ] **Phase 22: Results Interpreter** — Post-execution analysis, mission-context explanation, fallback generic framing
 
@@ -174,7 +174,7 @@ Plans:
 Plans:
 - [x] 20-01-PLAN.md — Backend canvas tools + ToolContext/schema extension + tests
 - [x] 20-02-PLAN.md — Frontend store extensions (applyAgentDiff, chat state) + SSE client
-- [ ] 20-03-PLAN.md — ChatPanel UI components (8 components in Chat/ directory)
+- [x] 20-03-PLAN.md — ChatPanel UI components (8 components in Chat/ directory)
 - [x] 20-04-PLAN.md — EditorPage/Toolbar wiring + auto-open Fix mode + skill file update
 
 ### Phase 21: Build Wizard Agent
@@ -222,7 +222,7 @@ Plans:
 | 17. Squawk Optimization | v2.0 | 1/1 | Complete | 2026-03-13 |
 | 18. Agent Infrastructure | v3.0 | 4/4 | Complete    | 2026-03-24 |
 | 19. Cube Expert + Validation | v3.0 | 3/3 | Complete   | 2026-03-24 |
-| 20. Canvas Agent | v3.0 | 3/4 | In Progress|  |
+| 20. Canvas Agent | v3.0 | 4/4 | Complete   | 2026-03-24 |
 | 21. Build Wizard Agent | v3.0 | 0/0 | Not started | — |
 | 22. Results Interpreter | v3.0 | 0/0 | Not started | — |
 
