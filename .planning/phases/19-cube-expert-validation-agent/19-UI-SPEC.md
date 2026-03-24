@@ -42,7 +42,7 @@ Declared values (must be multiples of 4):
 | 3xl | 64px | Page-level spacing (not used in this phase) |
 
 Exceptions:
-- Issue row vertical padding: 6px top/bottom (matches existing `.results-table td` padding — aligns with data-density convention)
+- Issue row vertical padding: 8px top/bottom (sm token — compact for 12px font, total row height ~28px)
 - Issue row horizontal padding: 12px left/right (matches existing table cell pattern)
 - Panel header height: 32px (matches existing collapsible header pattern)
 - Collapse toggle touch target: 28px height minimum (matches `.toolbar__help-btn` 28px height)
@@ -57,7 +57,7 @@ Source: spacing values observed in `Toolbar.css`, `Canvas.css`, Results componen
 |------|------|--------|-------------|
 | Body | 13px | 400 | 1.5 |
 | Label / UI text (issue row message) | 12px | 400 | 1.4 |
-| Label / caption (cube name, param name badges) | 11px | 500 | 1.3 |
+| Label / caption (cube name, param name badges) | 11px | 400 | 1.3 |
 | Panel section heading | 11px | 600 | 1.3 |
 
 Notes:
@@ -66,9 +66,10 @@ Notes:
 - 11px is used for uppercase section labels and meta-information (22 occurrences — most common).
 - No display or heading size (24px+) is needed in the issues panel or validation flow for this phase.
 - Letter spacing: `-0.01em` for body text (matches `body` rule in `index.css`); `-0.025em` for any heading text.
-- Font family: inherit from `body` — DM Sans. Exception: cube name and param name tokens in issue rows use `font-family: var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace)` to distinguish identifiers from prose (matches `results-table` monospace pattern).
+- Font family: inherit from `body` — DM Sans. Exception: cube name and param name tokens in issue rows use `font-family: var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace)` to distinguish identifiers from prose (matches `results-table` monospace pattern). The monospace font-family change provides sufficient visual distinction — no intermediate weight is needed.
+- Two weights only: 400 (body, message text, label/UI text, monospace identifiers) and 600 (panel section heading).
 
-Source: font-size frequency count across all frontend CSS files; weight values from `font-weight: 500` and `font-weight: 600` occurrences.
+Source: font-size frequency count across all frontend CSS files; weight values from `font-weight: 600` occurrences.
 
 ---
 
@@ -138,11 +139,11 @@ Each issue is one row with:
 - Left border: 2px solid `--color-error` for errors, 2px solid `--color-warning` for warnings
 - Background: transparent; hover state `--color-surface-hover` (matches node hover pattern)
 - Icon: `●` bullet 8px, colored per severity (`--color-error` or `--color-warning`)
-- Cube name: 11px monospace, weight 500, `--color-text-dim`
+- Cube name: 11px monospace, weight 400, `--color-text-dim`
 - Separator `›`: 11px, `--color-text-muted`
-- Param name: 11px monospace, weight 500, `--color-text-dim` (omitted when `param_name` is null — cycle errors, unknown cube errors)
+- Param name: 11px monospace, weight 400, `--color-text-dim` (omitted when `param_name` is null — cycle errors, unknown cube errors)
 - Message: 12px DM Sans, weight 400, `--color-text-secondary`; right of the identifier block, same line on wide viewports
-- Padding: 6px top/bottom, 12px left/right
+- Padding: 8px top/bottom, 12px left/right
 - Cursor: `pointer` — entire row is clickable; clicking highlights the relevant canvas node
 
 ### Click-to-Highlight Behavior
