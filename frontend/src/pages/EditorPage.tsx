@@ -5,7 +5,7 @@
  * Routes: /workflow/new (empty canvas) and /workflow/:id (loads existing)
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useParams, useBlocker } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -16,6 +16,7 @@ import { Toolbar } from '../components/Toolbar/Toolbar';
 import { ResultsDrawer } from '../components/Results/ResultsDrawer';
 import { IssuesPanel } from '../components/Validation/IssuesPanel';
 import { WelcomeTour } from '../components/WelcomeTour/WelcomeTour';
+import { ChatPanel } from '../components/Chat/ChatPanel';
 import { useFlowStore } from '../store/flowStore';
 import { useThemeStore } from '../store/themeStore';
 import '../App.css';
@@ -27,6 +28,16 @@ export function EditorPage() {
   const stopExecution = useFlowStore((s) => s.stopExecution);
   const workflowName = useFlowStore((s) => s.workflowName);
   const isDirty = useFlowStore((s) => s.isDirty);
+
+  // Chat panel auto-open Fix mode state
+  const isRunning = useFlowStore((s) => s.isRunning);
+  const executionStatus = useFlowStore((s) => s.executionStatus);
+  const setChatPanelOpen = useFlowStore((s) => s.setChatPanelOpen);
+  const setChatPanelMode = useFlowStore((s) => s.setChatPanelMode);
+  const addChatMessage = useFlowStore((s) => s.addChatMessage);
+
+  // Guard: fire auto-open Fix mode only once per execution, reset on new run
+  const autoFixFired = useRef(false);
 
   // Apply persisted theme on mount
   useEffect(() => {
@@ -56,6 +67,34 @@ export function EditorPage() {
     return () => { document.title = 'ONYX 12'; };
   }, [workflowName]);
 
+  // Auto-open Fix mode when execution finishes with errors (D-04, D-06)
+  // useRef guard prevents repeated firing for the same failed run
+  useEffect(() => {
+    if (isRunning) {
+      // Reset the guard when a new run starts
+      autoFixFired.current = false;
+      return;
+    }
+    // Only fire once per execution completion
+    if (autoFixFired.current) return;
+
+    const errorNodes = Object.entries(executionStatus).filter(
+      ([, s]) => s.status === 'error'
+    );
+    if (errorNodes.length > 0) {
+      autoFixFired.current = true;
+      setChatPanelOpen(true);
+      setChatPanelMode('fix');
+      addChatMessage({
+        id: crypto.randomUUID(),
+        role: 'agent',
+        content: `I see errors in ${errorNodes.length} cube(s) from the last run. Want me to diagnose the issues and suggest a fix?`,
+        timestamp: Date.now(),
+        type: 'auto_fix_prompt',
+      });
+    }
+  }, [isRunning, executionStatus, setChatPanelOpen, setChatPanelMode, addChatMessage]);
+
   // Browser close/refresh guard
   useEffect(() => {
     if (!isDirty) return;
@@ -79,6 +118,7 @@ export function EditorPage() {
           </ReactFlowProvider>
           <ResultsDrawer />
         </div>
+        <ChatPanel />
       </div>
       <Toaster position="bottom-right" theme="dark" />
       <WelcomeTour />

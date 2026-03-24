@@ -409,6 +409,23 @@
   line-height: 1;
 }
 
+/* ── Chat toggle button ─────────────────────────────────── */
+
+.toolbar__chat-btn {
+  position: relative;
+}
+
+.toolbar__chat-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
 /* ── Take Tour button in shortcuts panel ───────────────── */
 
 .toolbar__tour-btn {

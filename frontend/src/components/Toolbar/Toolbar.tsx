@@ -38,6 +38,9 @@ export function Toolbar() {
   const completedCount = useFlowStore((s) => s.completedCount);
   const totalCount = useFlowStore((s) => s.totalCount);
 
+  const chatPanelOpen = useFlowStore((s) => s.chatPanelOpen);
+  const setChatPanelOpen = useFlowStore((s) => s.setChatPanelOpen);
+
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const shortcutsRef = useRef<HTMLDivElement>(null);
@@ -146,6 +149,14 @@ export function Toolbar() {
       if (isCtrl && e.key === 'Enter') {
         e.preventDefault();
         handleRun();
+        return;
+      }
+
+      // Ctrl+Shift+A / Cmd+Shift+A: toggle agent chat panel (works even in inputs)
+      if (isCtrl && e.shiftKey && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        const store = useFlowStore.getState();
+        store.setChatPanelOpen(!store.chatPanelOpen);
         return;
       }
 
@@ -344,6 +355,12 @@ export function Toolbar() {
                   </span>
                   <span>Toggle this panel</span>
                 </div>
+                <div className="toolbar__shortcut-row">
+                  <span className="toolbar__shortcut-keys">
+                    <kbd>{isMac ? '⌘' : 'Ctrl'}</kbd><kbd>{isMac ? '⇧' : 'Shift'}</kbd><kbd>A</kbd>
+                  </span>
+                  <span>Agent panel</span>
+                </div>
               </div>
               <button
                 className="toolbar__tour-btn glass-btn"
@@ -357,6 +374,18 @@ export function Toolbar() {
             </div>
           )}
         </div>
+
+        <button
+          className={`toolbar__help-btn toolbar__chat-btn${chatPanelOpen ? ' toolbar__chat-btn--active' : ''}`}
+          onClick={() => setChatPanelOpen(!chatPanelOpen)}
+          title={`Agent (${isMac ? '⌘' : 'Ctrl+'}⇧A)`}
+          aria-label="Toggle agent chat panel"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          {chatPanelOpen && <span className="toolbar__chat-dot" />}
+        </button>
 
         <button
           className="toolbar__btn toolbar__btn--save"
