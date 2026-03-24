@@ -4,9 +4,15 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://localhost:5432/tracer"
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5174"]
-    result_row_limit: int = 10000
+    result_row_limit: int = 100000
     port: int = 8000
     host: str = "0.0.0.0"
+
+    # Gemini / Agent config
+    gemini_api_key: str = ""
+    gemini_flash_model: str = "gemini-2.5-flash"
+    gemini_pro_model: str = "gemini-2.5-pro"
+    agent_session_ttl_minutes: int = 30
 
     model_config = {"env_file": "../.env", "env_file_encoding": "utf-8"}
 
