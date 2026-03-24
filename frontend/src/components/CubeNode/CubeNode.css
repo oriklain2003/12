@@ -15,6 +15,11 @@
   box-shadow: var(--shadow-node-selected);
 }
 
+.cube-node--highlighted {
+  box-shadow: var(--shadow-node-selected, 0 0 0 2px var(--color-accent), 0 8px 40px rgba(99, 102, 241, 0.2));
+  z-index: 10;
+}
+
 /* ── Close button ─────────────────────────────────────────── */
 
 .cube-node__close {

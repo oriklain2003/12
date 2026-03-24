@@ -14,6 +14,7 @@ import { FlowCanvas } from '../components/Canvas/FlowCanvas';
 import { CubeCatalog } from '../components/Sidebar/CubeCatalog';
 import { Toolbar } from '../components/Toolbar/Toolbar';
 import { ResultsDrawer } from '../components/Results/ResultsDrawer';
+import { IssuesPanel } from '../components/Validation/IssuesPanel';
 import { WelcomeTour } from '../components/WelcomeTour/WelcomeTour';
 import { useFlowStore } from '../store/flowStore';
 import { useThemeStore } from '../store/themeStore';
@@ -74,6 +75,7 @@ export function EditorPage() {
         <div className="app__canvas-area">
           <ReactFlowProvider>
             <FlowCanvas />
+            <IssuesPanel />
           </ReactFlowProvider>
           <ResultsDrawer />
         </div>

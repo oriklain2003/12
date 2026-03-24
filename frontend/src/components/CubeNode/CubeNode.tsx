@@ -131,6 +131,10 @@ export function CubeNode({ id, data, selected, isConnectable }: NodeProps<CubeFl
   const executionStatus = useFlowStore((s) => s.executionStatus[id]);
   const isRunning = useFlowStore((s) => s.isRunning);
 
+  // Validation highlight — set when user clicks an issue row in IssuesPanel
+  const highlightedNodeId = useFlowStore((s) => s.highlightedNodeId);
+  const isHighlighted = highlightedNodeId === id;
+
   // Results drawer — open drawer when header clicked and results exist
   const setSelectedResultNodeId = useFlowStore((s) => s.setSelectedResultNodeId);
   const hasResults = useFlowStore((s) => !!s.results[id]);
@@ -145,6 +149,7 @@ export function CubeNode({ id, data, selected, isConnectable }: NodeProps<CubeFl
     selected ? 'cube-node--selected' : '',
     executionStatus?.status === 'running' ? 'cube-node--running' : '',
     data.isNew ? 'cube-node--entering' : '',
+    isHighlighted ? 'cube-node--highlighted' : '',
   ]
     .filter(Boolean)
     .join(' ');

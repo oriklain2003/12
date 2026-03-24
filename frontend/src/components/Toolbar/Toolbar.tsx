@@ -16,6 +16,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useFlowStore, serializeGraph } from '../../store/flowStore';
 import { useWorkflowSSE } from '../../hooks/useWorkflowSSE';
+import { validateWorkflow } from '../../api/agent';
 import { useTourStore } from '../WelcomeTour/useTourStore';
 import { ThemeSettings } from '../Settings/ThemeSettings';
 import './Toolbar.css';
@@ -32,6 +33,7 @@ export function Toolbar() {
   const workflowId = useFlowStore((s) => s.workflowId);
   const isDirty = useFlowStore((s) => s.isDirty);
   const isRunning = useFlowStore((s) => s.isRunning);
+  const isValidating = useFlowStore((s) => s.isValidating);
   const isLoadingWorkflow = useFlowStore((s) => s.isLoadingWorkflow);
   const completedCount = useFlowStore((s) => s.completedCount);
   const totalCount = useFlowStore((s) => s.totalCount);
@@ -69,7 +71,7 @@ export function Toolbar() {
   // ── Run handler ─────────────────────────────────────────────────────────────
 
   const handleRun = useCallback(async () => {
-    if (isRunning) return;
+    if (isRunning || isValidating) return;
 
     let id = workflowId;
 
@@ -86,8 +88,38 @@ export function Toolbar() {
 
     const { nodes, edges } = useFlowStore.getState();
     const graph = serializeGraph(nodes, edges);
+
+    // Pre-run validation (per D-05)
+    useFlowStore.getState().setIsValidating(true);
+    try {
+      const validation = await validateWorkflow(graph);
+      const hasErrors = validation.issues.some((i) => i.severity === 'error');
+
+      if (hasErrors) {
+        // Block execution, show issues panel expanded (per D-06)
+        useFlowStore.getState().setValidationIssues(validation.issues);
+        useFlowStore.getState().setShowIssuesPanel(true);
+        return;
+      }
+
+      if (validation.issues.length > 0) {
+        // Warnings only — show panel but proceed (per D-06)
+        useFlowStore.getState().setValidationIssues(validation.issues);
+        useFlowStore.getState().setShowIssuesPanel(true);
+      } else {
+        // Clean pass — hide panel, silent pass-through (per D-08)
+        useFlowStore.getState().setValidationIssues([]);
+        useFlowStore.getState().setShowIssuesPanel(false);
+      }
+    } catch (err) {
+      // Validation failed (network error) — proceed with execution anyway
+      console.error('Validation failed:', err);
+    } finally {
+      useFlowStore.getState().setIsValidating(false);
+    }
+
     startStream(graph);
-  }, [isRunning, workflowId, handleSave, startStream]);
+  }, [isRunning, isValidating, workflowId, handleSave, startStream]);
 
   // ── Cancel handler ──────────────────────────────────────────────────────────
 
@@ -348,11 +380,11 @@ export function Toolbar() {
           <button
             className="toolbar__btn toolbar__btn--run"
             onClick={handleRun}
-            disabled={isLoadingWorkflow}
-            title={`Run (${isMac ? '⌘' : 'Ctrl+'}⏎)`}
+            disabled={isLoadingWorkflow || isValidating}
+            title={`Run (${isMac ? '⌘' : 'Ctrl+'}Enter)`}
             data-tour="run-btn"
           >
-            Run
+            {isValidating ? 'Validating...' : 'Run'}
           </button>
         )}
       </div>
