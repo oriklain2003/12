@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: false
 preset: none
 created: 2026-03-24
+revised: 2026-03-24
 ---
 
 # Phase 20 — UI Design Contract: Canvas Agent
@@ -59,9 +60,9 @@ All sizes pre-populated from codebase inspection. Matches existing component pat
 | Body | 13px | 400 | 1.5 | Message bubble text, input field text |
 | Label | 11px | 600 | 1.4 | Panel header title ("AGENT"), mode badge labels, category headers — uppercase, letter-spacing 0.06em |
 | Meta | 12px | 400 | 1.4 | Timestamp, diff summary line items, tool call indicators |
-| Heading | 15px | 500 | 1.2 | Diff proposal header text (matches toolbar workflow name input size) |
+| Heading | 15px | 600 | 1.2 | Diff proposal header text (matches toolbar workflow name input size) |
 
-Two weights only: 400 (regular) and 600 (semibold). Weight 500 used only in the diff proposal header to match the existing toolbar name input — not an additional weight declaration, it is already present in the DM Sans variable font loaded.
+Two weights only: 400 (regular) and 600 (semibold). No other weights are used anywhere in this phase.
 
 Monospace exception: Cube names and parameter names within diff proposals use `'JetBrains Mono', 'Fira Code', monospace` at 11px weight 400 — matches existing `issues-panel__cube-name` pattern.
 
@@ -76,14 +77,14 @@ All values sourced directly from `src/styles/theme.css`. No new color values are
 | Dominant (60%) | `var(--color-bg)` = `#000000` | App background, canvas area |
 | Secondary (30%) | `var(--color-surface)` = `#08090d` / `var(--color-surface-raised)` = `#0e1017` | Chat panel background, message bubbles, header bar |
 | Accent (10%) | `var(--color-accent)` = `#6366f1` | See reserved list below |
-| Error / destructive | `var(--color-error)` = `#ef4444` | Error-fix mode indicator dot, Reject button border, error diagnostic messages |
+| Error / destructive | `var(--color-error)` = `#ef4444` | Error-fix mode indicator dot, Reject Changes button border, error diagnostic messages |
 | Warning | `var(--color-warning)` = `#f97316` | Warning-level diff items |
 | Success | `var(--color-success)` = `#22c55e` | Successful diff application confirmation |
 
 Accent (`#6366f1`) reserved for:
 - Active mode segment in the three-way mode toggle (Optimize / Fix / General)
 - The toolbar chat toggle button when the panel is open (active state indicator dot, matching `toolbar__dirty-dot` pattern)
-- Apply button background — uses `var(--btn-accent-bg)` = `rgba(99, 102, 241, 0.18)` with `var(--btn-accent-border)`, matching Run button treatment
+- Apply Changes button background — uses `var(--btn-accent-bg)` = `rgba(99, 102, 241, 0.18)` with `var(--btn-accent-border)`, matching Run button treatment
 - Text selection highlight (inherited from `::selection` in index.css)
 - Focus ring on chat textarea: `0 0 0 3px var(--color-accent-glow)` (matches sidebar search focus)
 
@@ -114,7 +115,7 @@ Pre-populated from D-01 through D-04 in 20-CONTEXT.md.
 [ Panel Header: "AGENT" title + mode toggle (Optimize|Fix|General) + close button ]
 [ Message List — flex:1, overflow-y:auto, padding: 12px 0 ]
 [ Diff Proposal Block — shown when agent proposes changes ]
-[ Chat Input Row — textarea + Send button, flex-shrink: 0 ]
+[ Chat Input Row — textarea + Send Message button, flex-shrink: 0 ]
 ```
 
 ### Panel Header
@@ -126,9 +127,13 @@ Pre-populated from D-01 through D-04 in 20-CONTEXT.md.
 - Mode toggle: three segments `Optimize | Fix | General`, each 28px tall, font-size 11px, weight 600
 - Close button: 28x28px, same style as `.sidebar__toggle`
 
+### Panel Focal Point
+
+The chat input row at the bottom of the panel is the primary focal point. It is visually anchored by a persistent `border-top: 1px solid var(--color-border)` separator and the accent focus ring on the textarea, drawing the user's eye to the action area. The message list above fills available vertical space and scrolls independently.
+
 ### Mode Toggle Segments
 
-- Container: `display: flex`, `border-radius: var(--radius-sm)`, `background: rgba(255,255,255,0.04)`, `border: 1px solid var(--color-border)`, `padding: 2px`
+- Container: `display: flex`, `border-radius: var(--radius-sm)`, `background: rgba(255,255,255,0.04)`, `border: 1px solid var(--color-border)`, `padding: 4px`
 - Each segment: `padding: 0 10px`, `height: 24px`, `border-radius: 6px`, `font-size: 11px`, `font-weight: 600`, `cursor: pointer`
 - Inactive: `color: var(--color-text-dim)`, transparent background
 - Active: `color: var(--color-text)`, `background: rgba(var(--accent-rgb), 0.18)`, `border: 1px solid rgba(var(--accent-rgb), 0.25)` — matches `btn-accent-bg/border`
@@ -146,6 +151,8 @@ Pre-populated from D-01 through D-04 in 20-CONTEXT.md.
 - Placed in `.toolbar__actions` between the settings gear button and Save button
 - Style: matches `.toolbar__help-btn` exactly — 28x28px circle, `border-radius: 50%`
 - Icon: chat bubble SVG, 14x14, inline, stroke-based, `stroke-width: 1.5`
+- `aria-label`: "Toggle agent chat panel" (always present — button is icon-only)
+- `title` tooltip: "Agent (Cmd+Shift+A)" — matches existing toolbar button tooltip pattern
 - Active state (panel open): shows a 6px accent dot at top-right of button — `position: absolute`, `background: var(--color-accent)`, `border-radius: 50%`, matches `.toolbar__dirty-dot` approach
 - Badge state (agent has suggestions pending): uses same 6px dot but pulsing — `animation: cancel-pulse 2s ease-in-out infinite` adapted with accent color
 
@@ -162,8 +169,8 @@ Pre-populated from D-01 through D-04 in 20-CONTEXT.md.
 | `ModeToggle` | `src/components/Chat/ModeToggle.tsx` | Three-segment Optimize/Fix/General control |
 | `MessageList` | `src/components/Chat/MessageList.tsx` | Scrollable message thread |
 | `MessageBubble` | `src/components/Chat/MessageBubble.tsx` | Single agent or user message with streaming support |
-| `DiffProposal` | `src/components/Chat/DiffProposal.tsx` | Structured diff summary with Apply/Reject buttons |
-| `ChatInput` | `src/components/Chat/ChatInput.tsx` | Textarea + Send button row |
+| `DiffProposal` | `src/components/Chat/DiffProposal.tsx` | Structured diff summary with Apply Changes/Reject Changes buttons |
+| `ChatInput` | `src/components/Chat/ChatInput.tsx` | Textarea + Send Message button row |
 | `ToolCallIndicator` | `src/components/Chat/ToolCallIndicator.tsx` | Inline spinner/label shown during Gemini tool dispatch |
 
 ### Modified Components
@@ -231,22 +238,22 @@ Each line item in the structured diff:
 - `padding: 6px 14px`
 - `font-size: 12px`, `line-height: 1.4`, `color: var(--color-text-secondary)`
 - Prefix badge (3 variants):
-  - Add: `+` in `var(--color-success)`, `background: rgba(34,197,94,0.1)`, `border-radius: 3px`, `padding: 1px 5px`
-  - Remove: `−` in `var(--color-error)`, `background: rgba(239,68,68,0.1)`
-  - Update: `~` in `var(--color-warning)`, `background: rgba(249,115,22,0.1)`
+  - Add: `+` in `var(--color-success)`, `background: rgba(34,197,94,0.1)`, `border-radius: 3px`, `padding: 0 4px`
+  - Remove: `−` in `var(--color-error)`, `background: rgba(239,68,68,0.1)`, `border-radius: 3px`, `padding: 0 4px`
+  - Update: `~` in `var(--color-warning)`, `background: rgba(249,115,22,0.1)`, `border-radius: 3px`, `padding: 0 4px`
 - Cube/param names: monospace 11px, `var(--color-text-dim)` (matches IssuesPanel cube-name style)
 
-### Apply / Reject Buttons
+### Apply Changes / Reject Changes Buttons
 
 Placed in a footer row inside the diff block:
 - Footer: `padding: 10px 14px`, `display: flex`, `gap: 8px`, `justify-content: flex-end`
-- Apply button: uses `.glass-btn.glass-btn--accent` class exactly — matches Run button visual treatment
+- Apply Changes button: uses `.glass-btn.glass-btn--accent` class exactly — matches Run button visual treatment
   - Label: "Apply Changes" (verb + noun)
   - Width: auto, `padding: 7px 16px`
-- Reject button: uses `.glass-btn` class — neutral glass treatment
-  - Label: "Reject"
+- Reject Changes button: uses `.glass-btn` class — neutral glass treatment
+  - Label: "Reject Changes" (verb + noun)
   - Width: auto, `padding: 7px 16px`
-- Both buttons: `font-size: 13px`, `font-weight: 500`
+- Both buttons: `font-size: 13px`, `font-weight: 600`
 
 ---
 
@@ -264,11 +271,13 @@ Placed in a footer row inside the diff block:
   - Placeholder: `var(--color-text-placeholder)`
   - Focus: `border-color: var(--color-border-focus)`, `box-shadow: 0 0 0 3px var(--color-accent-glow)`
   - Enter sends message; Shift+Enter inserts newline
-- Send button:
+- Send Message button:
   - `align-self: flex-end` (sticks to bottom of textarea during multi-line growth)
   - 32x32px, `border-radius: var(--radius-sm)`
   - Style: `.glass-btn.glass-btn--accent`
   - Icon: arrow-up SVG 12x12, inline
+  - `aria-label`: "Send message" (always present — button is icon-only)
+  - `title` tooltip: "Send (Enter)"
   - Disabled (empty input or streaming): `opacity: 0.4`, `cursor: not-allowed`
 
 ---
@@ -304,9 +313,9 @@ When the chat panel is closed:
 |-------|--------|
 | Panel closed | Not rendered, toolbar button shows no dot |
 | Panel open, no messages | Empty state shown in message list |
-| Panel open, agent streaming | Streaming cursor on agent bubble, Send button disabled |
+| Panel open, agent streaming | Streaming cursor on agent bubble, Send Message button disabled |
 | Panel open, diff proposed | DiffProposal block appears below last agent message |
-| Panel open, diff applied | DiffProposal block shows "Applied" label, Apply/Reject buttons hidden |
+| Panel open, diff applied | DiffProposal block shows "Applied" label, Apply Changes/Reject Changes buttons hidden |
 | Panel open, diff rejected | DiffProposal block removed from thread |
 | Fix mode, errors present | Error dot on "Fix" segment, auto-open behavior fires |
 | Fix mode, no errors | Fix mode accessible manually, no auto-open behavior |
@@ -317,8 +326,9 @@ When the chat panel is closed:
 
 | Element | Copy |
 |---------|------|
-| Primary CTA — send message | "Send" (button label) |
+| Primary CTA — send message | "Send Message" (button label) |
 | Primary CTA — apply diff | "Apply Changes" |
+| Primary CTA — reject diff | "Reject Changes" |
 | Primary CTA — diagnose errors (auto-open Fix mode) | "Diagnose Errors" |
 | Chat input placeholder — General mode | "Ask about your workflow..." |
 | Chat input placeholder — Optimize mode | "Describe what you want to optimize..." |
@@ -337,9 +347,13 @@ When the chat panel is closed:
 | Diff applied confirmation | "Changes applied to canvas" |
 | Diff rejected confirmation | (none — block silently removed) |
 | Results cap notice (inline in agent message) | "Note: results shown are capped at the store limit and may not reflect the full execution output." |
-| Destructive action — Reject diff | Reject: no confirmation modal. Inline "Reject" button is sufficient — diff is not destructive to the saved workflow, only to the proposed change. |
+| Destructive action — Reject Changes diff | Reject Changes: no confirmation modal. Inline "Reject Changes" button is sufficient — diff is not destructive to the saved workflow, only to the proposed change. |
 | Discard agent changes (post-apply) | Available via Ctrl+Z (undo to pre-apply snapshot) or workflow reload. No dedicated button in chat panel. |
 | Error state — SSE connection failed | "Connection lost. Please try again." (inline in message thread as agent message) |
+| Toolbar chat toggle button aria-label | "Toggle agent chat panel" |
+| Toolbar chat toggle button tooltip | "Agent (Cmd+Shift+A)" |
+| Send Message button aria-label | "Send message" |
+| Send Message button tooltip | "Send (Enter)" |
 
 ---
 
