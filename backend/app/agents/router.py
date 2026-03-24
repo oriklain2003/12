@@ -165,7 +165,14 @@ async def agent_chat(
         db_session=db,
         cube_registry=cube_registry,
         workflow_id=body.workflow_id,
+        workflow_graph=body.workflow_graph,
+        execution_errors=body.execution_errors,
+        execution_results=body.execution_results,
     )
+
+    # Prepend mode context to user message for Gemini system prompt awareness
+    mode_prefix = f"[Mode: {body.mode}] " if body.mode != "general" else ""
+    effective_message = f"{mode_prefix}{body.message}"
 
     async def event_publisher():
         # First event: session ID so client can reuse it
@@ -177,7 +184,7 @@ async def agent_chat(
         async for event in _agent_turn_stream(
             client=client,
             history=history,
-            new_message=body.message,
+            new_message=effective_message,
             persona=body.persona,
             tool_context=tool_context,
             request=request,

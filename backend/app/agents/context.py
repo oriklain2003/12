@@ -17,6 +17,9 @@ class ToolContext:
     db_session: Any  # AsyncSession, typed as Any to avoid circular import
     cube_registry: Any  # CubeRegistry instance
     workflow_id: str | None = None
+    workflow_graph: dict | None = None      # Serialized graph for read_workflow_graph
+    execution_errors: dict | None = None    # Errors from last run for read_execution_errors
+    execution_results: dict | None = None   # Results summary for read_execution_results
 
 
 def estimate_tokens(history: list) -> int:

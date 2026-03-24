@@ -11,6 +11,10 @@ class AgentChatRequest(BaseModel):
     session_id: str | None = Field(None, description="Existing session ID, or None to create new")
     persona: str = Field("canvas_agent", description="Agent persona to use")
     workflow_id: str | None = Field(None, description="Workflow ID for context")
+    workflow_graph: dict | None = Field(None, description="Current canvas serialized graph")
+    execution_errors: dict | None = Field(None, description="Errors from last workflow run")
+    execution_results: dict | None = Field(None, description="Summarized results from last run")
+    mode: str = Field("general", description="Agent mode: optimize, fix, or general")
 
 
 class AgentSSEEvent(BaseModel):
