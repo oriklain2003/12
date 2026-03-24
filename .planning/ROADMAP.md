@@ -134,7 +134,13 @@ Plans:
   3. A skill file (system prompt) for each agent persona loads from disk at startup and is injected into every agent request without duplication in the request body
   4. Sending 20 chat turns does not cause a context explosion — history is pruned at the token threshold and the latest turn still receives a coherent response
   5. Mission context (analysis intent, parameters) persists in the workflow JSONB metadata and is retrievable in subsequent sessions
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 18-01-PLAN.md — Gemini client singleton + Settings extension + google-genai install
+- [ ] 18-02-PLAN.md — Skill files (system brief + 5 agent personas) + loader module
+- [ ] 18-03-PLAN.md — Tool registry + dispatcher + context management + placeholder catalog tools
+- [ ] 18-04-PLAN.md — SSE chat endpoint + sessions + lifespan wiring + integration tests
 
 ### Phase 19: Cube Expert + Validation Agent
 **Goal**: Analysts can run pre-flight validation before executing a workflow and see human-readable explanations of structural issues; agents have a reliable two-tier catalog tool to look up cubes
@@ -203,7 +209,7 @@ Plans:
 | 15. Cube Tests | v2.0 | 7/7 | Complete | 2026-03-09 |
 | 16. Signal Health Fixes | v2.0 | 3/3 | Complete | 2026-03-13 |
 | 17. Squawk Optimization | v2.0 | 1/1 | Complete | 2026-03-13 |
-| 18. Agent Infrastructure | v3.0 | 0/0 | Not started | — |
+| 18. Agent Infrastructure | v3.0 | 0/4 | Planning complete | — |
 | 19. Cube Expert + Validation | v3.0 | 0/0 | Not started | — |
 | 20. Canvas Agent | v3.0 | 0/0 | Not started | — |
 | 21. Build Wizard Agent | v3.0 | 0/0 | Not started | — |
