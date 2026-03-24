@@ -11,8 +11,8 @@ Requirements for AI Workflow Agents milestone. Each maps to roadmap phases.
 
 - [x] **INFRA-01**: Gemini client integration (`google-genai>=1.68.0`) with async execution via `run_in_executor`
 - [ ] **INFRA-02**: SSE streaming endpoint for agent chat responses
-- [ ] **INFRA-03**: Skill files (system prompts) for each agent persona
-- [ ] **INFRA-04**: System brief document with Tracer 42 domain context for all agents
+- [x] **INFRA-03**: Skill files (system prompts) for each agent persona
+- [x] **INFRA-04**: System brief document with Tracer 42 domain context for all agents
 - [ ] **INFRA-05**: Agent tool dispatch system (internal function calls, not HTTP)
 - [ ] **INFRA-06**: Context management (client-carried history, result summarization to avoid context explosion)
 - [ ] **INFRA-07**: Mission context persistence in workflow metadata (JSONB)
@@ -80,8 +80,8 @@ Requirements for AI Workflow Agents milestone. Each maps to roadmap phases.
 |-------------|-------|--------|
 | INFRA-01 | Phase 18 | Complete |
 | INFRA-02 | Phase 18 | Pending |
-| INFRA-03 | Phase 18 | Pending |
-| INFRA-04 | Phase 18 | Pending |
+| INFRA-03 | Phase 18 | Complete |
+| INFRA-04 | Phase 18 | Complete |
 | INFRA-05 | Phase 18 | Pending |
 | INFRA-06 | Phase 18 | Pending |
 | INFRA-07 | Phase 18 | Pending |

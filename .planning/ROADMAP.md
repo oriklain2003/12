@@ -138,8 +138,8 @@ Plans:
 
 Plans:
 - [x] 18-01-PLAN.md — Gemini client singleton + Settings extension + google-genai install
-- [ ] 18-02-PLAN.md — Skill files (system brief + 5 agent personas) + loader module
-- [ ] 18-03-PLAN.md — Tool registry + dispatcher + context management + placeholder catalog tools
+- [x] 18-02-PLAN.md — Skill files (system brief + 5 agent personas) + loader module
+- [x] 18-03-PLAN.md — Tool registry + dispatcher + context management + placeholder catalog tools
 - [ ] 18-04-PLAN.md — SSE chat endpoint + sessions + lifespan wiring + integration tests
 
 ### Phase 19: Cube Expert + Validation Agent
@@ -209,7 +209,7 @@ Plans:
 | 15. Cube Tests | v2.0 | 7/7 | Complete | 2026-03-09 |
 | 16. Signal Health Fixes | v2.0 | 3/3 | Complete | 2026-03-13 |
 | 17. Squawk Optimization | v2.0 | 1/1 | Complete | 2026-03-13 |
-| 18. Agent Infrastructure | v3.0 | 1/4 | In Progress|  |
+| 18. Agent Infrastructure | v3.0 | 3/4 | In Progress|  |
 | 19. Cube Expert + Validation | v3.0 | 0/0 | Not started | — |
 | 20. Canvas Agent | v3.0 | 0/0 | Not started | — |
 | 21. Build Wizard Agent | v3.0 | 0/0 | Not started | — |
