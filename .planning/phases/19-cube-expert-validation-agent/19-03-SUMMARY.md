@@ -101,13 +101,13 @@ None — plan executed exactly as written. All acceptance criteria satisfied.
 
 None. The IssuesPanel is fully wired to live Zustand state and the validation API. No mock data or placeholder values.
 
-## Checkpoint Status
+## Checkpoint Status: APPROVED
 
-Task 3 (human-verify) pending — awaiting manual browser verification of 4 test scenarios:
-- Test A: Missing required param blocks execution with issues panel
-- Test B: Clean validation is silent pass-through
-- Test C: Click-to-highlight scrolls canvas to offending node
-- Test D: Orphan node warning does not block execution
+Task 3 (human-verify) approved by user — all 4 test scenarios passed in browser:
+- Test A: Missing required param blocks execution with issues panel — PASS
+- Test B: Clean validation is silent pass-through — PASS
+- Test C: Click-to-highlight scrolls canvas to offending node — PASS
+- Test D: Orphan node warning does not block execution — PASS
 
 ## Self-Check: PASSED
 

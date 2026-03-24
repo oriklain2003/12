@@ -43,8 +43,8 @@ Requirements for AI Workflow Agents milestone. Each maps to roadmap phases.
 
 ### Validation Agent
 
-- [ ] **VALID-01**: Rule-based structural checks (missing params, dangling inputs, type mismatches, cycles)
-- [ ] **VALID-02**: Human-readable explanation of issues via LLM
+- [x] **VALID-01**: Rule-based structural checks (missing params, dangling inputs, type mismatches, cycles)
+- [x] **VALID-02**: Human-readable explanation of issues via LLM
 - [x] **VALID-03**: Pre-run trigger — validation runs before workflow execution
 
 ### Results Interpreter
@@ -88,8 +88,8 @@ Requirements for AI Workflow Agents milestone. Each maps to roadmap phases.
 | CUBE-01 | Phase 19 | Complete |
 | CUBE-02 | Phase 19 | Complete |
 | CUBE-03 | Phase 19 | Complete |
-| VALID-01 | Phase 19 | Pending |
-| VALID-02 | Phase 19 | Pending |
+| VALID-01 | Phase 19 | Complete |
+| VALID-02 | Phase 19 | Complete |
 | VALID-03 | Phase 19 | Complete |
 | CANVAS-01 | Phase 20 | Pending |
 | CANVAS-02 | Phase 20 | Pending |
