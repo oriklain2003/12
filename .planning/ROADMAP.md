@@ -155,8 +155,8 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 19-01-PLAN.md — Validation engine + schemas + POST /api/agent/validate endpoint + tests
-- [ ] 19-02-PLAN.md — Cube Expert class + find_cubes_for_task tool + tests
+- [x] 19-01-PLAN.md — Validation engine + schemas + POST /api/agent/validate endpoint + tests
+- [x] 19-02-PLAN.md — Cube Expert class + find_cubes_for_task tool + tests
 - [ ] 19-03-PLAN.md — Frontend IssuesPanel + pre-run validation trigger + node highlighting
 
 ### Phase 20: Canvas Agent
@@ -215,7 +215,7 @@ Plans:
 | 16. Signal Health Fixes | v2.0 | 3/3 | Complete | 2026-03-13 |
 | 17. Squawk Optimization | v2.0 | 1/1 | Complete | 2026-03-13 |
 | 18. Agent Infrastructure | v3.0 | 4/4 | Complete    | 2026-03-24 |
-| 19. Cube Expert + Validation | v3.0 | 0/3 | Planned | — |
+| 19. Cube Expert + Validation | v3.0 | 2/3 | In Progress|  |
 | 20. Canvas Agent | v3.0 | 0/0 | Not started | — |
 | 21. Build Wizard Agent | v3.0 | 0/0 | Not started | — |
 | 22. Results Interpreter | v3.0 | 0/0 | Not started | — |
