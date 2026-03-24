@@ -4,7 +4,7 @@ Phase 19 Plan 02 — Cube Expert implementation.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 from app.agents.context import ToolContext
 
@@ -217,7 +217,7 @@ class TestCubeExpert:
             expert = CubeExpert()
             result = await expert.ask("load all flight data", _make_ctx())
 
-        mock_dispatch.assert_called_once_with("list_cubes_summary", {}, pytest.ANY)
+        mock_dispatch.assert_called_once_with("list_cubes_summary", {}, ANY)
         assert result == "Use all_flights cube"
 
     @pytest.mark.asyncio
