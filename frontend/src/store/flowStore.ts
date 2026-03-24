@@ -14,6 +14,7 @@ import type { WorkflowGraph, WorkflowNode, WorkflowEdge } from '../types/workflo
 import { getWorkflow, createWorkflow, updateWorkflow } from '../api/workflows';
 import { getCatalog } from '../api/cubes';
 import type { ValidationIssue } from '../api/agent';
+import type { AgentMode, ChatMessage, AgentDiff } from '../types/agent';
 
 // ─── Type definitions (collocated here, not in a separate file) ──────────────
 
@@ -193,6 +194,25 @@ interface FlowState {
   setShowIssuesPanel: (show: boolean) => void;
   setHighlightedNodeId: (nodeId: string | null) => void;
   setIsValidating: (v: boolean) => void;
+
+  // Chat panel state
+  chatPanelOpen: boolean;
+  chatPanelMode: AgentMode;
+  chatMessages: ChatMessage[];
+  chatSessionId: string | null;
+  pendingDiff: AgentDiff | null;
+  isAgentStreaming: boolean;
+
+  // Chat actions
+  setChatPanelOpen: (open: boolean) => void;
+  setChatPanelMode: (mode: AgentMode) => void;
+  addChatMessage: (msg: ChatMessage) => void;
+  updateLastAgentMessage: (content: string) => void;
+  setChatSessionId: (id: string | null) => void;
+  setPendingDiff: (diff: AgentDiff | null) => void;
+  setIsAgentStreaming: (streaming: boolean) => void;
+  clearChat: () => void;
+  applyAgentDiff: (diff: AgentDiff) => void;
 }
 
 // ─── Default param value helper ──────────────────────────────────────────────
@@ -247,6 +267,14 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
   showIssuesPanel: false,
   highlightedNodeId: null,
   isValidating: false,
+
+  // Chat panel initial state
+  chatPanelOpen: false,
+  chatPanelMode: 'general' as AgentMode,
+  chatMessages: [],
+  chatSessionId: null,
+  pendingDiff: null,
+  isAgentStreaming: false,
 
   // Results drawer selection
   setSelectedResultNodeId: (nodeId) => set({ selectedResultNodeId: nodeId }),
@@ -578,6 +606,88 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
   setShowIssuesPanel: (show) => set({ showIssuesPanel: show }),
   setHighlightedNodeId: (nodeId) => set({ highlightedNodeId: nodeId }),
   setIsValidating: (v) => set({ isValidating: v }),
+
+  // Chat panel actions
+  setChatPanelOpen: (open) => set({ chatPanelOpen: open }),
+  setChatPanelMode: (mode) => set({ chatPanelMode: mode }),
+  addChatMessage: (msg) => set((s) => ({ chatMessages: [...s.chatMessages, msg] })),
+  updateLastAgentMessage: (content) => set((s) => {
+    const msgs = [...s.chatMessages];
+    for (let i = msgs.length - 1; i >= 0; i--) {
+      if (msgs[i].role === 'agent' && msgs[i].streaming) {
+        msgs[i] = { ...msgs[i], content: msgs[i].content + content };
+        break;
+      }
+    }
+    return { chatMessages: msgs };
+  }),
+  setChatSessionId: (id) => set({ chatSessionId: id }),
+  setPendingDiff: (diff) => set({ pendingDiff: diff }),
+  setIsAgentStreaming: (streaming) => set({ isAgentStreaming: streaming }),
+  clearChat: () => set({ chatMessages: [], chatSessionId: null, pendingDiff: null }),
+
+  applyAgentDiff: (diff) => {
+    get().pushSnapshot();
+    const { nodes, edges, catalog } = get();
+
+    // Process node additions
+    const addedNodes: CubeFlowNode[] = (diff.add_nodes ?? [])
+      .map((n) => {
+        const cubeDef = catalog.find((c) => c.cube_id === n.cube_id);
+        if (!cubeDef) {
+          console.warn(`applyAgentDiff: unknown cube "${n.cube_id}" — skipping node`);
+          return null;
+        }
+        return {
+          id: n.id ?? crypto.randomUUID(),
+          type: 'cube' as const,
+          position: n.position,
+          data: {
+            cube_id: n.cube_id,
+            cubeDef,
+            params: n.params ?? {},
+          },
+        } satisfies CubeFlowNode;
+      })
+      .filter((n): n is CubeFlowNode => n !== null);
+
+    // Process node removals
+    const removeNodeIds = new Set(diff.remove_node_ids ?? []);
+
+    // Process param updates on existing nodes
+    const updatedNodes = nodes
+      .filter((n) => !removeNodeIds.has(n.id))
+      .map((n) => {
+        const update = (diff.update_params ?? []).find((u) => u.node_id === n.id);
+        if (!update) return n;
+        return {
+          ...n,
+          data: { ...n.data, params: { ...n.data.params, ...update.params } },
+        };
+      });
+
+    // Process edge removals
+    const removeEdgeIds = new Set(diff.remove_edge_ids ?? []);
+    const keptEdges = edges.filter((e) => !removeEdgeIds.has(e.id));
+
+    // Process edge additions
+    const addedEdges: Edge[] = (diff.add_edges ?? []).map((e) => ({
+      id: e.id ?? crypto.randomUUID(),
+      source: e.source,
+      target: e.target,
+      sourceHandle: e.source_handle ?? null,
+      targetHandle: e.target_handle ?? null,
+      type: 'straight',
+    }));
+
+    // Atomic single set() call — per D-10, never patch incrementally
+    set({
+      nodes: [...updatedNodes, ...addedNodes],
+      edges: [...keptEdges, ...addedEdges],
+      isDirty: true,
+      pendingDiff: null,
+    });
+  },
 
   setNodeExecutionStatus: (nodeId, event) =>
     set((state) => {
