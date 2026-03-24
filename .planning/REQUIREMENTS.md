@@ -35,9 +35,9 @@ Requirements for AI Workflow Agents milestone. Each maps to roadmap phases.
 
 - [ ] **CANVAS-01**: Chat panel UI component integrated into editor page
 - [ ] **CANVAS-02**: Mode switching (optimize / error-fix / general) with visual indicator
-- [ ] **CANVAS-03**: Canvas context — agent reads current workflow graph state
+- [x] **CANVAS-03**: Canvas context — agent reads current workflow graph state
 - [ ] **CANVAS-04**: Optimize mode — suggest faster/simpler cube configurations
-- [ ] **CANVAS-05**: Error-fix mode — read cube errors from last run, diagnose pipeline failures
+- [x] **CANVAS-05**: Error-fix mode — read cube errors from last run, diagnose pipeline failures
 - [ ] **CANVAS-06**: General mode — find cubes, suggest edits, answer questions
 - [ ] **CANVAS-07**: `applyAgentDiff()` Zustand action for atomic canvas updates with snapshot
 
@@ -93,9 +93,9 @@ Requirements for AI Workflow Agents milestone. Each maps to roadmap phases.
 | VALID-03 | Phase 19 | Complete |
 | CANVAS-01 | Phase 20 | Pending |
 | CANVAS-02 | Phase 20 | Pending |
-| CANVAS-03 | Phase 20 | Pending |
+| CANVAS-03 | Phase 20 | Complete |
 | CANVAS-04 | Phase 20 | Pending |
-| CANVAS-05 | Phase 20 | Pending |
+| CANVAS-05 | Phase 20 | Complete |
 | CANVAS-06 | Phase 20 | Pending |
 | CANVAS-07 | Phase 20 | Pending |
 | BUILD-01 | Phase 21 | Pending |
