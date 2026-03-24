@@ -69,8 +69,8 @@ Users can build and run custom flight analysis pipelines visually — connecting
 - [ ] Cube Expert sub-agent — two-tier catalog lookup (summaries → full definitions), suggests best cubes for use case
 - [ ] Validation Agent — pre-execution structural checks (params filled, types compatible, no dangling inputs)
 - [ ] Results Interpreter Agent — post-execution, explains findings in mission context
-- [ ] Agent infrastructure — Gemini LLM integration via FastAPI, skill files (system prompts), system brief, internal function-call tools
-- [ ] Cube catalog tool — two-tier lookup for agents (summary browse → full definition load)
+- [x] Agent infrastructure — Gemini LLM integration via FastAPI, skill files (system prompts), system brief, internal function-call tools — Phase 18
+- [x] Cube catalog tool — two-tier lookup for agents (summary browse → full definition load) — Phase 18 (placeholders)
 - [ ] Chat UI component — React chat panel for canvas/error/general agents
 - [ ] Wizard UI component — React step-by-step page for build agent with clickable options
 
@@ -133,7 +133,7 @@ Users can build and run custom flight analysis pipelines visually — connecting
 - Cube Expert — sub-agent for intelligent cube discovery and recommendation
 - Validation Agent — structural pre-flight checks before execution
 - Results Interpreter — post-execution analysis explaining findings in user's mission context
-- Agent infrastructure — Gemini integration, skill files, system brief, internal tools
+- ~~Agent infrastructure~~ — Complete (Phase 18): Gemini client, skill files, tool registry, SSE endpoint, sessions
 
 ---
-*Last updated: 2026-03-22 after v3.0 milestone start*
+*Last updated: 2026-03-24 after Phase 18 (Agent Infrastructure) completed*
