@@ -125,7 +125,7 @@ Pre-populated from D-01 through D-04 in 20-CONTEXT.md.
 - Border bottom: `1px solid var(--color-border)`
 - Title "AGENT": 11px, weight 600, uppercase, letter-spacing 0.06em, color `var(--color-text-muted)` — matches `.sidebar__title` but right-aligned panel so title on left
 - Mode toggle: three segments `Optimize | Fix | General`, each 28px tall, font-size 11px, weight 600
-- Close button: 28x28px, same style as `.sidebar__toggle`
+- Close button: 28x28px, same style as `.sidebar__toggle`, `aria-label: "Close agent panel"`
 
 ### Panel Focal Point
 
@@ -134,7 +134,7 @@ The chat input row at the bottom of the panel is the primary focal point. It is 
 ### Mode Toggle Segments
 
 - Container: `display: flex`, `border-radius: var(--radius-sm)`, `background: rgba(255,255,255,0.04)`, `border: 1px solid var(--color-border)`, `padding: 4px`
-- Each segment: `padding: 0 10px`, `height: 24px`, `border-radius: 6px`, `font-size: 11px`, `font-weight: 600`, `cursor: pointer`
+- Each segment: `padding: 0 12px`, `height: 24px`, `border-radius: 6px`, `font-size: 11px`, `font-weight: 600`, `cursor: pointer`
 - Inactive: `color: var(--color-text-dim)`, transparent background
 - Active: `color: var(--color-text)`, `background: rgba(var(--accent-rgb), 0.18)`, `border: 1px solid rgba(var(--accent-rgb), 0.25)` — matches `btn-accent-bg/border`
 - Error-Fix active: active segment additionally shows a 4px colored dot using `var(--color-error)` at left of "Fix" label when error count > 0
@@ -190,7 +190,7 @@ The chat input row at the bottom of the panel is the primary focal point. It is 
 - `background: rgba(255,255,255,0.05)`
 - `border: 1px solid var(--color-border)`
 - `border-radius: var(--radius-sm)`
-- `padding: 10px 12px`
+- `padding: 8px 12px`
 - `margin: 0 12px 8px 24px` (right-aligned visual weight via left margin)
 - Text: 13px, weight 400, `var(--color-text)`, line-height 1.5
 
@@ -198,7 +198,7 @@ The chat input row at the bottom of the panel is the primary focal point. It is 
 
 - `background: transparent` (no background fill — distinguishes from user)
 - `border-left: 2px solid rgba(var(--accent-rgb), 0.3)` (subtle accent left marker)
-- `padding: 8px 12px 8px 14px`
+- `padding: 8px 12px 8px 16px`
 - `margin: 0 24px 8px 12px` (left-aligned)
 - Text: 13px, weight 400, `var(--color-text-secondary)`, line-height 1.5
 - Streaming state: trailing cursor element `::after` — 2px wide blinking vertical bar, `var(--color-accent)`, `animation: blink 1s step-end infinite`
@@ -206,7 +206,7 @@ The chat input row at the bottom of the panel is the primary focal point. It is 
 ### Tool Call Indicator (during agent thinking)
 
 - Inline row within agent message thread (not a bubble)
-- `display: flex`, `align-items: center`, `gap: 8px`, `padding: 6px 12px`
+- `display: flex`, `align-items: center`, `gap: 8px`, `padding: 8px 12px`
 - Spinner: 12x12px SVG circle with `stroke-dasharray` animation, `var(--color-text-muted)` color
 - Label: 11px, weight 400, `var(--color-text-muted)` — text matches tool name (e.g. "Reading workflow graph...", "Looking up cube definition...")
 
@@ -229,13 +229,13 @@ Shown inline in the message thread after agent emits a `propose_graph_diff` tool
 - Height: 36px
 - `background: rgba(255,255,255,0.02)`
 - `border-bottom: 1px solid var(--color-border)`
-- `padding: 0 14px`
+- `padding: 0 12px`
 - Label: "Proposed Changes" — 11px, weight 600, uppercase, letter-spacing 0.06em, `var(--color-text-muted)`
 
 ### Diff Line Items
 
 Each line item in the structured diff:
-- `padding: 6px 14px`
+- `padding: 8px 12px`
 - `font-size: 12px`, `line-height: 1.4`, `color: var(--color-text-secondary)`
 - Prefix badge (3 variants):
   - Add: `+` in `var(--color-success)`, `background: rgba(34,197,94,0.1)`, `border-radius: 3px`, `padding: 0 4px`
@@ -246,13 +246,13 @@ Each line item in the structured diff:
 ### Apply Changes / Reject Changes Buttons
 
 Placed in a footer row inside the diff block:
-- Footer: `padding: 10px 14px`, `display: flex`, `gap: 8px`, `justify-content: flex-end`
+- Footer: `padding: 8px 12px`, `display: flex`, `gap: 8px`, `justify-content: flex-end`
 - Apply Changes button: uses `.glass-btn.glass-btn--accent` class exactly — matches Run button visual treatment
   - Label: "Apply Changes" (verb + noun)
-  - Width: auto, `padding: 7px 16px`
+  - Width: auto, `padding: 8px 16px`
 - Reject Changes button: uses `.glass-btn` class — neutral glass treatment
   - Label: "Reject Changes" (verb + noun)
-  - Width: auto, `padding: 7px 16px`
+  - Width: auto, `padding: 8px 16px`
 - Both buttons: `font-size: 13px`, `font-weight: 600`
 
 ---
@@ -352,6 +352,7 @@ When the chat panel is closed:
 | Error state — SSE connection failed | "Connection lost. Please try again." (inline in message thread as agent message) |
 | Toolbar chat toggle button aria-label | "Toggle agent chat panel" |
 | Toolbar chat toggle button tooltip | "Agent (Cmd+Shift+A)" |
+| Panel close button aria-label | "Close agent panel" |
 | Send Message button aria-label | "Send message" |
 | Send Message button tooltip | "Send (Enter)" |
 
