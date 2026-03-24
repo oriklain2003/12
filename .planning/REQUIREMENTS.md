@@ -13,8 +13,8 @@ Requirements for AI Workflow Agents milestone. Each maps to roadmap phases.
 - [ ] **INFRA-02**: SSE streaming endpoint for agent chat responses
 - [x] **INFRA-03**: Skill files (system prompts) for each agent persona
 - [x] **INFRA-04**: System brief document with Tracer 42 domain context for all agents
-- [ ] **INFRA-05**: Agent tool dispatch system (internal function calls, not HTTP)
-- [ ] **INFRA-06**: Context management (client-carried history, result summarization to avoid context explosion)
+- [x] **INFRA-05**: Agent tool dispatch system (internal function calls, not HTTP)
+- [x] **INFRA-06**: Context management (client-carried history, result summarization to avoid context explosion)
 - [ ] **INFRA-07**: Mission context persistence in workflow metadata (JSONB)
 
 ### Cube Expert
@@ -82,8 +82,8 @@ Requirements for AI Workflow Agents milestone. Each maps to roadmap phases.
 | INFRA-02 | Phase 18 | Pending |
 | INFRA-03 | Phase 18 | Complete |
 | INFRA-04 | Phase 18 | Complete |
-| INFRA-05 | Phase 18 | Pending |
-| INFRA-06 | Phase 18 | Pending |
+| INFRA-05 | Phase 18 | Complete |
+| INFRA-06 | Phase 18 | Complete |
 | INFRA-07 | Phase 18 | Pending |
 | CUBE-01 | Phase 19 | Pending |
 | CUBE-02 | Phase 19 | Pending |
