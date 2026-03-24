@@ -152,7 +152,12 @@ Plans:
   3. Validation runs automatically when the user clicks Run — if issues are found, execution is blocked and the issues panel opens before any cube executes
   4. The Cube Expert sub-agent, given a description like "I need to filter flights by geographic area", returns the correct cube name (`area_spatial_filter`) with reasoning — not a hallucinated cube name
   5. The two-tier catalog lookup returns only summaries on the first call (no parameter detail), and loads full parameter definitions only when a specific cube name is requested
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 19-01-PLAN.md — Validation engine + schemas + POST /api/agent/validate endpoint + tests
+- [ ] 19-02-PLAN.md — Cube Expert class + find_cubes_for_task tool + tests
+- [ ] 19-03-PLAN.md — Frontend IssuesPanel + pre-run validation trigger + node highlighting
 
 ### Phase 20: Canvas Agent
 **Goal**: Analysts working in the editor can open a chat panel, describe what they want to change, and see the agent apply diffs to the canvas — without breaking existing node connections or workflow state
@@ -210,7 +215,7 @@ Plans:
 | 16. Signal Health Fixes | v2.0 | 3/3 | Complete | 2026-03-13 |
 | 17. Squawk Optimization | v2.0 | 1/1 | Complete | 2026-03-13 |
 | 18. Agent Infrastructure | v3.0 | 4/4 | Complete    | 2026-03-24 |
-| 19. Cube Expert + Validation | v3.0 | 0/0 | Not started | — |
+| 19. Cube Expert + Validation | v3.0 | 0/3 | Planned | — |
 | 20. Canvas Agent | v3.0 | 0/0 | Not started | — |
 | 21. Build Wizard Agent | v3.0 | 0/0 | Not started | — |
 | 22. Results Interpreter | v3.0 | 0/0 | Not started | — |
