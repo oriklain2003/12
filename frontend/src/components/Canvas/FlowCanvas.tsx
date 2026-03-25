@@ -31,8 +31,9 @@ import { AnimatedEdge } from './AnimatedEdge';
 import { LabeledStraightEdge } from './LabeledStraightEdge';
 import { CommandPalette } from '../CommandPalette/CommandPalette';
 import { MagneticConnectionLine } from './MagneticConnectionLine';
-import { useFlowStore } from '../../store/flowStore';
+import { useFlowStore, type CubeFlowNode } from '../../store/flowStore';
 import { ParamType } from '../../types/cube';
+import type { AgentDiff } from '../../types/agent';
 import './FlowCanvas.css';
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
@@ -41,6 +42,58 @@ const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigat
 
 const nodeTypes = { cube: CubeNode } as const;
 const edgeTypes = { straight: LabeledStraightEdge, mismatch: MismatchEdge, animated: AnimatedEdge } as const;
+
+// ─── Ghost preview builder ───────────────────────────────────────────────────
+
+function buildGhostPreview(
+  diff: AgentDiff,
+  catalog: CubeFlowNode['data']['cubeDef'][],
+) {
+  const previewNodes: CubeFlowNode[] = [];
+  const previewEdges: Edge[] = [];
+  const removedNodeIds = new Set(diff.remove_node_ids ?? []);
+  const removedEdgeIds = new Set(diff.remove_edge_ids ?? []);
+
+  // Ghost nodes for additions — use deterministic IDs
+  const addNodes = diff.add_nodes ?? [];
+  for (let i = 0; i < addNodes.length; i++) {
+    const n = addNodes[i];
+    const cubeDef = catalog.find((c) => c.cube_id === n.cube_id);
+    if (!cubeDef) continue;
+    previewNodes.push({
+      id: n.id ?? `ghost-${n.cube_id}-${i}`,
+      type: 'cube',
+      position: n.position,
+      className: 'react-flow__node--ghost-add',
+      data: {
+        cube_id: n.cube_id,
+        cubeDef,
+        params: n.params ?? {},
+        isPreview: true,
+      },
+      selectable: false,
+      draggable: false,
+      connectable: false,
+    });
+  }
+
+  // Ghost edges for additions — use deterministic IDs
+  const addEdges = diff.add_edges ?? [];
+  for (let i = 0; i < addEdges.length; i++) {
+    const e = addEdges[i];
+    previewEdges.push({
+      id: e.id ?? `ghost-edge-${i}`,
+      source: e.source,
+      target: e.target,
+      sourceHandle: e.source_handle ?? null,
+      targetHandle: e.target_handle ?? null,
+      type: 'straight',
+      className: 'react-flow__edge--ghost-add',
+    });
+  }
+
+  return { previewNodes, previewEdges, removedNodeIds, removedEdgeIds };
+}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -216,16 +269,55 @@ export function FlowCanvas() {
     useFlowStore.getState().addTypedEdge(edge);
   }, []);
 
+  // ── Ghost preview from pendingDiff ────────────────────────────────────────
+
+  const pendingDiff = useFlowStore((s) => s.pendingDiff);
+  const catalog = useFlowStore((s) => s.catalog);
+
+  const { previewNodes, previewEdges, removedNodeIds, removedEdgeIds } = useMemo(() => {
+    if (!pendingDiff) return { previewNodes: [] as CubeFlowNode[], previewEdges: [] as Edge[], removedNodeIds: new Set<string>(), removedEdgeIds: new Set<string>() };
+    return buildGhostPreview(pendingDiff, catalog);
+  }, [pendingDiff, catalog]);
+
   // ── Animated edges during execution ──────────────────────────────────────────
 
   const displayEdges = useMemo(() => {
-    if (!isRunning) return edges;
-    return edges.map((edge) =>
-      edge.type === 'mismatch'
-        ? edge
-        : { ...edge, type: 'animated' as const }
-    );
-  }, [edges, isRunning]);
+    let result = edges;
+
+    // Dim edges connected to removed nodes or explicitly removed edges
+    if (removedNodeIds.size > 0 || removedEdgeIds.size > 0) {
+      result = result.map((edge) => {
+        if (removedEdgeIds.has(edge.id) || removedNodeIds.has(edge.source) || removedNodeIds.has(edge.target)) {
+          return { ...edge, className: 'react-flow__edge--ghost-remove' };
+        }
+        return edge;
+      });
+    }
+
+    if (isRunning) {
+      result = result.map((edge) =>
+        edge.type === 'mismatch'
+          ? edge
+          : { ...edge, type: 'animated' as const }
+      );
+    }
+
+    return [...result, ...previewEdges];
+  }, [edges, isRunning, previewEdges, removedNodeIds, removedEdgeIds]);
+
+  // ── Display nodes with ghost previews ───────────────────────────────────────
+
+  const displayNodes = useMemo(() => {
+    let result = nodes;
+    if (removedNodeIds.size > 0) {
+      result = result.map((n) =>
+        removedNodeIds.has(n.id)
+          ? { ...n, className: 'react-flow__node--ghost-remove' }
+          : n
+      );
+    }
+    return [...result, ...previewNodes];
+  }, [nodes, previewNodes, removedNodeIds]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -253,7 +345,7 @@ export function FlowCanvas() {
         </div>
       )}
       <ReactFlow
-        nodes={nodes}
+        nodes={displayNodes}
         edges={displayEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}

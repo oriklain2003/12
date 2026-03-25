@@ -218,11 +218,70 @@ function ResultsTableIllustration() {
   );
 }
 
+function AgentPanelIllustration() {
+  return (
+    <svg className="tour-tooltip__illustration" width="260" height="100" viewBox="0 0 260 100">
+      {/* Panel frame */}
+      <rect x="10" y="4" width="240" height="92" rx="10" fill="rgba(99, 102, 241, 0.06)" stroke="rgba(99, 102, 241, 0.2)" strokeWidth="1" />
+      {/* Header bar */}
+      <rect x="10" y="4" width="240" height="22" rx="10" fill="rgba(99, 102, 241, 0.1)" />
+      <rect x="10" y="16" width="240" height="10" fill="rgba(99, 102, 241, 0.1)" />
+      <text x="24" y="18" fill="rgba(255,255,255,0.5)" fontSize="8" fontWeight="600" letterSpacing="0.5" fontFamily="DM Sans, system-ui">AGENT</text>
+      {/* Mode toggle — three segments */}
+      <rect x="70" y="9" width="120" height="14" rx="4" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
+      {/* Optimize segment */}
+      <rect x="72" y="11" width="38" height="10" rx="3" fill="rgba(99, 102, 241, 0.18)" stroke="rgba(99, 102, 241, 0.25)" strokeWidth="0.5">
+        <animate attributeName="fill" values="rgba(99,102,241,0.18);rgba(255,255,255,0.02);rgba(255,255,255,0.02)" dur="4s" begin="0s" repeatCount="indefinite" />
+        <animate attributeName="stroke" values="rgba(99,102,241,0.25);rgba(255,255,255,0.06);rgba(255,255,255,0.06)" dur="4s" begin="0s" repeatCount="indefinite" />
+      </rect>
+      <text x="91" y="19" textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize="6" fontWeight="500" fontFamily="DM Sans, system-ui">
+        <animate attributeName="fill" values="rgba(255,255,255,0.8);rgba(255,255,255,0.4);rgba(255,255,255,0.4)" dur="4s" begin="0s" repeatCount="indefinite" />
+        Optimize
+      </text>
+      {/* Fix segment */}
+      <rect x="112" y="11" width="26" height="10" rx="3" fill="rgba(255,255,255,0.02)">
+        <animate attributeName="fill" values="rgba(255,255,255,0.02);rgba(239,68,68,0.15);rgba(255,255,255,0.02)" dur="4s" begin="0s" repeatCount="indefinite" />
+      </rect>
+      <text x="125" y="19" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="6" fontWeight="500" fontFamily="DM Sans, system-ui">
+        <animate attributeName="fill" values="rgba(255,255,255,0.4);rgba(255,255,255,0.8);rgba(255,255,255,0.4)" dur="4s" begin="0s" repeatCount="indefinite" />
+        Fix
+      </text>
+      {/* General segment */}
+      <rect x="140" y="11" width="48" height="10" rx="3" fill="rgba(255,255,255,0.02)">
+        <animate attributeName="fill" values="rgba(255,255,255,0.02);rgba(255,255,255,0.02);rgba(99,102,241,0.18)" dur="4s" begin="0s" repeatCount="indefinite" />
+      </rect>
+      <text x="164" y="19" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="6" fontWeight="500" fontFamily="DM Sans, system-ui">
+        <animate attributeName="fill" values="rgba(255,255,255,0.4);rgba(255,255,255,0.4);rgba(255,255,255,0.8)" dur="4s" begin="0s" repeatCount="indefinite" />
+        General
+      </text>
+      {/* Chat bubble — agent message */}
+      <rect x="20" y="32" width="140" height="24" rx="6" fill="transparent" />
+      <line x1="20" y1="32" x2="20" y2="56" stroke="rgba(99, 102, 241, 0.3)" strokeWidth="2" strokeLinecap="round" />
+      <text x="28" y="43" fill="rgba(255,255,255,0.5)" fontSize="7" fontFamily="DM Sans, system-ui">I can optimize your pipeline</text>
+      <text x="28" y="52" fill="rgba(255,255,255,0.35)" fontSize="7" fontFamily="DM Sans, system-ui">by reordering the filters...</text>
+      {/* Chat bubble — user message */}
+      <rect x="130" y="60" width="110" height="16" rx="6" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
+      <text x="185" y="71" textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize="7" fontFamily="DM Sans, system-ui">Apply the changes</text>
+      {/* Typing indicator dots */}
+      <circle cx="26" cy="86" r="2" fill="rgba(99, 102, 241, 0.4)">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="1.2s" begin="0s" repeatCount="indefinite" />
+      </circle>
+      <circle cx="34" cy="86" r="2" fill="rgba(99, 102, 241, 0.4)">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="1.2s" begin="0.2s" repeatCount="indefinite" />
+      </circle>
+      <circle cx="42" cy="86" r="2" fill="rgba(99, 102, 241, 0.4)">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="1.2s" begin="0.4s" repeatCount="indefinite" />
+      </circle>
+    </svg>
+  );
+}
+
 const ILLUSTRATION_MAP: Record<string, () => React.JSX.Element> = {
   'time-range': TimeRangeIllustration,
   'toggle-anomaly': ToggleAnomalyIllustration,
   'connect-pipeline': ConnectPipelineIllustration,
   'results-table': ResultsTableIllustration,
+  'agent-panel': AgentPanelIllustration,
 };
 
 // ── TourTooltip ──────────────────────────────────────────────────────────────

@@ -17,6 +17,8 @@ import './ChatPanel.css';
 export function ChatPanel() {
   const chatPanelOpen = useFlowStore((s) => s.chatPanelOpen);
   const setChatPanelOpen = useFlowStore((s) => s.setChatPanelOpen);
+  const clearChat = useFlowStore((s) => s.clearChat);
+  const isAgentStreaming = useFlowStore((s) => s.isAgentStreaming);
 
   const [width, setWidth] = useState(320);
   const isDragging = useRef(false);
@@ -63,6 +65,22 @@ export function ChatPanel() {
       <div className="chat-panel__header">
         <span className="chat-panel__title">AGENT</span>
         <ModeToggle />
+        <button
+          className="chat-panel__new-chat-btn"
+          onClick={clearChat}
+          disabled={isAgentStreaming}
+          aria-label="New chat"
+          title="New chat"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path
+              d="M7 2.5v9M2.5 7h9"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
         <button
           className="chat-panel__close-btn"
           onClick={() => setChatPanelOpen(false)}

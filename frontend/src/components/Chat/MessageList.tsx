@@ -54,6 +54,7 @@ export function MessageList() {
             <ToolCallIndicator
               key={message.id}
               toolName={message.toolName ?? ''}
+              done={!!message.content}
             />
           );
         }

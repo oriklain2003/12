@@ -361,9 +361,11 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
     if (!get()._isUndoRedo) {
       get().pushSnapshot();
     }
+    const hasStructuralChange = changes.some((c) => c.type === 'remove' || c.type === 'add');
     set((state) => ({
       edges: applyEdgeChanges(changes, state.edges),
       ...(get()._isUndoRedo ? {} : { isDirty: true }),
+      ...(hasStructuralChange ? { validationIssues: [], showIssuesPanel: false } : {}),
     }));
   },
 
@@ -372,6 +374,8 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
     set((state) => ({
       edges: addEdge(connection, state.edges),
       isDirty: true,
+      validationIssues: [],
+      showIssuesPanel: false,
     }));
   },
 

@@ -110,9 +110,15 @@ class AllFlightsCube(BaseCube):
             widget_hint="polygon",
         ),
         ParamDefinition(
-            name="airport",
+            name="origin",
             type=ParamType.STRING,
-            description="Airport code filter (ILIKE — matches origin or destination).",
+            description="Origin airport code filter (ILIKE match on origin_airport).",
+            required=False,
+        ),
+        ParamDefinition(
+            name="destination",
+            type=ParamType.STRING,
+            description="Destination airport code filter (ILIKE match on destination_airport).",
             required=False,
         ),
         ParamDefinition(
@@ -174,7 +180,8 @@ class AllFlightsCube(BaseCube):
                 min_altitude_ft, max_altitude_ft,
                 origin_airport, destination_airport,
                 is_anomaly, is_military,
-                start_lat, start_lon, end_lat, end_lon
+                start_lat, start_lon, end_lat, end_lon,
+                category
             FROM research.flight_metadata
             WHERE 1=1
             """
@@ -216,11 +223,17 @@ class AllFlightsCube(BaseCube):
             sql_parts.append("AND max_altitude_ft <= :max_altitude")
             params["max_altitude"] = float(max_altitude)
 
-        # airport filter (ILIKE on origin or destination)
-        airport = inputs.get("airport")
-        if airport:
-            sql_parts.append("AND (origin_airport ILIKE :airport OR destination_airport ILIKE :airport)")
-            params["airport"] = f"%{airport}%"
+        # origin filter
+        origin = inputs.get("origin")
+        if origin:
+            sql_parts.append("AND origin_airport ILIKE :origin")
+            params["origin"] = f"%{origin}%"
+
+        # destination filter
+        destination = inputs.get("destination")
+        if destination:
+            sql_parts.append("AND destination_airport ILIKE :destination")
+            params["destination"] = f"%{destination}%"
 
         # bounding-box region filter
         min_lat = inputs.get("min_lat")
@@ -256,7 +269,7 @@ class AllFlightsCube(BaseCube):
             )
 
         # Safety cap before polygon filtering
-        sql_parts.append("LIMIT 5000")
+        sql_parts.append("LIMIT 50000")
 
         full_sql = "\n".join(sql_parts)
 

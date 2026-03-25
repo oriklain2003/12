@@ -2,10 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Important
-
-The AskUserQuestion tool doesn't work in this environment. Always ask questions directly in the chat conversation instead.
-
 ## Project Overview
 
 **Project 12 (12-flow)** is a visual dataflow workflow builder for flight analysis, part of Tracer 42. Users build analysis pipelines by dragging "cubes" (processing nodes) onto a canvas, configuring parameters, connecting outputs to inputs, and executing against the Tracer 42 PostgreSQL database — no code required.

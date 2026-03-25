@@ -96,7 +96,8 @@ export function ChatInput() {
       );
 
       for await (const event of stream) {
-        console.log('[agent-sse]', event.type, event.data);
+        if (!event.type) continue; // skip malformed/ping events
+
         if (event.type === 'session') {
           const sessionData = event.data as Record<string, unknown>;
           useFlowStore.getState().setChatSessionId(sessionData.session_id as string);
@@ -113,7 +114,6 @@ export function ChatInput() {
           const store = useFlowStore.getState();
           const lastMsg = store.chatMessages[store.chatMessages.length - 1];
           if (lastMsg?.type === 'thinking') {
-            // Update existing thinking message
             const msgs = [...store.chatMessages];
             msgs[msgs.length - 1] = { ...lastMsg, content: lastMsg.content + (event.data as string) };
             useFlowStore.setState({ chatMessages: msgs });
@@ -128,7 +128,6 @@ export function ChatInput() {
           }
         } else if (event.type === 'tool_call') {
           const toolData = event.data as Record<string, unknown>;
-          console.log('[agent-tool-call]', toolData.name, toolData);
           useFlowStore.getState().addChatMessage({
             id: crypto.randomUUID(),
             role: 'agent',
@@ -138,16 +137,16 @@ export function ChatInput() {
             toolName: toolData.name as string,
           });
         } else if (event.type === 'tool_result') {
-          console.log('[agent-tool-result]', event.data);
-          // Remove the last tool_call indicator now that the result arrived
+          // Mark the last tool_call as completed (stop spinner) instead of removing it
           const currentMsgs = useFlowStore.getState().chatMessages;
-          const withoutToolCall = currentMsgs.filter((m, i) => {
-            // Remove last tool_call message
-            if (m.type !== 'tool_call') return true;
-            // Keep earlier tool_call messages, remove only the last one
-            return currentMsgs.slice(i + 1).some((later) => later.type === 'tool_call');
-          });
-          useFlowStore.setState({ chatMessages: withoutToolCall });
+          const msgs = [...currentMsgs];
+          for (let i = msgs.length - 1; i >= 0; i--) {
+            if (msgs[i].type === 'tool_call' && !msgs[i].content) {
+              msgs[i] = { ...msgs[i], content: 'done' };
+              useFlowStore.setState({ chatMessages: msgs });
+              break;
+            }
+          }
 
           const resultData = event.data as Record<string, unknown>;
           // proposed_diff is nested under result: {name, result: {proposed_diff: ...}}

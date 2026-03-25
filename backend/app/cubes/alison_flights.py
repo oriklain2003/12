@@ -153,7 +153,7 @@ class AlisonFlightsCube(BaseCube):
                 SELECT a.hex, a.registration, a.icao_type, a.type_description, a.category
                 FROM public.aircraft a
                 WHERE {where_sql}
-                LIMIT 5000
+                LIMIT 50000
             """
         else:
             # Slow path: join positions for callsign/altitude/polygon filters
@@ -200,7 +200,7 @@ class AlisonFlightsCube(BaseCube):
                       SELECT 1 FROM public.positions p
                       WHERE p.hex = a.hex AND {pos_filter}
                   )
-                LIMIT 5000
+                LIMIT 50000
             """
 
         debug_sql = sql

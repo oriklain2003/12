@@ -44,6 +44,6 @@ export interface AgentDiff {
 
 /** SSE event from agent chat endpoint */
 export interface AgentSSEEvent {
-  type: 'text' | 'tool_call' | 'tool_result' | 'thinking' | 'done' | 'session';
+  type: 'text' | 'tool_call' | 'tool_result' | 'thinking' | 'done' | 'session' | 'error';
   data: string | Record<string, unknown> | null;
 }

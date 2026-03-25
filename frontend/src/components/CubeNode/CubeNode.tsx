@@ -109,9 +109,84 @@ function CubeInfoPopover({ description, buttonRect, onClose }: {
   );
 }
 
+// ─── Preview component (no store hooks — safe for ghost nodes) ───────────────
+
+function CubeNodePreview({ data }: { data: CubeFlowNode['data'] }) {
+  const { cubeDef } = data;
+  const categoryColor = CATEGORY_COLORS[cubeDef.category] ?? '#6b7280';
+
+  return (
+    <div className="cube-node glass--node">
+      <div className="cube-node__header">
+        <span className="cube-node__category-dot" style={{ background: categoryColor }} />
+        <span className="cube-node__header-name">{cubeDef.name}</span>
+      </div>
+      <div className="cube-node__body">
+        {cubeDef.inputs.length > 0 && (
+          <>
+            <div className="cube-node__section-label">Inputs</div>
+            {cubeDef.inputs.map((param) => (
+              <div key={param.name} className="cube-node__param-row cube-node__param-row--input">
+                <ParamHandle param={param} type="target" isConnectable={false} />
+                <div className="cube-node__param-content">
+                  <span className="cube-node__param-label">{param.name}</span>
+                  {data.params[param.name] != null && (
+                    <span className="cube-node__preview-value">
+                      {String(data.params[param.name])}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+        {cubeDef.outputs.length > 0 && (
+          <>
+            <div className="cube-node__section-label">Outputs</div>
+            {cubeDef.outputs.map((param) => {
+              if (param.name === '__full_result__') return null;
+              return (
+                <div key={param.name} className="cube-node__param-row cube-node__param-row--output">
+                  <ParamHandle param={param} type="source" isConnectable={false} />
+                  <span className="cube-node__param-label">{param.name}</span>
+                </div>
+              );
+            })}
+          </>
+        )}
+        <div className="cube-node__full-result-row">
+          <span className="cube-node__full-result-label">Full Result</span>
+          <Handle
+            type="source"
+            position={Position.Right}
+            id="__full_result__"
+            isConnectable={false}
+            className="nodrag cube-node__handle"
+            style={{
+              background: PARAM_COLORS[ParamType.JSON_OBJECT],
+              width: 12,
+              height: 12,
+              borderRadius: 4,
+              border: '2px solid rgba(0,0,0,0.3)',
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function CubeNode({ id, data, selected, isConnectable }: NodeProps<CubeFlowNode>) {
+  if (data.isPreview) {
+    return <CubeNodePreview data={data} />;
+  }
+
+  return <CubeNodeInteractive id={id} data={data} selected={selected} isConnectable={isConnectable} />;
+}
+
+function CubeNodeInteractive({ id, data, selected, isConnectable }: NodeProps<CubeFlowNode>) {
   const { cubeDef } = data;
   const categoryColor = CATEGORY_COLORS[cubeDef.category] ?? '#6b7280';
   const removeNode = useFlowStore((s) => s.removeNode);

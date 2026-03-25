@@ -14,7 +14,7 @@ export interface TourStep {
   /** Whether this is the welcome or finish step (centered, large) */
   hero?: boolean;
   /** Optional illustration key rendered by TourTooltip */
-  illustration?: 'time-range' | 'toggle-anomaly' | 'connect-pipeline' | 'results-table';
+  illustration?: 'time-range' | 'toggle-anomaly' | 'connect-pipeline' | 'results-table' | 'agent-panel';
 }
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
@@ -120,14 +120,23 @@ export const TOUR_STEPS: TourStep[] = [
     position: 'top',
     illustration: 'results-table',
   },
-  // Step 11 — Shortcuts Overview
+  // Step 11 — Agent Panel
+  {
+    target: 'agent-btn',
+    title: 'Meet the Agent',
+    description:
+      `Your AI co-pilot lives here. Open it with ${mod}+Shift+A.\n\nThree modes:\n\u2022 Optimize — suggests pipeline improvements\n\u2022 Fix — auto-diagnoses errors after a failed run\n\u2022 General — ask anything about your workflow\n\nThe agent can read your canvas and propose changes you approve before they\u2019re applied.`,
+    position: 'left',
+    illustration: 'agent-panel',
+  },
+  // Step 12 — Shortcuts Overview
   {
     target: 'help-btn',
     title: 'Power Shortcuts',
     description: `${mod}+S Save \u00B7 ${mod}+Enter Run \u00B7 ${mod}+Z Undo \u00B7 ${mod}+Shift+Z Redo \u00B7 ${mod}+K Command Palette \u00B7 Del Delete \u00B7 ? Shortcuts panel`,
     position: 'bottom',
   },
-  // Step 12 — Finish
+  // Step 13 — Finish
   {
     target: null,
     title: "You're Ready",
