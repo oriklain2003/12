@@ -109,4 +109,4 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-22:** v3.0 roadmap created — 5 phases (18-22), 28/28 requirements mapped
 
 ---
-*Last session: 2026-03-25 — Phase 21 plan 02: Complete wizard frontend built — WizardPage SSE streaming shell, WizardChat, WizardWelcome (6 mission cards), WizardInput, OptionCards (single/multi-select + free-text), MiniGraph (SVG topological layout), Dashboard split into Build with Wizard + Blank Canvas buttons, /wizard route registered. Completed 21-02-PLAN.md.*
+*Last session: 2026-03-25 — Phase 21 plan 03: /wizard route wired, dashboard split into Build with Wizard + Blank Canvas two-button row (header + empty state) with CSS classes. Task 1 committed (8124e65). Paused at Task 2 checkpoint — awaiting human verification of end-to-end wizard flow.*
