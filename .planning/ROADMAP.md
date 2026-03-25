@@ -187,7 +187,12 @@ Plans:
   3. The generated workflow loads onto the canvas with all required parameters pre-filled — the analyst can click Run immediately without touching any parameter editor
   4. The Validation Agent runs automatically on the generated workflow before it is presented — a workflow with invalid connections is never delivered to the canvas
   5. The mission description and analysis intent from the wizard are saved to the workflow metadata — visible in the workflow title and accessible to the Results Interpreter later
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 21-01-PLAN.md — Backend wizard tools (present_options, show_intent_preview, generate_workflow) + skill file + model routing
+- [ ] 21-02-PLAN.md — Frontend WizardPage + Wizard components (WizardChat, WizardWelcome, OptionCards, MiniGraph, WizardInput) + types + API extension
+- [ ] 21-03-PLAN.md — Dashboard two-button split + /wizard routing + human verification
 
 ### Phase 22: Results Interpreter
 **Goal**: After a workflow executes, analysts can ask for an interpretation of the results and receive an explanation grounded in their stated mission — not a generic statistical summary
@@ -223,7 +228,7 @@ Plans:
 | 18. Agent Infrastructure | v3.0 | 4/4 | Complete    | 2026-03-24 |
 | 19. Cube Expert + Validation | v3.0 | 3/3 | Complete   | 2026-03-24 |
 | 20. Canvas Agent | v3.0 | 4/4 | Complete    | 2026-03-25 |
-| 21. Build Wizard Agent | v3.0 | 0/0 | Not started | — |
+| 21. Build Wizard Agent | v3.0 | 0/3 | In progress | — |
 | 22. Results Interpreter | v3.0 | 0/0 | Not started | — |
 
 ---
