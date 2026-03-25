@@ -99,37 +99,39 @@ async def _agent_turn_stream(
             # Detect tool calls
             if chunk.function_calls:
                 tool_call_detected = True
+                # Preserve original parts from chunk (includes thought_signature for Gemini 3)
+                original_parts = list(chunk.candidates[0].content.parts) if chunk.candidates else []
+
+                # Execute each tool and collect results
+                tool_results: list[tuple[str, dict]] = []
                 for fc in chunk.function_calls:
                     yield AgentSSEEvent(
                         type="tool_call",
                         data={"name": fc.name, "args": dict(fc.args) if fc.args else {}},
                     )
 
-                    # Execute tool
                     result = await dispatch_tool(fc.name, dict(fc.args) if fc.args else {}, tool_context)
+                    tool_results.append((fc.name, result))
 
                     yield AgentSSEEvent(
                         type="tool_result",
                         data={"name": fc.name, "result": result},
                     )
 
-                    # Append model's function call to history
-                    history.append(types.Content(
-                        role="model",
-                        parts=[types.Part.from_function_call(
-                            name=fc.name,
-                            args=dict(fc.args) if fc.args else {},
-                        )]
-                    ))
+                # Append model's original parts to history (preserves thought_signature)
+                history.append(types.Content(
+                    role="model",
+                    parts=original_parts,
+                ))
 
-                    # Append tool result to history
-                    history.append(types.Content(
-                        role="user",
-                        parts=[types.Part.from_function_response(
-                            name=fc.name,
-                            response=result,
-                        )]
-                    ))
+                # Append all tool results to history
+                history.append(types.Content(
+                    role="user",
+                    parts=[
+                        types.Part.from_function_response(name=name, response=res)
+                        for name, res in tool_results
+                    ],
+                ))
                 break  # End chunk iteration; restart Gemini call with tool results
 
         if not tool_call_detected:
