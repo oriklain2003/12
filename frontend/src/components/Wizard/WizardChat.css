@@ -1,0 +1,50 @@
+.wizard-chat {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.wizard-chat__content {
+  width: 100%;
+  max-width: 720px;
+  padding: 24px 24px 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.wizard-chat__messages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  padding-bottom: 8px;
+}
+
+.wizard-chat__thinking {
+  font-size: 13px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-text-dim);
+  padding: 4px 0;
+}
+
+.wizard-chat__error-block {
+  border-left: 2px solid var(--color-error);
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.wizard-chat__error-text {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--color-text);
+  margin: 0 0 8px 0;
+}
+
+.wizard-chat__retry-btn {
+  display: inline-flex;
+}

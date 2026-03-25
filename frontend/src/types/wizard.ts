@@ -49,3 +49,15 @@ export interface GenerateWorkflowResult {
     rule: string;
   }>;
 }
+
+/** Extended ChatMessage for wizard (adds toolData for structured tool results) */
+export interface WizardChatMessage {
+  id: string;
+  role: 'user' | 'agent';
+  content: string;
+  timestamp: number;
+  type?: string;
+  toolName?: string;
+  streaming?: boolean;
+  toolData?: unknown;
+}

@@ -110,12 +110,22 @@ export function DashboardPage() {
 
       <div className="dashboard__header">
         <h1 className="dashboard__title">Workflows</h1>
-        <button
-          className="dashboard__new-btn"
-          onClick={() => navigate('/workflow/new')}
-        >
-          New Workflow
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            className="dashboard__new-btn glass-btn glass-btn--accent"
+            onClick={() => navigate('/wizard')}
+            style={{ fontSize: 13, fontWeight: 600, padding: '8px 20px' }}
+          >
+            Build with Wizard
+          </button>
+          <button
+            className="dashboard__new-btn glass-btn"
+            onClick={() => navigate('/workflow/new')}
+            style={{ fontSize: 13, fontWeight: 600, padding: '8px 20px' }}
+          >
+            Blank Canvas
+          </button>
+        </div>
       </div>
 
       {loading && (

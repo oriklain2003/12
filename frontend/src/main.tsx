@@ -6,9 +6,11 @@ import './styles/glass.css';
 import './index.css';
 import { EditorPage } from './pages/EditorPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { WizardPage } from './pages/WizardPage';
 
 const router = createBrowserRouter([
   { path: '/', element: <DashboardPage /> },
+  { path: '/wizard', element: <WizardPage /> },
   { path: '/workflow/new', element: <EditorPage /> },
   { path: '/workflow/:id', element: <EditorPage /> },
 ]);
