@@ -178,12 +178,12 @@ function CubeNodePreview({ data }: { data: CubeFlowNode['data'] }) {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function CubeNode({ id, data, selected, isConnectable }: NodeProps<CubeFlowNode>) {
-  if (data.isPreview) {
-    return <CubeNodePreview data={data} />;
+export function CubeNode(props: NodeProps<CubeFlowNode>) {
+  if (props.data.isPreview) {
+    return <CubeNodePreview data={props.data} />;
   }
 
-  return <CubeNodeInteractive id={id} data={data} selected={selected} isConnectable={isConnectable} />;
+  return <CubeNodeInteractive {...props} />;
 }
 
 function CubeNodeInteractive({ id, data, selected, isConnectable }: NodeProps<CubeFlowNode>) {

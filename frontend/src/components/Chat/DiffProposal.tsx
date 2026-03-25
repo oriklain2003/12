@@ -28,7 +28,7 @@ function formatValue(v: unknown): string {
 function getNodeLabel(nodeId: string): string {
   const node = useFlowStore.getState().nodes.find((n) => n.id === nodeId);
   if (!node) return nodeId;
-  return node.data.cubeDef?.display_name ?? node.data.cube_id ?? nodeId;
+  return node.data.cubeDef?.name ?? node.data.cube_id ?? nodeId;
 }
 
 /** Get current param value from a node */

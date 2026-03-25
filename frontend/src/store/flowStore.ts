@@ -645,17 +645,16 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
     }
 
     // Process node additions — track proposed ID → real UUID
-    const addedNodes: CubeFlowNode[] = (diff.add_nodes ?? [])
-      .map((n) => {
+    const addedNodes: CubeFlowNode[] = (diff.add_nodes ?? []).reduce<CubeFlowNode[]>((acc, n) => {
         const cubeDef = catalog.find((c) => c.cube_id === n.cube_id);
         if (!cubeDef) {
           console.warn(`applyAgentDiff: unknown cube "${n.cube_id}" — skipping node`);
-          return null;
+          return acc;
         }
         const realId = crypto.randomUUID();
         if (n.id) idMap.set(n.id, realId);   // "new_filter_flights_1" → UUID
         idMap.set(n.cube_id, realId);          // also map by cube_id for new nodes
-        return {
+        acc.push({
           id: realId,
           type: 'cube' as const,
           position: n.position,
@@ -664,9 +663,9 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
             cubeDef,
             params: n.params ?? {},
           },
-        } satisfies CubeFlowNode;
-      })
-      .filter((n): n is CubeFlowNode => n !== null);
+        });
+        return acc;
+      }, []);
 
     // Resolve agent IDs to real canvas UUIDs
     const resolveId = (agentId: string): string => idMap.get(agentId) ?? agentId;
