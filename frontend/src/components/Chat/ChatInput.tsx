@@ -95,6 +95,7 @@ export function ChatInput() {
       );
 
       for await (const event of stream) {
+        console.log('[agent-sse]', event.type, event.data);
         if (event.type === 'session') {
           const sessionData = event.data as Record<string, unknown>;
           useFlowStore.getState().setChatSessionId(sessionData.session_id as string);
@@ -102,6 +103,7 @@ export function ChatInput() {
           useFlowStore.getState().updateLastAgentMessage(event.data as string);
         } else if (event.type === 'tool_call') {
           const toolData = event.data as Record<string, unknown>;
+          console.log('[agent-tool-call]', toolData.name, toolData);
           useFlowStore.getState().addChatMessage({
             id: crypto.randomUUID(),
             role: 'agent',
@@ -111,6 +113,7 @@ export function ChatInput() {
             toolName: toolData.name as string,
           });
         } else if (event.type === 'tool_result') {
+          console.log('[agent-tool-result]', event.data);
           // Remove the last tool_call indicator now that the result arrived
           const currentMsgs = useFlowStore.getState().chatMessages;
           const withoutToolCall = currentMsgs.filter((m, i) => {

@@ -10,8 +10,8 @@ class Settings(BaseSettings):
 
     # Gemini / Agent config
     gemini_api_key: str = ""
-    gemini_flash_model: str = "gemini-2.5-flash"
-    gemini_pro_model: str = "gemini-2.5-pro"
+    gemini_flash_model: str = "gemini-3-flash-preview"
+    gemini_pro_model: str = "gemini-3-pro-preview"
     agent_session_ttl_minutes: int = 30
 
     model_config = {"env_file": "../.env", "env_file_encoding": "utf-8"}
