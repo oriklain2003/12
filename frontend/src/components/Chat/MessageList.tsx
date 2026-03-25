@@ -22,13 +22,16 @@ export function MessageList() {
   const chatPanelMode = useFlowStore((s) => s.chatPanelMode);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when messages change
+  const lastMsg = chatMessages[chatMessages.length - 1];
+  const scrollDep = lastMsg ? `${lastMsg.id}:${lastMsg.content.length}` : '';
+
+  // Auto-scroll to bottom when messages are added or streaming content grows
   useEffect(() => {
     const container = containerRef.current;
     if (container) {
       container.scrollTop = container.scrollHeight;
     }
-  }, [chatMessages.length]);
+  }, [scrollDep]);
 
   if (chatMessages.length === 0) {
     return (
@@ -52,6 +55,17 @@ export function MessageList() {
               key={message.id}
               toolName={message.toolName ?? ''}
             />
+          );
+        }
+
+        if (message.type === 'thinking') {
+          return (
+            <div key={message.id} className="thinking-indicator">
+              <svg className="tool-call-indicator__spinner" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="14 8" />
+              </svg>
+              <span className="thinking-indicator__label">Thinking...</span>
+            </div>
           );
         }
 

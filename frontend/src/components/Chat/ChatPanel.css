@@ -72,6 +72,33 @@
   flex-shrink: 0;
 }
 
+/* ── New chat button ─────────────────────────────────────────────────────── */
+
+.chat-panel__new-chat-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-text-dim);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color var(--duration-fast), background var(--duration-fast);
+  flex-shrink: 0;
+}
+
+.chat-panel__new-chat-btn:hover:not(:disabled) {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+.chat-panel__new-chat-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 /* ── Close button — same style as .sidebar__toggle ───────────────────────── */
 
 .chat-panel__close-btn {
@@ -212,6 +239,19 @@
   color: var(--color-text-muted);
 }
 
+.thinking-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+}
+
+.thinking-indicator__label {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
 /* ── Message list ────────────────────────────────────────────────────────── */
 
 .message-list {
@@ -261,6 +301,83 @@
   padding: 8px 12px 8px 16px;
   margin: 0 24px 8px 12px;
   color: var(--color-text-secondary);
+}
+
+/* ── Markdown rendering inside agent bubbles ─────────────────────────────── */
+
+.message-bubble--agent .md-p {
+  margin: 0 0 6px;
+}
+
+.message-bubble--agent .md-p:last-child {
+  margin-bottom: 0;
+}
+
+.message-bubble--agent strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.message-bubble--agent em {
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.message-bubble--agent .md-inline-code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.88em;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--color-text);
+}
+
+.message-bubble--agent .md-h1,
+.message-bubble--agent .md-h2,
+.message-bubble--agent .md-h3 {
+  color: var(--color-text);
+  font-weight: 600;
+  margin: 10px 0 4px;
+  line-height: 1.3;
+}
+
+.message-bubble--agent .md-h1:first-child,
+.message-bubble--agent .md-h2:first-child,
+.message-bubble--agent .md-h3:first-child {
+  margin-top: 0;
+}
+
+.message-bubble--agent .md-h1 { font-size: 15px; }
+.message-bubble--agent .md-h2 { font-size: 14px; }
+.message-bubble--agent .md-h3 { font-size: 13px; }
+
+.message-bubble--agent .md-list {
+  list-style: none;
+  margin: 4px 0 8px;
+  padding: 0;
+}
+
+.message-bubble--agent .md-list:last-child {
+  margin-bottom: 0;
+}
+
+.message-bubble--agent .md-list li {
+  position: relative;
+  padding-left: 14px;
+  margin-bottom: 4px;
+  line-height: 1.45;
+}
+
+.message-bubble--agent .md-list li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(var(--accent-rgb), 0.5);
 }
 
 /* Streaming cursor */

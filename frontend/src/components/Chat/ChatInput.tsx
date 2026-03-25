@@ -10,6 +10,7 @@
  */
 
 import { useState, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
 import { useFlowStore, serializeGraph } from '../../store/flowStore';
 import { streamAgentChat } from '../../api/agent';
 import type { AgentDiff } from '../../types/agent';
@@ -100,7 +101,31 @@ export function ChatInput() {
           const sessionData = event.data as Record<string, unknown>;
           useFlowStore.getState().setChatSessionId(sessionData.session_id as string);
         } else if (event.type === 'text') {
+          // Remove thinking indicator when real text starts
+          const msgs = useFlowStore.getState().chatMessages;
+          const filtered = msgs.filter((m) => m.type !== 'thinking');
+          if (filtered.length !== msgs.length) {
+            useFlowStore.setState({ chatMessages: filtered });
+          }
           useFlowStore.getState().updateLastAgentMessage(event.data as string);
+        } else if (event.type === 'thinking') {
+          // Show/update thinking indicator in the message list
+          const store = useFlowStore.getState();
+          const lastMsg = store.chatMessages[store.chatMessages.length - 1];
+          if (lastMsg?.type === 'thinking') {
+            // Update existing thinking message
+            const msgs = [...store.chatMessages];
+            msgs[msgs.length - 1] = { ...lastMsg, content: lastMsg.content + (event.data as string) };
+            useFlowStore.setState({ chatMessages: msgs });
+          } else {
+            store.addChatMessage({
+              id: crypto.randomUUID(),
+              role: 'agent',
+              content: event.data as string,
+              timestamp: Date.now(),
+              type: 'thinking',
+            });
+          }
         } else if (event.type === 'tool_call') {
           const toolData = event.data as Record<string, unknown>;
           console.log('[agent-tool-call]', toolData.name, toolData);
@@ -125,8 +150,10 @@ export function ChatInput() {
           useFlowStore.setState({ chatMessages: withoutToolCall });
 
           const resultData = event.data as Record<string, unknown>;
-          if (resultData && 'proposed_diff' in resultData) {
-            const diff = resultData.proposed_diff as AgentDiff;
+          // proposed_diff is nested under result: {name, result: {proposed_diff: ...}}
+          const toolResult = resultData?.result as Record<string, unknown> | undefined;
+          if (toolResult && 'proposed_diff' in toolResult) {
+            const diff = toolResult.proposed_diff as AgentDiff;
             useFlowStore.getState().setPendingDiff(diff);
             // Update the last streaming agent message to carry the diff
             const msgs = [...useFlowStore.getState().chatMessages];
@@ -138,6 +165,13 @@ export function ChatInput() {
               }
             }
           }
+        } else if (event.type === 'error') {
+          const errData = event.data as Record<string, unknown> | string;
+          const errMsg = typeof errData === 'string'
+            ? errData
+            : (errData?.message as string) ?? 'Agent encountered an error';
+          toast.error(errMsg);
+          break;
         } else if (event.type === 'done') {
           // Mark last streaming message as not streaming
           const currentStore = useFlowStore.getState();
@@ -153,13 +187,7 @@ export function ChatInput() {
         }
       }
     } catch {
-      useFlowStore.getState().addChatMessage({
-        id: crypto.randomUUID(),
-        role: 'agent',
-        content: 'Connection lost. Please try again.',
-        timestamp: Date.now(),
-        type: 'error',
-      });
+      toast.error('Connection lost — please try again');
     } finally {
       // Always clean up streaming state — handles both normal completion
       // and cases where stream ends without a 'done' event

@@ -59,11 +59,12 @@ async def _agent_turn_stream(
     # Build tool declarations
     tool_decls = _build_tool_declarations()
 
-    # Configure Gemini call
+    # Configure Gemini call — enable thinking for pro model
     config = types.GenerateContentConfig(
         system_instruction=system_prompt,
         tools=[types.Tool(function_declarations=tool_decls)] if tool_decls else None,
         automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+        thinking_config=types.ThinkingConfig(thinking_level="LOW"),
     )
 
     # Add new user message to history
@@ -74,7 +75,8 @@ async def _agent_turn_stream(
     # Prune history if needed before calling Gemini
     prune_history(history)
 
-    model_name = settings.gemini_flash_model
+    # Canvas agent uses pro for better reasoning; others use flash
+    model_name = settings.gemini_pro_model if persona == "canvas_agent" else settings.gemini_flash_model
 
     # Outer loop: keep going until Gemini returns text (no more tool calls)
     max_tool_rounds = 10  # Safety limit
@@ -91,10 +93,14 @@ async def _agent_turn_stream(
             if await request.is_disconnected():
                 return
 
-            # Stream text tokens
-            if chunk.text:
-                streamed_text += chunk.text
-                yield AgentSSEEvent(type="text", data=chunk.text)
+            # Stream thinking and text tokens
+            if chunk.candidates and chunk.candidates[0].content and chunk.candidates[0].content.parts:
+                for part in chunk.candidates[0].content.parts:
+                    if part.thought and part.text:
+                        yield AgentSSEEvent(type="thinking", data=part.text)
+                    elif part.text and not part.thought:
+                        streamed_text += part.text
+                        yield AgentSSEEvent(type="text", data=part.text)
 
             # Detect tool calls
             if chunk.function_calls:
