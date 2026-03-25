@@ -53,18 +53,20 @@ Exceptions:
 
 All sizes sourced from existing ChatPanel.css and DashboardPage.css patterns.
 
+**4 sizes, 2 weights only.**
+
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
-| Body / chat messages | 13px | 400 | 1.5 |
-| Label / meta / timestamps | 12px | 400 | 1.4 |
-| Card title / option card heading | 14px | 600 | 1.3 |
+| Label / meta / timestamps / MiniGraph node labels | 12px | 400 | 1.4 |
+| Body / chat messages / button copy | 13px | 400 | 1.5 |
+| Sub-heading / card titles / option card headings / wizard welcome subtitle | 16px | 600 | 1.3 |
 | Page heading / mission preview title | 24px | 600 | 1.2 |
 
 Additional constraints:
 - `letter-spacing: -0.01em` on body (inherited from `index.css`)
 - `letter-spacing: -0.025em` on headings (inherited from `index.css`)
 - All monospace text (cube IDs, param names): `font-family: ui-monospace, monospace; font-size: 0.88em` (matches DiffProposal convention)
-- Wizard welcome subtitle: 16px, weight 400, `var(--color-text-secondary)`
+- MiniGraph node labels (12px, weight 400) are truncated with CSS `text-overflow: ellipsis` to fit the 120px node width
 
 ---
 
@@ -85,7 +87,7 @@ Accent (`var(--color-accent)`) reserved exclusively for:
 3. Active/focused state on free-text input border (`var(--color-border-focus)`)
 4. Streaming indicator dot on WizardInput while agent is responding
 
-All other interactive elements (option cards unselected, "Adjust" button, "Back to Dashboard" link, free-text send button) use `var(--glass-bg)` / `var(--btn-glass-bg)` surfaces — NOT accent.
+All other interactive elements (option cards unselected, "Adjust Plan" button, "Back to Workflows" link, free-text send button) use `var(--glass-bg)` / `var(--btn-glass-bg)` surfaces — NOT accent.
 
 Semantic colors:
 - `var(--color-success)` = #22c55e — workflow created success toast only
@@ -101,7 +103,7 @@ New components required for Phase 21 (all follow per-component CSS file pattern)
 | Component | File | Description |
 |-----------|------|-------------|
 | WizardPage | `src/pages/WizardPage.tsx` + `WizardPage.css` | Full-screen page shell, `/wizard` route |
-| WizardHeader | inside WizardPage | Brand logo + "Back to Dashboard" back-nav link — no toolbar |
+| WizardHeader | inside WizardPage | Brand logo + "Back to Workflows" back-nav link — no toolbar |
 | WizardChat | `src/components/Wizard/WizardChat.tsx` | Scrollable chat column, centers at max-width 720px |
 | WizardWelcome | `src/components/Wizard/WizardWelcome.tsx` | Initial state: heading + text input + 4-6 mission type cards |
 | OptionCards | `src/components/Wizard/OptionCards.tsx` | Rendered inline in chat from `present_options` tool result |
@@ -128,10 +130,11 @@ Reused from Phase 20 (import directly, do not duplicate):
 ### WizardWelcome (initial state — before first message sent)
 
 - Shown when message list is empty
+- The page heading "What do you want to analyze?" is the intentional visual focal point — it is the largest element on the welcome screen and the first thing the user's eye lands on
 - Heading: "What do you want to analyze?" — 24px, weight 600
-- Subheading: "Describe your idea or pick a starting point below." — 16px, weight 400, `var(--color-text-secondary)`
+- Subheading: "Describe your idea or pick a starting point below." — 16px, weight 600, `var(--color-text-secondary)`
 - 4–6 mission type cards displayed in a 2-column grid
-- Each mission card: glass surface (`var(--glass-bg)`), `border-radius: var(--radius-md)`, 20px padding, card title 14px weight 600 + one-line description 12px weight 400
+- Each mission card: glass surface (`var(--glass-bg)`), `border-radius: var(--radius-md)`, 20px padding, card title 16px weight 600 + one-line description 13px weight 400
 - Mission card hover: `translateY(-1px)`, `var(--color-surface-hover)` background (matches existing glass-btn hover)
 - WizardWelcome disappears when first message is added to message list
 
@@ -140,11 +143,11 @@ Reused from Phase 20 (import directly, do not duplicate):
 - Rendered as a special message bubble variant — agent-side, below the agent's preceding text message
 - Cards display in a column (not grid) when inside chat — max 5 cards before scroll
 - Each card: 44px minimum height, `border-radius: var(--radius-sm)`, glass surface
-- Card layout: `14px` bold title + optional `12px` description below
+- Card layout: `16px` bold title + optional `13px` description below
 - Single-select: clicking a card immediately sends selection as a message; card gains accent border highlight and is disabled
 - Multi-select: checkboxes or toggle visual on each card; a "Confirm selection" button appears below cards
 - Every OptionCards block includes a free-text input below the cards with placeholder "Or type your own..."
-- Free-text send button: small glass-btn, right-aligned, text "Send"
+- Free-text send button: small glass-btn, right-aligned, text "Send Message", `aria-label="Send message"`
 - After selection is sent: entire OptionCards block dims to `opacity: 0.5` and pointer-events disabled
 
 ### MiniGraph (inline in chat, from `show_intent_preview` tool)
@@ -153,12 +156,12 @@ Reused from Phase 20 (import directly, do not duplicate):
 - Container: glass surface, `border-radius: var(--radius-md)`, `padding: 16px`, `min-height: 240px`
 - SVG layout: cube nodes as rounded rectangles (120px × 44px), connected by directed lines with arrowheads
 - Node fill: `var(--color-surface-raised)`, border: `1px solid var(--color-border-hover)`
-- Node text: cube label, 11px, weight 600, truncated to fit
+- Node text: cube label, 12px, weight 400, truncated with `text-overflow: ellipsis` to fit node width
 - Connections: straight lines with arrowhead, stroke `rgba(255, 255, 255, 0.25)`, `stroke-width: 1.5`
 - Layout: left-to-right flow, topological column ordering (x = depth × 160px, y = index × 64px within column)
-- Below SVG: mission name in 14px weight 600 + mission description in 12px weight 400 `var(--color-text-secondary)`
+- Below SVG: mission name in 16px weight 600 + mission description in 13px weight 400 `var(--color-text-secondary)`
 - Below description: two buttons side by side
-  - "Adjust" — `glass-btn`, 13px weight 600, `padding: 8px 16px`
+  - "Adjust Plan" — `glass-btn`, 13px weight 600, `padding: 8px 16px`
   - "Build This" — `glass-btn glass-btn--accent`, 13px weight 600, `padding: 8px 16px`
 - After "Build This" clicked: both buttons disabled, "Build This" text changes to "Building..." with a spinner dot
 
@@ -167,7 +170,7 @@ Reused from Phase 20 (import directly, do not duplicate):
 - Matches ChatInput pattern from Phase 20
 - `textarea` element, auto-expands up to 5 lines, then scrolls
 - Placeholder: "Describe your analysis idea..."
-- Send button: inline SVG arrow icon, glass-btn, disabled while agent is streaming
+- Send button: inline SVG arrow icon, glass-btn, `aria-label="Send message"`, disabled while agent is streaming
 - Streaming state: send button shows pulse indicator dot in accent color, textarea is read-only
 - Border: `1px solid var(--color-border)`, focus: `1px solid var(--color-border-focus)`
 
@@ -177,7 +180,7 @@ Reused from Phase 20 (import directly, do not duplicate):
   - "Build with Wizard" — `glass-btn glass-btn--accent`, navigates to `/wizard`
   - "Blank Canvas" — `glass-btn`, navigates to `/workflow/new`
 - Button row: `display: flex; gap: 8px`
-- Both buttons: `font-size: 13px; font-weight: 500; padding: 8px 20px` (matches existing `dashboard__new-btn`)
+- Both buttons: `font-size: 13px; font-weight: 600; padding: 8px 20px` (matches existing `dashboard__new-btn`)
 
 ### Redirect After Generation
 
@@ -190,8 +193,8 @@ Reused from Phase 20 (import directly, do not duplicate):
 
 - If auto-fix retries exhausted (2 attempts), agent message bubble shows error block
 - Error block: `border-left: 2px solid var(--color-error)`, `padding: 8px 12px`, `background: rgba(239, 68, 68, 0.08)`
-- Error block contains: error summary text (13px, weight 400) + a "Try again" button (glass-btn, 13px)
-- "Try again" sends a "Please try again" message to the agent to restart generation
+- Error block contains: error summary text (13px, weight 400) + a "Retry Generation" button (glass-btn, 13px)
+- "Retry Generation" sends a "Please try again" message to the agent to restart generation
 
 ---
 
@@ -200,18 +203,19 @@ Reused from Phase 20 (import directly, do not duplicate):
 | Element | Copy |
 |---------|------|
 | Primary CTA (Build This) | "Build This" |
-| Secondary CTA (Adjust) | "Adjust" |
+| Secondary CTA (Adjust) | "Adjust Plan" |
 | Dashboard wizard button | "Build with Wizard" |
 | Dashboard blank button | "Blank Canvas" |
 | Wizard welcome heading | "What do you want to analyze?" |
 | Wizard welcome subheading | "Describe your idea or pick a starting point below." |
 | WizardInput placeholder | "Describe your analysis idea..." |
 | Free-text fallback placeholder | "Or type your own..." |
+| Free-text send button | "Send Message" |
 | Building in progress | "Building..." |
 | Redirect toast | "Workflow created — loading canvas..." |
 | Validation error heading | "Couldn't generate a valid workflow" |
 | Validation error body | "The workflow has connection issues. You can try again or adjust your requirements." |
-| Try again button | "Try again" |
+| Retry button | "Retry Generation" |
 | Empty option list fallback | "No options available — type your answer below." |
 | Back nav link | "Back to Workflows" |
 | Streaming indicator | (no text — visual dot only) |
@@ -240,7 +244,7 @@ No third-party registries. All new components are hand-written following the pro
 | Color tokens (bg, surface, accent, error) | `frontend/src/styles/theme.css` |
 | Glass morphism utility classes | `frontend/src/styles/glass.css` |
 | Spacing values (8, 20, 24, 32, 40) | `frontend/src/pages/DashboardPage.css` |
-| Typography scale (11–24px, weights 400/600) | `frontend/src/components/Chat/ChatPanel.css` + `DashboardPage.css` |
+| Typography scale (12–24px, weights 400/600) | `frontend/src/components/Chat/ChatPanel.css` + `DashboardPage.css` |
 | Radius tokens (sm=10px, md=14px) | `frontend/src/styles/theme.css` |
 | Inline SVG icon convention | Codebase scan — no icon library found, ChatPanel.tsx uses inline SVG |
 | Full-screen wizard page (D-01) | CONTEXT.md §Wizard Page & Navigation |
@@ -257,6 +261,12 @@ No third-party registries. All new components are hand-written following the pro
 | Topological layout (depth × 300, stack × 200) | RESEARCH.md §3.2 Node Positioning Algorithm |
 | Reuse MessageBubble, MessageList, ToolCallIndicator | RESEARCH.md §3.3 Frontend: WizardPage Component |
 | DiffProposal as model for structured tool rendering | CONTEXT.md §Reusable Assets |
+| Typography collapsed to 4 sizes (12/13/16/24px) | Checker revision — removed 11px (merged into 12px), removed 14px (merged into 16px) |
+| Font weights reduced to 2 (400/600) | Checker revision — eliminated weight 500 from dashboard buttons |
+| Dashboard buttons font-weight: 600 | Checker revision — changed from 500 to 600 for consistency |
+| Send button aria-label added | Checker revision — accessibility requirement |
+| Welcome heading declared as focal point | Checker revision — visual hierarchy clarification |
+| CTA copy improvements | Checker revision — "Adjust Plan", "Retry Generation", "Send Message" |
 
 ---
 
