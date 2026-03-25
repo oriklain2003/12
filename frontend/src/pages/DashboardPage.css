@@ -98,6 +98,20 @@
   transform: translateY(0.5px);
 }
 
+/* ── Button Row (wizard + blank canvas split) ─────────────── */
+
+.dashboard__btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.dashboard__wizard-btn,
+.dashboard__blank-btn {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 20px;
+}
+
 /* ── Card Grid ────────────────────────────────────────────── */
 
 .dashboard__grid {

@@ -110,18 +110,16 @@ export function DashboardPage() {
 
       <div className="dashboard__header">
         <h1 className="dashboard__title">Workflows</h1>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="dashboard__btn-row">
           <button
-            className="dashboard__new-btn glass-btn glass-btn--accent"
+            className="glass-btn glass-btn--accent dashboard__wizard-btn"
             onClick={() => navigate('/wizard')}
-            style={{ fontSize: 13, fontWeight: 600, padding: '8px 20px' }}
           >
             Build with Wizard
           </button>
           <button
-            className="dashboard__new-btn glass-btn"
+            className="glass-btn dashboard__blank-btn"
             onClick={() => navigate('/workflow/new')}
-            style={{ fontSize: 13, fontWeight: 600, padding: '8px 20px' }}
           >
             Blank Canvas
           </button>
@@ -143,13 +141,20 @@ export function DashboardPage() {
       {!loading && workflows.length === 0 && (
         <div className="dashboard__empty">
           <p>No saved workflows</p>
-          <button
-            className="dashboard__new-btn"
-            onClick={() => navigate('/workflow/new')}
-            style={{ marginTop: '16px' }}
-          >
-            Create New Workflow
-          </button>
+          <div className="dashboard__btn-row" style={{ marginTop: '16px' }}>
+            <button
+              className="glass-btn glass-btn--accent dashboard__wizard-btn"
+              onClick={() => navigate('/wizard')}
+            >
+              Build with Wizard
+            </button>
+            <button
+              className="glass-btn dashboard__blank-btn"
+              onClick={() => navigate('/workflow/new')}
+            >
+              Blank Canvas
+            </button>
+          </div>
         </div>
       )}
 
