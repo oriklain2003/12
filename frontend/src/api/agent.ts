@@ -35,6 +35,7 @@ export async function* streamAgentChat(
   mode: AgentMode,
   executionErrors?: Record<string, unknown> | null,
   executionResults?: Record<string, unknown> | null,
+  persona: string = 'canvas_agent',
 ): AsyncGenerator<AgentSSEEvent> {
   const response = await fetch(`${API_BASE}/agent/chat`, {
     method: 'POST',
@@ -42,7 +43,7 @@ export async function* streamAgentChat(
     body: JSON.stringify({
       message,
       session_id: sessionId,
-      persona: 'canvas_agent',
+      persona,
       workflow_id: workflowId,
       workflow_graph: workflowGraph,
       execution_errors: executionErrors ?? null,
