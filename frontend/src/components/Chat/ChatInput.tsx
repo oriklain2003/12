@@ -111,13 +111,22 @@ export function ChatInput() {
             toolName: toolData.name as string,
           });
         } else if (event.type === 'tool_result') {
+          // Remove the last tool_call indicator now that the result arrived
+          const currentMsgs = useFlowStore.getState().chatMessages;
+          const withoutToolCall = currentMsgs.filter((m, i) => {
+            // Remove last tool_call message
+            if (m.type !== 'tool_call') return true;
+            // Keep earlier tool_call messages, remove only the last one
+            return currentMsgs.slice(i + 1).some((later) => later.type === 'tool_call');
+          });
+          useFlowStore.setState({ chatMessages: withoutToolCall });
+
           const resultData = event.data as Record<string, unknown>;
           if (resultData && 'proposed_diff' in resultData) {
             const diff = resultData.proposed_diff as AgentDiff;
             useFlowStore.getState().setPendingDiff(diff);
             // Update the last streaming agent message to carry the diff
-            const currentStore = useFlowStore.getState();
-            const msgs = [...currentStore.chatMessages];
+            const msgs = [...useFlowStore.getState().chatMessages];
             for (let i = msgs.length - 1; i >= 0; i--) {
               if (msgs[i].role === 'agent' && msgs[i].streaming) {
                 msgs[i] = { ...msgs[i], diff };
@@ -148,7 +157,21 @@ export function ChatInput() {
         timestamp: Date.now(),
         type: 'error',
       });
-      useFlowStore.getState().setIsAgentStreaming(false);
+    } finally {
+      // Always clean up streaming state — handles both normal completion
+      // and cases where stream ends without a 'done' event
+      const finalStore = useFlowStore.getState();
+      if (finalStore.isAgentStreaming) {
+        const msgs = [...finalStore.chatMessages];
+        for (let i = msgs.length - 1; i >= 0; i--) {
+          if (msgs[i].role === 'agent' && msgs[i].streaming) {
+            msgs[i] = { ...msgs[i], streaming: false };
+            useFlowStore.setState({ chatMessages: msgs });
+            break;
+          }
+        }
+        finalStore.setIsAgentStreaming(false);
+      }
     }
   }, [
     input,
