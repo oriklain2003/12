@@ -25,11 +25,11 @@ Requirements for AI Workflow Agents milestone. Each maps to roadmap phases.
 
 ### Build Agent
 
-- [ ] **BUILD-01**: Wizard page with clickable option cards (analysis type, data source, filters, output)
-- [ ] **BUILD-02**: Mission discovery via 3-5 structured questions
-- [ ] **BUILD-03**: Workflow graph generation from mission spec (complete graph JSON)
-- [ ] **BUILD-04**: Intent preview — show summary of what will be built before applying
-- [ ] **BUILD-05**: Generated workflow loaded onto canvas with validation check
+- [x] **BUILD-01**: Wizard page with clickable option cards (analysis type, data source, filters, output)
+- [x] **BUILD-02**: Mission discovery via 3-5 structured questions
+- [x] **BUILD-03**: Workflow graph generation from mission spec (complete graph JSON)
+- [x] **BUILD-04**: Intent preview — show summary of what will be built before applying
+- [x] **BUILD-05**: Generated workflow loaded onto canvas with validation check
 
 ### Canvas Agent
 
@@ -98,11 +98,11 @@ Requirements for AI Workflow Agents milestone. Each maps to roadmap phases.
 | CANVAS-05 | Phase 20 | Complete |
 | CANVAS-06 | Phase 20 | Complete |
 | CANVAS-07 | Phase 20 | Pending |
-| BUILD-01 | Phase 21 | Pending |
-| BUILD-02 | Phase 21 | Pending |
-| BUILD-03 | Phase 21 | Pending |
-| BUILD-04 | Phase 21 | Pending |
-| BUILD-05 | Phase 21 | Pending |
+| BUILD-01 | Phase 21 | Complete |
+| BUILD-02 | Phase 21 | Complete |
+| BUILD-03 | Phase 21 | Complete |
+| BUILD-04 | Phase 21 | Complete |
+| BUILD-05 | Phase 21 | Complete |
 | RESULT-01 | Phase 22 | Pending |
 | RESULT-02 | Phase 22 | Pending |
 | RESULT-03 | Phase 22 | Pending |

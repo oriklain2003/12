@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: AI Workflow Agents
 status: completed
-last_updated: "2026-03-25T13:46:21.687Z"
+last_updated: "2026-03-25T17:13:29.520Z"
 last_activity: 2026-03-25
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 14
+  completed_plans: 12
 ---
 
 # Project State: Project 12
@@ -19,7 +19,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-22)
 
 **Core value:** Users can build and run custom flight analysis pipelines visually — now assisted by AI agents that help create, edit, optimize, and debug workflows
-**Current focus:** Phase 20 — canvas-agent
+**Current focus:** Phase 21 — build-wizard-agent
 
 ## Current Milestone
 
@@ -40,8 +40,8 @@ Last activity: 2026-03-25
 
 ### Current Position
 
-Phase: 21
-Plan: Not started
+Phase: 21 (build-wizard-agent) — EXECUTING
+Plan: 2 of 3
 
 ## Previous Milestones
 
@@ -85,6 +85,9 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-24:** handleRun uses finally block for setIsValidating(false) — Run button always re-enables on network error; execution proceeds on validation failure (graceful degradation)
 - **2026-03-24:** useRef(false) guard prevents auto-open Fix mode from firing more than once per failed run; resets when isRunning flips true (new run start)
 - **2026-03-24:** Ctrl+Shift+A keyboard shortcut for chat panel placed before isInputField guard — works even when focus is inside textarea or input fields
+- **2026-03-25:** Wizard tools (present_options, show_intent_preview) are intentionally pass-through — they return LLM-supplied data as structured dicts for frontend rendering; no DB interaction needed
+- **2026-03-25:** generate_workflow returns validation_failed dict (not exception) so LLM can read errors and self-correct; retry logic is guided by skill file (up to 2 retries)
+- **2026-03-25:** pro_personas set pattern in router.py allows future personas to opt into gemini-2.5-pro without changing conditional logic; build_agent added alongside canvas_agent
 
 ### Critical Risks (from research)
 
@@ -103,4 +106,4 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-22:** v3.0 roadmap created — 5 phases (18-22), 28/28 requirements mapped
 
 ---
-*Last session: 2026-03-25 — Phase 20 plan 03: Eight Chat UI components created (ChatPanel, ChatPanel.css, ModeToggle, ToolCallIndicator, MessageList, MessageBubble, DiffProposal, ChatInput). Full SSE streaming send flow in ChatInput. TypeScript clean. Completed 20-03-PLAN.md.*
+*Last session: 2026-03-25 — Phase 21 plan 01: Three wizard tools created (present_options, show_intent_preview, generate_workflow), Build Agent skill file expanded to 77-line guide with 5-step conversation flow, router.py updated to route build_agent to gemini-2.5-pro. Completed 21-01-PLAN.md.*
