@@ -27,7 +27,9 @@ from app.schemas.workflow import (
     description=(
         "Show clickable option cards to the analyst. Use this to present structured choices "
         "during workflow building — mission types, data sources, filter cubes, etc. "
-        "The frontend renders these as interactive card selectors."
+        "The frontend renders these as interactive card selectors. "
+        "IMPORTANT: After calling this tool, end your turn immediately with a brief prompt. "
+        "Wait for the analyst's next message with their selection before continuing."
     ),
     parameters_schema={
         "type": "object",
@@ -80,6 +82,8 @@ async def present_options(
         "question": question,
         "options": options or [],
         "multi_select": multi_select,
+        "awaiting_user_input": True,
+        "instruction": "STOP. The analyst sees interactive cards in the UI. You MUST end your turn NOW and wait for their next message with their selection. Do NOT continue speaking or call any more tools.",
     }
 
 
@@ -88,7 +92,9 @@ async def present_options(
     description=(
         "Show a visual mini-graph preview of the planned workflow to the analyst before generating. "
         "Displays planned cube nodes and their connections so the analyst can confirm or adjust. "
-        "The frontend renders this as an interactive preview with 'Build This' and 'Adjust Plan' buttons."
+        "The frontend renders this as an interactive preview with 'Build This' and 'Adjust Plan' buttons. "
+        "IMPORTANT: After calling this tool, end your turn immediately. "
+        "Wait for the analyst to click 'Build This' or 'Adjust Plan' before continuing."
     ),
     parameters_schema={
         "type": "object",
