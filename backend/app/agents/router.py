@@ -75,8 +75,9 @@ async def _agent_turn_stream(
     # Prune history if needed before calling Gemini
     prune_history(history)
 
-    # Canvas agent uses pro for better reasoning; others use flash
-    model_name = settings.gemini_pro_model if persona == "canvas_agent" else settings.gemini_flash_model
+    # Pro personas use gemini-2.5-pro for reasoning depth; others use flash
+    pro_personas = {"canvas_agent", "build_agent"}
+    model_name = settings.gemini_pro_model if persona in pro_personas else settings.gemini_flash_model
 
     # Outer loop: keep going until Gemini returns text (no more tool calls)
     max_tool_rounds = 10  # Safety limit
