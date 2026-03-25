@@ -23,6 +23,7 @@ export type CubeNodeData = {
   cubeDef: CubeDefinition;
   params: Record<string, unknown>;
   isNew?: boolean;
+  isPreview?: boolean;
 };
 
 export type CubeFlowNode = Node<CubeNodeData, 'cube'>;
@@ -630,7 +631,16 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
     get().pushSnapshot();
     const { nodes, edges, catalog } = get();
 
-    // Process node additions
+    // Build ID mapping: agent semantic IDs → actual canvas UUIDs
+    // Agents reference nodes by cube_id (e.g., "all_flights") or proposed IDs
+    // (e.g., "new_filter_flights_1"), but canvas nodes have UUID IDs.
+    const idMap = new Map<string, string>();
+    for (const node of nodes) {
+      idMap.set(node.data.cube_id, node.id);  // "all_flights" → UUID
+      idMap.set(node.id, node.id);             // UUID → UUID (passthrough)
+    }
+
+    // Process node additions — track proposed ID → real UUID
     const addedNodes: CubeFlowNode[] = (diff.add_nodes ?? [])
       .map((n) => {
         const cubeDef = catalog.find((c) => c.cube_id === n.cube_id);
@@ -638,8 +648,11 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
           console.warn(`applyAgentDiff: unknown cube "${n.cube_id}" — skipping node`);
           return null;
         }
+        const realId = crypto.randomUUID();
+        if (n.id) idMap.set(n.id, realId);   // "new_filter_flights_1" → UUID
+        idMap.set(n.cube_id, realId);          // also map by cube_id for new nodes
         return {
-          id: n.id ?? crypto.randomUUID(),
+          id: realId,
           type: 'cube' as const,
           position: n.position,
           data: {
@@ -651,14 +664,17 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
       })
       .filter((n): n is CubeFlowNode => n !== null);
 
+    // Resolve agent IDs to real canvas UUIDs
+    const resolveId = (agentId: string): string => idMap.get(agentId) ?? agentId;
+
     // Process node removals
-    const removeNodeIds = new Set(diff.remove_node_ids ?? []);
+    const removeNodeIds = new Set((diff.remove_node_ids ?? []).map(resolveId));
 
     // Process param updates on existing nodes
     const updatedNodes = nodes
       .filter((n) => !removeNodeIds.has(n.id))
       .map((n) => {
-        const update = (diff.update_params ?? []).find((u) => u.node_id === n.id);
+        const update = (diff.update_params ?? []).find((u) => resolveId(u.node_id) === n.id);
         if (!update) return n;
         return {
           ...n,
@@ -670,11 +686,11 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
     const removeEdgeIds = new Set(diff.remove_edge_ids ?? []);
     const keptEdges = edges.filter((e) => !removeEdgeIds.has(e.id));
 
-    // Process edge additions
+    // Process edge additions — resolve agent IDs to real UUIDs
     const addedEdges: Edge[] = (diff.add_edges ?? []).map((e) => ({
       id: e.id ?? crypto.randomUUID(),
-      source: e.source,
-      target: e.target,
+      source: resolveId(e.source),
+      target: resolveId(e.target),
       sourceHandle: e.source_handle ?? null,
       targetHandle: e.target_handle ?? null,
       type: 'straight',
