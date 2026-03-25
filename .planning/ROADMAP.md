@@ -191,7 +191,7 @@ Plans:
 
 Plans:
 - [x] 21-01-PLAN.md — Backend wizard tools (present_options, show_intent_preview, generate_workflow) + skill file + model routing
-- [ ] 21-02-PLAN.md — Frontend WizardPage + Wizard components (WizardChat, WizardWelcome, OptionCards, MiniGraph, WizardInput) + types + API extension
+- [x] 21-02-PLAN.md — Frontend WizardPage + Wizard components (WizardChat, WizardWelcome, OptionCards, MiniGraph, WizardInput) + types + API extension
 - [ ] 21-03-PLAN.md — Dashboard two-button split + /wizard routing + human verification
 
 ### Phase 22: Results Interpreter
@@ -228,7 +228,7 @@ Plans:
 | 18. Agent Infrastructure | v3.0 | 4/4 | Complete    | 2026-03-24 |
 | 19. Cube Expert + Validation | v3.0 | 3/3 | Complete   | 2026-03-24 |
 | 20. Canvas Agent | v3.0 | 4/4 | Complete    | 2026-03-25 |
-| 21. Build Wizard Agent | v3.0 | 1/3 | In Progress|  |
+| 21. Build Wizard Agent | v3.0 | 2/3 | In Progress|  |
 | 22. Results Interpreter | v3.0 | 0/0 | Not started | — |
 
 ---

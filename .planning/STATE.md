@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: AI Workflow Agents
 status: completed
-last_updated: "2026-03-25T17:13:29.520Z"
+last_updated: "2026-03-25T17:22:24.684Z"
 last_activity: 2026-03-25
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 14
-  completed_plans: 12
+  completed_plans: 13
 ---
 
 # Project State: Project 12
@@ -41,7 +41,7 @@ Last activity: 2026-03-25
 ### Current Position
 
 Phase: 21 (build-wizard-agent) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Previous Milestones
 
@@ -88,6 +88,9 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-25:** Wizard tools (present_options, show_intent_preview) are intentionally pass-through — they return LLM-supplied data as structured dicts for frontend rendering; no DB interaction needed
 - **2026-03-25:** generate_workflow returns validation_failed dict (not exception) so LLM can read errors and self-correct; retry logic is guided by skill file (up to 2 retries)
 - **2026-03-25:** pro_personas set pattern in router.py allows future personas to opt into gemini-2.5-pro without changing conditional logic; build_agent added alongside canvas_agent
+- **2026-03-25:** WizardChatMessage extends ChatMessage with toolData field in wizard.ts — isolated from shared agent.ts types to avoid polluting the canvas agent type surface
+- **2026-03-25:** WizardPage uses useState not Zustand — wizard session state (messages, sessionId, isStreaming) is fully isolated from canvas flowStore
+- **2026-03-25:** Dashboard "New Workflow" split into "Build with Wizard" (accent, /wizard) + "Blank Canvas" (glass, /workflow/new) per UI-SPEC D-02
 
 ### Critical Risks (from research)
 
@@ -106,4 +109,4 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-22:** v3.0 roadmap created — 5 phases (18-22), 28/28 requirements mapped
 
 ---
-*Last session: 2026-03-25 — Phase 21 plan 01: Three wizard tools created (present_options, show_intent_preview, generate_workflow), Build Agent skill file expanded to 77-line guide with 5-step conversation flow, router.py updated to route build_agent to gemini-2.5-pro. Completed 21-01-PLAN.md.*
+*Last session: 2026-03-25 — Phase 21 plan 02: Complete wizard frontend built — WizardPage SSE streaming shell, WizardChat, WizardWelcome (6 mission cards), WizardInput, OptionCards (single/multi-select + free-text), MiniGraph (SVG topological layout), Dashboard split into Build with Wizard + Blank Canvas buttons, /wizard route registered. Completed 21-02-PLAN.md.*
