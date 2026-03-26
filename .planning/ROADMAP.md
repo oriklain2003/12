@@ -202,7 +202,11 @@ Plans:
   1. An "Interpret Results" button appears in the results drawer after a successful workflow execution, and clicking it triggers the interpreter without navigating away from the results
   2. For a workflow created via the Build Wizard, the interpretation references the analyst's original mission intent (e.g., "You were looking for squawk 7700 activity in the Jordan FIR — 3 matching flights were found") rather than just describing the data schema
   3. For a workflow with no wizard-derived mission context, the interpretation still produces a useful flight-analysis framing (e.g., "This result contains 47 flights with anomaly scores above threshold — the top anomaly type is...") rather than refusing to interpret
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 22-01-PLAN.md — Backend: InterpretRequest schema + interpreter tools + skill files + SSE interpret endpoint
+- [ ] 22-02-PLAN.md — Frontend: InterpretPanel component + ResultsDrawer integration + streamInterpret API + human verification
 
 ## Progress
 
@@ -229,7 +233,7 @@ Plans:
 | 19. Cube Expert + Validation | v3.0 | 3/3 | Complete   | 2026-03-24 |
 | 20. Canvas Agent | v3.0 | 4/4 | Complete    | 2026-03-25 |
 | 21. Build Wizard Agent | v3.0 | 2/3 | In Progress|  |
-| 22. Results Interpreter | v3.0 | 0/0 | Not started | — |
+| 22. Results Interpreter | v3.0 | 0/2 | Not started | — |
 
 ---
 *Roadmap created: 2026-03-03*
