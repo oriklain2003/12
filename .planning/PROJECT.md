@@ -2,11 +2,11 @@
 
 ## What This Is
 
-A visual dataflow workflow builder ("12") — a subsystem of Tracer 42, a flight tracking and anomaly detection platform for Middle East airspace. Users drag analysis "cubes" onto a canvas, configure parameters, connect outputs to inputs, and run pipelines against a real PostgreSQL database containing 113K flights, 76M track points, and 114K anomaly reports. No coding required.
+A visual dataflow workflow builder ("12") — a subsystem of Tracer 42, a flight tracking and anomaly detection platform for Middle East airspace. Users drag analysis "cubes" onto a canvas, configure parameters, connect outputs to inputs, and run pipelines against a real PostgreSQL database containing 113K flights, 76M track points, and 114K anomaly reports. AI agents assist with building, editing, validating, and interpreting workflows. No coding required.
 
 ## Core Value
 
-Users can build and run custom flight analysis pipelines visually — connecting data source cubes to transform/analysis cubes — and see real results from live Tracer 42 data in tables and on maps.
+Users can build and run custom flight analysis pipelines visually — connecting data source cubes to transform/analysis cubes — and see real results from live Tracer 42 data in tables and on maps. AI agents make the growing cube ecosystem accessible through conversational and wizard-style interfaces.
 
 ## Requirements
 
@@ -59,20 +59,19 @@ Users can build and run custom flight analysis pipelines visually — connecting
 - ✓ Production Dockerfiles (multi-stage) — v1.0
 - ✓ Widget field on CubeDefinition for custom visualization dispatch — v1.0
 - ✓ GeoPlaybackWidget with animated map, timeline, histogram — v1.0
+- ✓ Agent infrastructure — Gemini client, skill files, tool registry, SSE endpoint, sessions — v3.0
+- ✓ Cube catalog tool — two-tier lookup (summary browse → full definition load) — v3.0
+- ✓ AI Canvas Agent — chat panel in editor with 3 modes: optimize, error-fix, general — v3.0
+- ✓ Cube Expert sub-agent — catalog tools for intelligent cube discovery and recommendation — v3.0
+- ✓ Validation Agent — pre-execution structural checks (7 rules, pre-run blocking, issue highlighting) — v3.0
+- ✓ AI Build Agent — wizard page with option cards, mission discovery, workflow generation — v3.0
+- ✓ Results Interpreter Agent — post-execution analysis with mission-context explanation — v3.0
+- ✓ Chat UI component — React chat panel for canvas agent with mode switching — v3.0
+- ✓ Wizard UI component — React wizard page with option cards, mini graph preview — v3.0
 
 ### Active
 
-<!-- v3.0 — AI Workflow Agents -->
-
-- [ ] AI Build Agent — wizard-style page with interactive options, discovers user mission, selects cubes, generates complete workflow
-- [ ] AI Canvas Agent — chat panel in editor with 3 modes: optimize, error-fix, general editing
-- [ ] Cube Expert sub-agent — two-tier catalog lookup (summaries → full definitions), suggests best cubes for use case
-- [ ] Validation Agent — pre-execution structural checks (params filled, types compatible, no dangling inputs)
-- [ ] Results Interpreter Agent — post-execution, explains findings in mission context
-- [x] Agent infrastructure — Gemini LLM integration via FastAPI, skill files (system prompts), system brief, internal function-call tools — Phase 18
-- [x] Cube catalog tool — two-tier lookup for agents (summary browse → full definition load) — Phase 18 (placeholders)
-- [ ] Chat UI component — React chat panel for canvas/error/general agents
-- [ ] Wizard UI component — React step-by-step page for build agent with clickable options
+(No active requirements — planning next milestone)
 
 ### Out of Scope
 
@@ -80,21 +79,25 @@ Users can build and run custom flight analysis pipelines visually — connecting
 - Custom cube creation by end users — future feature
 - Real-time collaboration — single user per workflow
 - Undo/redo — complexity not justified for v1
-- Cube marketplace/sharing — v2 feature
+- Cube marketplace/sharing — future feature
 - Mobile responsive design — desktop-only tool for analysts
 - Writing to research schema — read-only access to Tracer 42 data
-- Scheduled/recurring workflow execution — v2 feature
-- Export results to CSV/Excel — v2 feature
+- Scheduled/recurring workflow execution — future feature
+- Export results to CSV/Excel — future feature
+- Fully autonomous workflow execution (no user confirmation) — analysts must own query logic
+- Persistent agent memory across sessions — workflow itself is the artifact
+- Multi-turn wizard refinement — wizard is one-shot; use Canvas Agent for refinements
 
 ## Context
 
-- **Shipped:** v1.0 on 2026-03-06 (3 days, 111 commits, ~7,200 LOC)
-- **Tech stack:** FastAPI + SQLAlchemy async (Python), React 18 + TypeScript + Vite (frontend), @xyflow/react v12, Zustand 5, Leaflet + react-leaflet, Docker + nginx
+- **Shipped:** v1.0 on 2026-03-06 (3 days, 111 commits, ~7,200 LOC); v3.0 on 2026-03-27 (4 days, 89 commits, +8,249 LOC)
+- **Tech stack:** FastAPI + SQLAlchemy async (Python), React 18 + TypeScript + Vite (frontend), @xyflow/react v12, Zustand 5, Leaflet + react-leaflet, Docker + nginx, google-genai (Gemini LLM)
 - **Tracer 42 integration:** 12 is a standalone service linked from Tracer 42's UI. It reads from Tracer 42's PostgreSQL database (research schema) but writes only to its own table (public.workflows).
 - **Database:** PostgreSQL on AWS RDS with research.flight_metadata (113K rows), research.normal_tracks (76M rows), research.anomaly_reports (114K rows). Timestamps are bigint epoch format.
 - **Package managers:** uv for Python (pyproject.toml), pnpm for Node
-- **Cubes shipped:** 8 production cubes — AllFlights, FilterFlights, GetAnomalies, CountByField, GetFlightCourse, GetLearnedPaths, GeoTemporalPlayback + 2 stubs (Echo, AddNumbers)
-- **Known tech debt:** See `.planning/milestones/v1.0-MILESTONE-AUDIT.md` — orphaned routes, SQL LIMIT inconsistency, missing VERIFICATION.md files
+- **Cubes shipped:** 14+ production cubes across data_source, filter, analysis, aggregation, output categories
+- **AI agents:** 5 personas (canvas_agent, build_agent, results_interpreter, results_followup, validation_agent) powered by Gemini 2.5/3 Flash/Pro with tool calling
+- **Known tech debt:** See `.planning/milestones/v3.0-MILESTONE-AUDIT.md` — dead CubeExpert class, unused validation_agent persona, missing VERIFICATION.md files, orphaned mission endpoint
 
 ## Constraints
 
@@ -103,8 +106,9 @@ Users can build and run custom flight analysis pipelines visually — connecting
 - **Canvas library:** @xyflow/react (React Flow v12+) — parameter-level connections required
 - **Maps:** Leaflet with CartoDB dark tiles (no API key needed)
 - **State:** Zustand (not Redux)
-- **Streaming:** SSE via sse-starlette (not WebSocket)
-- **Performance:** 10,000-row result limit per cube (raised from 100 in Phase 8)
+- **Streaming:** SSE via sse-starlette (not WebSocket) — for both workflow execution and agent responses
+- **Performance:** 10,000-row result limit per cube
+- **LLM:** google-genai >= 1.68.0 (Gemini); async-only calls in handlers; manual tool dispatch pattern
 
 ## Key Decisions
 
@@ -116,24 +120,15 @@ Users can build and run custom flight analysis pipelines visually — connecting
 | Connection values override manual | If both exist, connection wins at execution time; intuitive behavior | ✓ Good — no user confusion reported |
 | Warn on type mismatch, don't block | Dashed orange edge for mismatches; flexibility > strictness | ✓ Good — users appreciate flexibility |
 | Leaflet over MapLibre | Lighter weight, no API key, CartoDB dark tiles free | ✓ Good — sufficient for current needs |
-| Alembic for migrations | Standards require it; clean separation from Tracer 42 schema | ✓ Good — single migration, clean workflow |
-| Workflow table in public schema | Keeps 12's data separate from research schema | ✓ Good — no cross-schema conflicts |
 | Row limit 100→10,000 | Track data needs thousands of points per flight | ✓ Good — AllFlights/GetAnomalies still cap at 5K via SQL LIMIT |
 | Widget dispatch via CubeDefinition.widget | Output cubes declare custom visualization; ResultsDrawer dispatches | ✓ Good — extensible for future widgets |
-| Two-tier FilterFlights | Tier 1 metadata (fast), Tier 2 track aggregation (slower but accurate) | ✓ Good — balances performance and accuracy |
 | POST SSE (graph-in-body) over GET/{id} | Ad-hoc execution without saving; frontend serializes graph on each run | ⚠️ Revisit — orphaned GET/{id}/run/stream route exists |
-
-## Current Milestone: v3.0 AI Workflow Agents
-
-**Goal:** Build an AI agent system that helps users create, edit, optimize, and debug visual dataflow workflows — making the growing cube ecosystem accessible through conversational and wizard-style interfaces.
-
-**Target features:**
-- Build Agent — wizard page for creating workflows from scratch via guided questions
-- Canvas Agent — chat panel with optimize/error-fix/general modes for live workflow editing
-- Cube Expert — sub-agent for intelligent cube discovery and recommendation
-- Validation Agent — structural pre-flight checks before execution
-- Results Interpreter — post-execution analysis explaining findings in user's mission context
-- ~~Agent infrastructure~~ — Complete (Phase 18): Gemini client, skill files, tool registry, SSE endpoint, sessions
+| Stateless agents (client-carried history) | No server-side session store; conversation state in POST body | ✓ Good — simple, scalable, no DB for chat |
+| Manual tool dispatch (not auto function calling) | Gemini tool_config: ANY for tool turns, then stream final text | ✓ Good — reliable control over tool→response flow |
+| Two-tier catalog (summaries → full def) | Never inline all cube definitions in system prompt; load on demand | ✓ Good — keeps context manageable |
+| applyAgentDiff for atomic canvas updates | pushSnapshot first, then batch node+edge insertion in single Zustand update | ✓ Good — no partial broken canvas states |
+| Wizard uses option cards only (no free text for cube selection) | Prevents LLM hallucination on analyst input | ✓ Good — reliable cube selection |
+| Results interpreter is one-shot SSE | No session management; follow-up uses results_followup persona via /api/agent/chat | ✓ Good — simple, clean separation |
 
 ---
-*Last updated: 2026-03-24 after Phase 18 (Agent Infrastructure) completed*
+*Last updated: 2026-03-27 after v3.0 milestone*
