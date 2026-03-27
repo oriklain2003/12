@@ -1,0 +1,96 @@
+.interpret-panel {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary, #1a1a2e);
+  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.interpret-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg-secondary, #1a1a2e);
+  z-index: 1;
+}
+
+.interpret-panel__title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary, #a0a0b8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.interpret-panel__dismiss {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #a0a0b8);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 8px;
+}
+
+.interpret-panel__dismiss:hover {
+  color: var(--text-primary, #e0e0f0);
+}
+
+.interpret-panel__body {
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-primary, #e0e0f0);
+}
+
+.interpret-panel__body--streaming::after {
+  content: '\25CF';
+  animation: blink 1s step-end infinite;
+  color: var(--accent, #6c63ff);
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.interpret-panel__text p {
+  margin: 0 0 8px 0;
+}
+
+.interpret-panel__text p:last-child {
+  margin-bottom: 0;
+}
+
+.interpret-panel__error {
+  color: var(--error, #ff6b6b);
+  margin: 0;
+}
+
+.interpret-panel__loading {
+  color: var(--text-secondary, #a0a0b8);
+  font-style: italic;
+}
+
+.interpret-panel__footer {
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.interpret-panel__discuss {
+  background: var(--accent, #6c63ff);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.interpret-panel__discuss:hover {
+  opacity: 0.85;
+}
