@@ -84,6 +84,27 @@
   color: var(--color-text);
 }
 
+.results-drawer__interpret-btn {
+  background: var(--accent, #6c63ff);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 14px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-right: 8px;
+}
+
+.results-drawer__interpret-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.results-drawer__interpret-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ─── Content area — flex row for table + map ────────────────────────────── */
 
 .results-drawer__content {

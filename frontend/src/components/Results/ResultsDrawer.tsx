@@ -12,14 +12,16 @@
  * The only thing from the store is selectedResultNodeId and results.
  */
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { ResultsTable } from './ResultsTable';
 import { ResultsMap } from './ResultsMap';
 import { GeoPlaybackWidget } from '../Visualization/GeoPlaybackWidget';
 import { detectGeoColumns } from '../../utils/geoDetect';
 import type { GeoInfo } from '../../utils/geoDetect';
-import { useFlowStore } from '../../store/flowStore';
+import { useFlowStore, serializeGraph } from '../../store/flowStore';
+import { InterpretPanel } from './InterpretPanel';
+import { streamInterpret } from '../../api/agent';
 import './ResultsDrawer.css';
 
 // ─── ResizeDivider ────────────────────────────────────────────────────────────
@@ -67,6 +69,13 @@ export function ResultsDrawer() {
   const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
   const [splitRatio, setSplitRatio] = useState(0.55);
 
+  // Interpretation state — local per-selection, resets on cube change
+  const [interpretText, setInterpretText] = useState('');
+  const [interpretLoading, setInterpretLoading] = useState(false);
+  const [interpretOpen, setInterpretOpen] = useState(false);
+  const [interpretError, setInterpretError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Store reads
@@ -89,6 +98,15 @@ export function ResultsDrawer() {
       return node?.data.params ?? {};
     })
   );
+  const workflowId = useFlowStore((s) => s.workflowId);
+  const allResults = useFlowStore((s) => s.results);
+  const cubeCategory = useFlowStore((s) => {
+    const node = s.nodes.find((n) => n.id === s.selectedResultNodeId);
+    return node?.data.cubeDef.category ?? 'unknown';
+  });
+  const workflowGraph = useFlowStore(
+    useShallow((s) => serializeGraph(s.nodes, s.edges))
+  );
 
   // Derived
   const geoInfo: GeoInfo | null = useMemo(
@@ -98,10 +116,60 @@ export function ResultsDrawer() {
 
   const isOpen = selectedNodeId !== null && results !== null && results.rows.length > 0;
 
-  // Reset row selection when selected cube changes
+  // Reset row selection and interpretation state when selected cube changes
   useEffect(() => {
     setSelectedRowIndex(null);
+    setInterpretText('');
+    setInterpretLoading(false);
+    setInterpretOpen(false);
+    setInterpretError(null);
+    abortControllerRef.current?.abort();
   }, [selectedNodeId]);
+
+  const handleInterpret = useCallback(async () => {
+    if (!selectedNodeId || !results) return;
+
+    // Abort any in-progress interpretation
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
+
+    setInterpretText('');
+    setInterpretError(null);
+    setInterpretLoading(true);
+    setInterpretOpen(true);
+
+    try {
+      for await (const event of streamInterpret(
+        workflowId,
+        workflowGraph as unknown as Record<string, unknown>,
+        allResults as unknown as Record<string, unknown>,
+        selectedNodeId,
+        cubeName,
+        cubeCategory,
+      )) {
+        if (abortControllerRef.current?.signal.aborted) break;
+        if (event.type === 'text' && typeof event.data === 'string') {
+          setInterpretText(prev => prev + event.data);
+        }
+        if (event.type === 'done') break;
+      }
+    } catch (e) {
+      if (!(e instanceof DOMException && e.name === 'AbortError')) {
+        setInterpretError('Interpretation failed — try again.');
+      }
+    } finally {
+      setInterpretLoading(false);
+    }
+  }, [selectedNodeId, results, workflowId, workflowGraph, allResults, cubeName, cubeCategory]);
+
+  const handleDiscuss = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('open-results-followup', {
+      detail: {
+        interpretationSummary: interpretText,
+        persona: 'results_followup',
+      },
+    }));
+  }, [interpretText]);
 
   return (
     <div className={`results-drawer${isOpen ? ' results-drawer--open' : ''}`} data-tour="results-drawer">
@@ -114,12 +182,30 @@ export function ResultsDrawer() {
       <div className="results-drawer__header">
         <span className="results-drawer__title">{cubeName} Results</span>
         <button
+          className="results-drawer__interpret-btn"
+          onClick={handleInterpret}
+          disabled={interpretLoading}
+        >
+          {interpretLoading ? 'Interpreting...' : 'Interpret Results'}
+        </button>
+        <button
           className="results-drawer__close"
           onClick={() => setSelectedResultNodeId(null)}
         >
           Close
         </button>
       </div>
+
+      {/* Interpretation panel — above table, below header */}
+      {interpretOpen && results && (
+        <InterpretPanel
+          loading={interpretLoading}
+          text={interpretText}
+          error={interpretError}
+          onDismiss={() => setInterpretOpen(false)}
+          onDiscuss={handleDiscuss}
+        />
+      )}
 
       {/* Content — table + optional map */}
       <div className="results-drawer__content" ref={contentRef}>
