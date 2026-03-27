@@ -63,7 +63,9 @@ export function ChatPanel() {
       />
 
       <div className="chat-panel__header">
-        <span className="chat-panel__title">AGENT</span>
+        <span className="chat-panel__title">
+          {useFlowStore((s) => s.chatPersona) === 'results_followup' ? 'RESULTS Q&A' : 'AGENT'}
+        </span>
         <ModeToggle />
         <button
           className="chat-panel__new-chat-btn"

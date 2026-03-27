@@ -28,6 +28,7 @@ export function ChatInput() {
 
   const isAgentStreaming = useFlowStore((s) => s.isAgentStreaming);
   const chatPanelMode = useFlowStore((s) => s.chatPanelMode);
+  const chatPersona = useFlowStore((s) => s.chatPersona);
   const chatSessionId = useFlowStore((s) => s.chatSessionId);
   const workflowId = useFlowStore((s) => s.workflowId);
   const nodes = useFlowStore((s) => s.nodes);
@@ -93,6 +94,7 @@ export function ChatInput() {
         chatPanelMode,
         Object.keys(errors).length > 0 ? errors : null,
         Object.keys(results).length > 0 ? (results as Record<string, unknown>) : null,
+        chatPersona,
       );
 
       for await (const event of stream) {

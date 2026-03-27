@@ -199,6 +199,7 @@ interface FlowState {
   // Chat panel state
   chatPanelOpen: boolean;
   chatPanelMode: AgentMode;
+  chatPersona: string;
   chatMessages: ChatMessage[];
   chatSessionId: string | null;
   pendingDiff: AgentDiff | null;
@@ -207,6 +208,7 @@ interface FlowState {
   // Chat actions
   setChatPanelOpen: (open: boolean) => void;
   setChatPanelMode: (mode: AgentMode) => void;
+  setChatPersona: (persona: string) => void;
   addChatMessage: (msg: ChatMessage) => void;
   updateLastAgentMessage: (content: string) => void;
   setChatSessionId: (id: string | null) => void;
@@ -272,6 +274,7 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
   // Chat panel initial state
   chatPanelOpen: false,
   chatPanelMode: 'general' as AgentMode,
+  chatPersona: 'canvas_agent',
   chatMessages: [],
   chatSessionId: null,
   pendingDiff: null,
@@ -615,6 +618,7 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
   // Chat panel actions
   setChatPanelOpen: (open) => set({ chatPanelOpen: open }),
   setChatPanelMode: (mode) => set({ chatPanelMode: mode }),
+  setChatPersona: (persona) => set({ chatPersona: persona }),
   addChatMessage: (msg) => set((s) => ({ chatMessages: [...s.chatMessages, msg] })),
   updateLastAgentMessage: (content) => set((s) => {
     const msgs = [...s.chatMessages];
@@ -629,7 +633,7 @@ export const useFlowStore = create<FlowState>()((set, get) => ({
   setChatSessionId: (id) => set({ chatSessionId: id }),
   setPendingDiff: (diff) => set({ pendingDiff: diff }),
   setIsAgentStreaming: (streaming) => set({ isAgentStreaming: streaming }),
-  clearChat: () => set({ chatMessages: [], chatSessionId: null, pendingDiff: null }),
+  clearChat: () => set({ chatMessages: [], chatSessionId: null, pendingDiff: null, chatPersona: 'canvas_agent' }),
 
   applyAgentDiff: (diff) => {
     get().pushSnapshot();

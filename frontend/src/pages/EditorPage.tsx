@@ -6,6 +6,8 @@
  */
 
 import { useEffect, useRef } from 'react';
+// NOTE: Zustand actions are accessed via useFlowStore.getState() inside effects
+// to avoid unstable references causing infinite re-render loops.
 import { useParams, useBlocker } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -23,18 +25,12 @@ import '../App.css';
 
 export function EditorPage() {
   const { id } = useParams<{ id: string }>();
-  const loadWorkflow = useFlowStore((s) => s.loadWorkflow);
-  const resetWorkflow = useFlowStore((s) => s.resetWorkflow);
-  const stopExecution = useFlowStore((s) => s.stopExecution);
   const workflowName = useFlowStore((s) => s.workflowName);
   const isDirty = useFlowStore((s) => s.isDirty);
 
   // Chat panel auto-open Fix mode state
   const isRunning = useFlowStore((s) => s.isRunning);
   const executionStatus = useFlowStore((s) => s.executionStatus);
-  const setChatPanelOpen = useFlowStore((s) => s.setChatPanelOpen);
-  const setChatPanelMode = useFlowStore((s) => s.setChatPanelMode);
-  const addChatMessage = useFlowStore((s) => s.addChatMessage);
 
   // Guard: fire auto-open Fix mode only once per execution, reset on new run
   const autoFixFired = useRef(false);
@@ -46,18 +42,19 @@ export function EditorPage() {
 
   // Load/reset workflow on mount
   useEffect(() => {
+    const store = useFlowStore.getState();
     if (id) {
-      loadWorkflow(id).catch((err) => {
+      store.loadWorkflow(id).catch((err) => {
         console.error('Failed to load workflow:', err);
       });
     } else {
-      resetWorkflow();
+      store.resetWorkflow();
     }
 
     return () => {
-      stopExecution();
+      useFlowStore.getState().stopExecution();
     };
-  }, [id, loadWorkflow, resetWorkflow, stopExecution]);
+  }, [id]);
 
   // Dynamic browser tab title
   useEffect(() => {
@@ -83,9 +80,10 @@ export function EditorPage() {
     );
     if (errorNodes.length > 0) {
       autoFixFired.current = true;
-      setChatPanelOpen(true);
-      setChatPanelMode('fix');
-      addChatMessage({
+      const store = useFlowStore.getState();
+      store.setChatPanelOpen(true);
+      store.setChatPanelMode('fix');
+      store.addChatMessage({
         id: crypto.randomUUID(),
         role: 'agent',
         content: `I see errors in ${errorNodes.length} cube(s) from the last run. Want me to diagnose the issues and suggest a fix?`,
@@ -93,7 +91,33 @@ export function EditorPage() {
         type: 'auto_fix_prompt',
       });
     }
-  }, [isRunning, executionStatus, setChatPanelOpen, setChatPanelMode, addChatMessage]);
+  }, [isRunning, executionStatus]);
+
+  // Listen for "Discuss Results" follow-up handoff from ResultsDrawer
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      const store = useFlowStore.getState();
+      // Start a fresh follow-up session
+      store.setChatSessionId(null);
+      store.clearChat();
+      store.setChatPersona(detail.persona ?? 'results_followup');
+      store.setChatPanelMode('general');
+      store.setChatPanelOpen(true);
+      // Seed with the interpretation as context
+      if (detail.interpretationSummary) {
+        store.addChatMessage({
+          id: crypto.randomUUID(),
+          role: 'agent',
+          content: detail.interpretationSummary,
+          timestamp: Date.now(),
+          type: 'interpretation_context',
+        });
+      }
+    };
+    window.addEventListener('open-results-followup', handler);
+    return () => window.removeEventListener('open-results-followup', handler);
+  }, []);
 
   // Browser close/refresh guard
   useEffect(() => {
