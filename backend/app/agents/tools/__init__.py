@@ -2,3 +2,5 @@
 
 import app.agents.tools.canvas_tools  # noqa: F401
 import app.agents.tools.wizard_tools  # noqa: F401
+import app.agents.tools.wizard_memory_tools  # noqa: F401
+import app.agents.tools.interpreter_tools  # noqa: F401

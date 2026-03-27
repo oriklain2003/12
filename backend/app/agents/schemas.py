@@ -61,6 +61,16 @@ class ValidationResponse(BaseModel):
         return any(i.severity == "error" for i in self.issues)
 
 
+class InterpretRequest(BaseModel):
+    """Request body for POST /api/agent/interpret."""
+    workflow_id: str | None = Field(None, description="Workflow ID to fetch mission context from DB")
+    workflow_graph: dict | None = Field(None, description="Full graph JSON for pipeline walk")
+    execution_results: dict | None = Field(None, description="All cube results (summarized by frontend)")
+    selected_cube_id: str = Field(..., description="Node ID of the cube to interpret")
+    cube_name: str = Field(..., description="Display name of the selected cube")
+    cube_category: str = Field("unknown", description="Cube category for fallback framing")
+
+
 # Deferred import to avoid circular dependency
 from app.schemas.workflow import WorkflowGraph  # noqa: E402
 ValidationRequest.model_rebuild()
