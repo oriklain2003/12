@@ -119,7 +119,7 @@ Plans:
 - [x] **Phase 18: Agent Infrastructure** — Gemini client, SSE streaming, skill files, tool dispatch, context management, mission persistence (completed 2026-03-24)
 - [x] **Phase 19: Cube Expert + Validation Agent** — Two-tier catalog sub-agent, structural validation checks, pre-run validation trigger (completed 2026-03-24)
 - [x] **Phase 20: Canvas Agent** — Chat panel UI, three modes (optimize/fix/general), canvas diff application, agent streaming (completed 2026-03-24)
-- [ ] **Phase 21: Build Wizard Agent** — Wizard page with option cards, mission discovery, workflow generation, intent preview
+- [x] **Phase 21: Build Wizard Agent** — Wizard page with option cards, mission discovery, workflow generation, intent preview (completed 2026-03-27)
 - [x] **Phase 22: Results Interpreter** — Post-execution analysis, mission-context explanation, fallback generic framing (completed 2026-03-27)
 
 ## Phase Details
@@ -192,7 +192,7 @@ Plans:
 Plans:
 - [x] 21-01-PLAN.md — Backend wizard tools (present_options, show_intent_preview, generate_workflow) + skill file + model routing
 - [x] 21-02-PLAN.md — Frontend WizardPage + Wizard components (WizardChat, WizardWelcome, OptionCards, MiniGraph, WizardInput) + types + API extension
-- [ ] 21-03-PLAN.md — Dashboard two-button split + /wizard routing + human verification
+- [x] 21-03-PLAN.md — Dashboard two-button split + /wizard routing + human verification
 
 ### Phase 22: Results Interpreter
 **Goal**: After a workflow executes, analysts can ask for an interpretation of the results and receive an explanation grounded in their stated mission — not a generic statistical summary
@@ -232,7 +232,7 @@ Plans:
 | 18. Agent Infrastructure | v3.0 | 4/4 | Complete    | 2026-03-24 |
 | 19. Cube Expert + Validation | v3.0 | 3/3 | Complete   | 2026-03-24 |
 | 20. Canvas Agent | v3.0 | 4/4 | Complete    | 2026-03-25 |
-| 21. Build Wizard Agent | v3.0 | 2/3 | In Progress|  |
+| 21. Build Wizard Agent | v3.0 | 3/3 | Complete    | 2026-03-27 |
 | 22. Results Interpreter | v3.0 | 2/2 | Complete   | 2026-03-27 |
 
 ---

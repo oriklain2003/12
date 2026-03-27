@@ -35,13 +35,13 @@ Last activity: 2026-03-27
 | 18 | Agent Infrastructure | INFRA-01 through INFRA-07 | Complete (4/4 plans) |
 | 19 | Cube Expert + Validation Agent | CUBE-01..03, VALID-01..03 | Complete (3/3 plans, human-verify approved) |
 | 20 | Canvas Agent | CANVAS-01 through CANVAS-07 | Not started |
-| 21 | Build Wizard Agent | BUILD-01 through BUILD-05 | Complete (3/3 plans, bug-fix applied) |
-| 22 | Results Interpreter | RESULT-01 through RESULT-03 | In Progress (1/2 plans) |
+| 21 | Build Wizard Agent | BUILD-01 through BUILD-05 | Complete (3/3 plans, skill rewrite applied) |
+| 22 | Results Interpreter | RESULT-01 through RESULT-03 | Complete (2/2 plans, bug-fix applied) |
 
 ### Current Position
 
-Phase: 22 (results-interpreter) — EXECUTING
-Plan: 2 of 2
+Phase: 22 (results-interpreter) — COMPLETE
+Plan: 2 of 2 (complete)
 
 ## Previous Milestones
 
@@ -93,6 +93,7 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-25:** Dashboard "New Workflow" split into "Build with Wizard" (accent, /wizard) + "Blank Canvas" (glass, /workflow/new) per UI-SPEC D-02
 - **2026-03-27:** results_interpreter is one-shot SSE with empty history — no session management; follow-up uses results_followup persona via /api/agent/chat
 - **2026-03-27:** results_interpreter uses flash model — summarization does not require pro-level reasoning depth; flash sufficient for cube-type framing and narrative generation
+- **2026-03-27:** chatPersona added to flowStore — EditorPage listens for open-results-followup event, sets persona in store; ChatInput reads it on each send; ChatPanel shows "Q&A" title when persona is results_followup; clearChat resets persona
 
 ### Critical Risks (from research)
 
@@ -111,4 +112,4 @@ See `.planning/MILESTONES.md` for details.
 - **2026-03-22:** v3.0 roadmap created — 5 phases (18-22), 28/28 requirements mapped
 
 ---
-*Last session: 2026-03-27 — Phase 22 Plan 01 complete. Backend infrastructure for Results Interpreter: InterpretRequest schema, read_pipeline_summary and read_cube_results tools, expanded results_interpreter.md skill with cube-type framing + empty results guidance + mission context sections, results_followup.md persona, POST /api/agent/interpret SSE endpoint with mission context DB fetch.*
+*Last session: 2026-03-27 — Phase 22 Plan 02 complete. Frontend integration for Results Interpreter: renderMarkdown shared util extracted, streamInterpret SSE client added, InterpretPanel component with streaming/dismiss/discuss, ResultsDrawer wired with interpret button. Bug fix applied post-verification: chatPersona added to flowStore, EditorPage event listener, ChatInput persona passthrough, ChatPanel Q&A title. v3.0 milestone complete — all 5 agent phases done.*

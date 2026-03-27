@@ -2,14 +2,14 @@
 phase: 22
 plan: "02"
 subsystem: frontend-results
-tags: [results-interpreter, sse, markdown, interpret-panel, results-drawer]
+tags: [results-interpreter, sse, markdown, interpret-panel, results-drawer, discuss-results, chat-persona]
 dependency_graph:
   requires: [22-01]
-  provides: [streamInterpret, InterpretPanel, renderMarkdown-shared-util, results-drawer-interpret-button]
-  affects: [frontend/src/api/agent.ts, frontend/src/components/Results/ResultsDrawer.tsx, frontend/src/components/Chat/MessageBubble.tsx]
+  provides: [streamInterpret, InterpretPanel, renderMarkdown-shared-util, results-drawer-interpret-button, discuss-results-followup-handoff]
+  affects: [frontend/src/api/agent.ts, frontend/src/components/Results/ResultsDrawer.tsx, frontend/src/components/Chat/MessageBubble.tsx, frontend/src/store/flowStore.ts, frontend/src/pages/EditorPage.tsx]
 tech_stack:
   added: []
-  patterns: [sse-async-generator, custom-dom-event, local-component-state, shared-utility-extraction]
+  patterns: [sse-async-generator, custom-dom-event, local-component-state, shared-utility-extraction, chatPersona-zustand-field]
 key_files:
   created:
     - frontend/src/utils/renderMarkdown.tsx
@@ -20,17 +20,23 @@ key_files:
     - frontend/src/api/agent.ts
     - frontend/src/components/Results/ResultsDrawer.tsx
     - frontend/src/components/Results/ResultsDrawer.css
+    - frontend/src/store/flowStore.ts
+    - frontend/src/components/Chat/ChatInput.tsx
+    - frontend/src/components/Chat/ChatPanel.tsx
+    - frontend/src/pages/EditorPage.tsx
 decisions:
   - "InterpretPanel placed outside the flex-row content div — sits between header and content so it stacks vertically above the table"
   - "Interpretation state is fully local (useState) — ephemeral per-selection, resets on selectedNodeId change"
   - "handleDiscuss dispatches open-results-followup custom DOM event — decoupled from EditorPage without Zustand coupling"
   - "streamInterpret mirrors streamAgentChat SSE reading pattern exactly — no custom SSE parser"
   - "renderMarkdown extracted to shared util — no code duplication between MessageBubble and InterpretPanel"
+  - "chatPersona added to flowStore — EditorPage listens for open-results-followup event, sets persona in store, ChatInput reads it on each send"
+  - "ChatPanel shows Q&A title when persona is results_followup — visual cue that follow-up mode is active"
 metrics:
-  duration_minutes: 8
+  duration_minutes: 20
   completed_date: "2026-03-27"
-  tasks_completed: 2
-  files_changed: 7
+  tasks_completed: 3
+  files_changed: 11
 ---
 
 # Phase 22 Plan 02: Frontend Results Interpreter Integration Summary
@@ -76,7 +82,16 @@ New collapsible panel component (`InterpretPanel.tsx` + `InterpretPanel.css`). P
 
 ## Deviations from Plan
 
-None — plan executed exactly as written (with one structural correction: InterpretPanel placed outside the flex-row content div rather than inside it, per requirement that it appear above the table, not beside it).
+### Auto-fixed Issues
+
+**1. [Rule 1 - Bug] Wired "Discuss Results" button — custom event had no listener**
+- **Found during:** Task 3 human verification
+- **Issue:** `handleDiscuss` dispatched `open-results-followup` CustomEvent but nothing in the app was listening for it. The "Discuss Results" button appeared to do nothing.
+- **Fix:** Added `chatPersona` field and `setChatPersona` action to `flowStore.ts`. EditorPage now has an event listener for `open-results-followup` that calls `setChatPersona('results_followup')`, opens the chat panel, and seeds the interpretation text as a context message. `ChatInput.tsx` reads `chatPersona` from the store and passes it to `streamAgentChat`. `ChatPanel.tsx` shows "Q&A" in the title when persona is `results_followup`. `clearChat` resets persona to default.
+- **Files modified:** `frontend/src/store/flowStore.ts`, `frontend/src/pages/EditorPage.tsx`, `frontend/src/components/Chat/ChatInput.tsx`, `frontend/src/components/Chat/ChatPanel.tsx`
+- **Commit:** 2bb396d
+
+**Note:** InterpretPanel placed outside the flex-row content div rather than inside it (structural correction so it stacks vertically above the table, not beside it).
 
 ## Known Stubs
 
@@ -94,7 +109,12 @@ Files modified:
 - FOUND: /Users/oriklain/work/five/tracer/12-flow/frontend/src/api/agent.ts
 - FOUND: /Users/oriklain/work/five/tracer/12-flow/frontend/src/components/Results/ResultsDrawer.tsx
 - FOUND: /Users/oriklain/work/five/tracer/12-flow/frontend/src/components/Results/ResultsDrawer.css
+- FOUND: /Users/oriklain/work/five/tracer/12-flow/frontend/src/store/flowStore.ts
+- FOUND: /Users/oriklain/work/five/tracer/12-flow/frontend/src/components/Chat/ChatInput.tsx
+- FOUND: /Users/oriklain/work/five/tracer/12-flow/frontend/src/components/Chat/ChatPanel.tsx
+- FOUND: /Users/oriklain/work/five/tracer/12-flow/frontend/src/pages/EditorPage.tsx
 
 Commits:
 - FOUND: eeabc01 (Task 1)
 - FOUND: c68fe2f (Task 2)
+- FOUND: 2bb396d (Bug fix — Discuss Results button wiring)
