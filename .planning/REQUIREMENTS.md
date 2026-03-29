@@ -9,16 +9,16 @@ Requirements for v4.0 milestone. Each maps to roadmap phases.
 
 ### Cube Infrastructure
 
-- [ ] **INFRA-01**: Shared `historical_query.py` module provides `get_callsign_history()` and `get_route_history()` async functions for historical flight lookups
-- [ ] **INFRA-02**: Shared `epoch_cutoff()` helper computes bigint epoch cutoffs from lookback days, preventing epoch/datetime mixing bugs
+- [x] **INFRA-01**: Shared `historical_query.py` module provides `get_callsign_history()` and `get_route_history()` async functions for historical flight lookups
+- [x] **INFRA-02**: Shared `epoch_cutoff()` helper computes bigint epoch cutoffs from lookback days, preventing epoch/datetime mixing bugs
 - [ ] **INFRA-03**: All new behavioral cubes accept `full_result` input (`accepts_full_result=True`) for drop-in compatibility after AllFlights/FilterFlights
-- [ ] **INFRA-04**: Historical lookback queries use batch `asyncio.gather()` pattern over unique callsigns, not per-flight loops
+- [x] **INFRA-04**: Historical lookback queries use batch `asyncio.gather()` pattern over unique callsigns, not per-flight loops
 
 ### Cube Enhancements
 
-- [ ] **ENHANCE-01**: User can filter flights by minimum and maximum flight duration (minutes) on FilterFlights cube
-- [ ] **ENHANCE-02**: Cubes with historical queries have a datetime/lookback toggle — user can switch between providing a specific datetime range OR a lookback period
-- [ ] **ENHANCE-03**: Partial datetime input (only start or only end) raises a descriptive validation error instead of silently falling back
+- [x] **ENHANCE-01**: User can filter flights by minimum and maximum flight duration (minutes) on FilterFlights cube
+- [x] **ENHANCE-02**: Cubes with historical queries have a datetime/lookback toggle — user can switch between providing a specific datetime range OR a lookback period
+- [x] **ENHANCE-03**: Partial datetime input (only start or only end) raises a descriptive validation error instead of silently falling back
 
 ### Anomaly Detection
 
@@ -69,13 +69,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 23 | Pending |
-| INFRA-02 | Phase 23 | Pending |
+| INFRA-01 | Phase 23 | Complete |
+| INFRA-02 | Phase 23 | Complete |
 | INFRA-03 | Phase 24 | Pending |
-| INFRA-04 | Phase 23 | Pending |
-| ENHANCE-01 | Phase 23 | Pending |
-| ENHANCE-02 | Phase 23 | Pending |
-| ENHANCE-03 | Phase 23 | Pending |
+| INFRA-04 | Phase 23 | Complete |
+| ENHANCE-01 | Phase 23 | Complete |
+| ENHANCE-02 | Phase 23 | Complete |
+| ENHANCE-03 | Phase 23 | Complete |
 | DETECT-01 | Phase 24 | Pending |
 | DETECT-02 | Phase 25 | Pending |
 | DETECT-03 | Phase 25 | Pending |

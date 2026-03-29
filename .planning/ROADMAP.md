@@ -59,7 +59,7 @@
 
 **Milestone Goal:** Add behavioral analysis and anomaly detection cubes that compare individual flights against historical patterns, plus enhance existing cubes with duration filtering and flexible datetime/lookback parameters.
 
-- [ ] **Phase 23: Shared Utility Foundation + Duration Filter** - Shared historical query utilities, epoch helpers, and FilterFlights duration params
+- [x] **Phase 23: Shared Utility Foundation + Duration Filter** - Shared historical query utilities, epoch helpers, and FilterFlights duration params (completed 2026-03-29)
 - [ ] **Phase 24: No Recorded Takeoff Cube** - Detection cube establishing the output schema pattern for all behavioral cubes
 - [ ] **Phase 25: Statistical Behavioral Analysis** - Unusual takeoff location and time detection using historical baselines
 - [ ] **Phase 26: O/D Verification + Route Statistics** - Origin/destination verification and route frequency aggregation cubes
@@ -75,10 +75,10 @@
   2. Partial datetime input (only start or only end) raises a descriptive error visible in the cube output
   3. A datetime/lookback toggle parameter is available on cubes that query historical data, letting user switch between a fixed date range and a rolling lookback window
   4. All historical queries batch callsign lookups via asyncio.gather() — no per-flight DB round-trips
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 23-01-PLAN.md — Shared utils package: time_utils.py + historical_query.py with tests
-- [ ] 23-02-PLAN.md — Partial datetime validation retrofit for AllFlights + AlisonFlights
+- [x] 23-01-PLAN.md — Shared utils package: time_utils.py + historical_query.py with tests
+- [x] 23-02-PLAN.md — Partial datetime validation retrofit for AllFlights + AlisonFlights
 
 ### Phase 24: No Recorded Takeoff Cube
 **Goal**: Users can detect flights with no recorded takeoff using the new cube, establishing the behavioral output schema pattern
@@ -139,7 +139,7 @@ Plans:
 | 20. Canvas Agent | v3.0 | 4/4 | Complete | 2026-03-25 |
 | 21. Build Wizard Agent | v3.0 | 3/3 | Complete | 2026-03-27 |
 | 22. Results Interpreter | v3.0 | 2/2 | Complete | 2026-03-27 |
-| 23. Shared Utility Foundation | v4.0 | 0/2 | Planned | — |
+| 23. Shared Utility Foundation | v4.0 | 2/2 | Complete   | 2026-03-29 |
 | 24. No Recorded Takeoff | v4.0 | 0/TBD | Not started | — |
 | 25. Statistical Behavioral Analysis | v4.0 | 0/TBD | Not started | — |
 | 26. O/D Verification + Route Stats | v4.0 | 0/TBD | Not started | — |
