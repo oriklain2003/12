@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Flight Behavioral Analysis
-status: defining_requirements
+status: ready_to_plan
 last_updated: "2026-03-29"
 last_activity: 2026-03-29
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -19,40 +19,53 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Users can build and run custom flight analysis pipelines visually — now with behavioral analysis cubes that detect anomalies by comparing flights against historical patterns
-**Current focus:** Defining requirements for v4.0
+**Current focus:** Phase 23 — Shared Utility Foundation + Duration Filter
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-29 — Milestone v4.0 started
+Phase: 23 of 26 (Shared Utility Foundation + Duration Filter)
+Plan: — (not yet planned)
+Status: Ready to plan
+Last activity: 2026-03-29 — v4.0 roadmap created (4 phases, 17 requirements mapped)
 
-## Previous Milestones
+Progress: [░░░░░░░░░░] 0%
 
-**v3.0:** Shipped 2026-03-27
-5 phases, 16 plans — Gemini-powered agent system: canvas chat, build wizard, validation, results interpreter.
-See `.planning/milestones/v3.0-ROADMAP.md` for details.
+## Performance Metrics
 
-**v2.0:** Shipped 2026-03-13 (Phase 13 deferred)
-6/7 phases complete — advanced cubes: squawk filter, area spatial, signal health, comprehensive test suite.
+**Velocity:**
+- Total plans completed: 0 (v4.0)
+- Average duration: —
+- Total execution time: —
 
-**v1.0:** Shipped 2026-03-06
-10 phases, 23 plans, 55 requirements satisfied.
-See `.planning/milestones/v1.0-ROADMAP.md` for details.
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| — | — | — | — |
+
+*Updated after each plan completion*
 
 ## Accumulated Context
 
-### Tech Debt
+### Decisions
 
-- Pre-existing test failures in test_all_flights.py, test_area_spatial_filter.py, test_stream_graph.py
-- Tool registration depends on implicit Python package __init__.py import chain
-- CubeExpert class (cube_expert.py) is dead code — consider removing
-- validation_agent.md skill loaded but persona never invoked
-- POST /api/agent/mission endpoint has no frontend caller
-- InterpretPanel state is local useState — not persisted across drawer close/reopen
-- Orphaned GET /api/workflows/{id}/run/stream route
-- Missing VERIFICATION.md files for phases 18, 19, 21, 22
+Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:
 
----
-*Last session: 2026-03-29 — v4.0 milestone started.*
+- No v4.0 decisions yet — see PROJECT.md for prior milestone decisions
+
+### Pending Todos
+
+None yet.
+
+### Blockers/Concerns
+
+- **Research flag (Phase 25):** Threshold defaults (5 NM, 2.0 stddev) must be calibrated against 30-day production data before marking phase complete. Include explicit calibration task in phase plan.
+- **Research flag (Phase 26):** O/D Verification check registry needs design validation — review `.planning/new-cubes/02-behavioral-analysis.md` for full check inventory before committing.
+- **Tech debt (carried from v3.0):** CubeExpert dead class, orphaned mission endpoint, missing VERIFICATION.md for phases 18/19/21/22 — tracked but not blocking v4.0.
+
+## Session Continuity
+
+Last session: 2026-03-29
+Stopped at: Roadmap created — ready to begin planning Phase 23
+Resume file: None

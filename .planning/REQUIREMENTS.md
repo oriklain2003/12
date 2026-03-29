@@ -69,29 +69,29 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | — | Pending |
-| INFRA-02 | — | Pending |
-| INFRA-03 | — | Pending |
-| INFRA-04 | — | Pending |
-| ENHANCE-01 | — | Pending |
-| ENHANCE-02 | — | Pending |
-| ENHANCE-03 | — | Pending |
-| DETECT-01 | — | Pending |
-| DETECT-02 | — | Pending |
-| DETECT-03 | — | Pending |
-| DETECT-04 | — | Pending |
-| DETECT-05 | — | Pending |
-| DETECT-06 | — | Pending |
-| DETECT-07 | — | Pending |
-| STATS-01 | — | Pending |
-| STATS-02 | — | Pending |
-| STATS-03 | — | Pending |
+| INFRA-01 | Phase 23 | Pending |
+| INFRA-02 | Phase 23 | Pending |
+| INFRA-03 | Phase 24 | Pending |
+| INFRA-04 | Phase 23 | Pending |
+| ENHANCE-01 | Phase 23 | Pending |
+| ENHANCE-02 | Phase 23 | Pending |
+| ENHANCE-03 | Phase 23 | Pending |
+| DETECT-01 | Phase 24 | Pending |
+| DETECT-02 | Phase 25 | Pending |
+| DETECT-03 | Phase 25 | Pending |
+| DETECT-04 | Phase 26 | Pending |
+| DETECT-05 | Phase 24 | Pending |
+| DETECT-06 | Phase 24 | Pending |
+| DETECT-07 | Phase 26 | Pending |
+| STATS-01 | Phase 26 | Pending |
+| STATS-02 | Phase 26 | Pending |
+| STATS-03 | Phase 26 | Pending |
 
 **Coverage:**
 - v4.0 requirements: 17 total
-- Mapped to phases: 0
-- Unmapped: 17 (pending roadmap creation)
+- Mapped to phases: 17
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-29*
-*Last updated: 2026-03-29 after initial definition*
+*Last updated: 2026-03-29 — traceability updated after roadmap creation*
