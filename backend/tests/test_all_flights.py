@@ -264,3 +264,32 @@ async def test_polygon_empty_candidates():
 
     assert result["flights"] == []
     assert result["flight_ids"] == []
+
+
+@pytest.mark.asyncio
+@patch("app.cubes.all_flights.engine")
+async def test_partial_datetime_error_start_only(mock_engine):
+    """Test: Providing only start_time returns descriptive error (ENHANCE-03)."""
+    from app.cubes.all_flights import AllFlightsCube
+    cube = AllFlightsCube()
+    result = await cube.execute(start_time="1700000000")
+    assert "error" in result
+    assert "start_time provided but end_time is missing" in result["error"]
+    assert result["flights"] == []
+    assert result["flight_ids"] == []
+    # DB should NOT be queried
+    mock_engine.connect.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch("app.cubes.all_flights.engine")
+async def test_partial_datetime_error_end_only(mock_engine):
+    """Test: Providing only end_time returns descriptive error (ENHANCE-03)."""
+    from app.cubes.all_flights import AllFlightsCube
+    cube = AllFlightsCube()
+    result = await cube.execute(end_time="1700003600")
+    assert "error" in result
+    assert "end_time provided but start_time is missing" in result["error"]
+    assert result["flights"] == []
+    assert result["flight_ids"] == []
+    mock_engine.connect.assert_not_called()
