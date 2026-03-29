@@ -248,3 +248,31 @@ async def test_absolute_time_range():
     sql_params = call_args[0][1] if len(call_args[0]) > 1 else {}
     assert "ts_start" in sql_params
     assert "ts_end" in sql_params
+
+
+@pytest.mark.asyncio
+@patch("app.cubes.alison_flights.engine")
+async def test_partial_datetime_error_start_only(mock_engine):
+    """Test: Providing only start_time returns descriptive error (ENHANCE-03)."""
+    from app.cubes.alison_flights import AlisonFlightsCube
+    cube = AlisonFlightsCube()
+    result = await cube.execute(start_time="1700000000")
+    assert "error" in result
+    assert "start_time provided but end_time is missing" in result["error"]
+    assert result["flights"] == []
+    assert result["hex_list"] == []
+    mock_engine.connect.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch("app.cubes.alison_flights.engine")
+async def test_partial_datetime_error_end_only(mock_engine):
+    """Test: Providing only end_time returns descriptive error (ENHANCE-03)."""
+    from app.cubes.alison_flights import AlisonFlightsCube
+    cube = AlisonFlightsCube()
+    result = await cube.execute(end_time="1700003600")
+    assert "error" in result
+    assert "end_time provided but start_time is missing" in result["error"]
+    assert result["flights"] == []
+    assert result["hex_list"] == []
+    mock_engine.connect.assert_not_called()
