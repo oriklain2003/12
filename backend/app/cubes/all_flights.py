@@ -9,6 +9,7 @@ from sqlalchemy import text
 logger = logging.getLogger(__name__)
 
 from app.cubes.base import BaseCube
+from app.cubes.utils.time_utils import validate_datetime_pair
 from app.database import engine
 from app.schemas.cube import CubeCategory, ParamDefinition, ParamType
 
@@ -165,6 +166,12 @@ class AllFlightsCube(BaseCube):
         time_range_seconds = inputs.get("time_range_seconds", 604800)
         start_time = inputs.get("start_time")
         end_time = inputs.get("end_time")
+
+        # ENHANCE-03: Partial datetime validation (per D-08, D-09)
+        err = validate_datetime_pair(start_time, end_time)
+        if err:
+            return {**err, "flights": [], "flight_ids": []}
+
         flight_ids_filter = inputs.get("flight_ids")
         callsign = inputs.get("callsign")
         min_altitude = inputs.get("min_altitude")

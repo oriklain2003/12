@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 from app.cubes.all_flights import point_in_polygon
 from app.cubes.base import BaseCube
+from app.cubes.utils.time_utils import validate_datetime_pair
 from app.database import engine
 from app.schemas.cube import CubeCategory, ParamDefinition, ParamType
 
@@ -113,6 +114,12 @@ class AlisonFlightsCube(BaseCube):
         time_range_seconds = inputs.get("time_range_seconds", 604800)
         start_time = inputs.get("start_time")
         end_time = inputs.get("end_time")
+
+        # ENHANCE-03: Partial datetime validation (per D-08, D-09)
+        err = validate_datetime_pair(start_time, end_time)
+        if err:
+            return {**err, "flights": [], "hex_list": []}
+
         hex_filter = inputs.get("hex_filter")
         callsign = inputs.get("callsign")
         aircraft_type = inputs.get("aircraft_type")
