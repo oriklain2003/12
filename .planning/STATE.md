@@ -1,31 +1,32 @@
 ---
 gsd_state_version: 1.0
-milestone: v3.0
-milestone_name: AI Workflow Agents
-status: shipped
-last_updated: "2026-03-27"
-last_activity: 2026-03-27
+milestone: v4.0
+milestone_name: Flight Behavioral Analysis
+status: defining_requirements
+last_updated: "2026-03-29"
+last_activity: 2026-03-29
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 16
-  completed_plans: 16
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State: Project 12
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-27)
+See: .planning/PROJECT.md (updated 2026-03-29)
 
-**Core value:** Users can build and run custom flight analysis pipelines visually — now assisted by AI agents that help create, edit, optimize, and debug workflows
-**Current focus:** Planning next milestone
+**Core value:** Users can build and run custom flight analysis pipelines visually — now with behavioral analysis cubes that detect anomalies by comparing flights against historical patterns
+**Current focus:** Defining requirements for v4.0
 
-## Current Milestone
+## Current Position
 
-**v3.0:** Shipped 2026-03-27 — AI Workflow Agents (Phases 18-22)
-
-All 5 phases complete, 16 plans executed, 89 commits, +8,249 LOC.
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-29 — Milestone v4.0 started
 
 ## Previous Milestones
 
@@ -54,4 +55,4 @@ See `.planning/milestones/v1.0-ROADMAP.md` for details.
 - Missing VERIFICATION.md files for phases 18, 19, 21, 22
 
 ---
-*Last session: 2026-03-27 — v3.0 milestone archived.*
+*Last session: 2026-03-29 — v4.0 milestone started.*

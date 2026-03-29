@@ -71,7 +71,20 @@ Users can build and run custom flight analysis pipelines visually — connecting
 
 ### Active
 
-(No active requirements — planning next milestone)
+(Defining requirements for v4.0 — see REQUIREMENTS.md)
+
+## Current Milestone: v4.0 Flight Behavioral Analysis
+
+**Goal:** Add behavioral analysis and anomaly detection cubes that compare individual flights against historical patterns, plus enhance existing cubes with duration filtering and flexible datetime/lookback parameters.
+
+**Target features:**
+- Duration/flight-time filtering on existing cubes
+- Datetime/lookback toggle on cubes with historical queries
+- No Recorded Takeoff detection cube (first report at altitude)
+- Unusual Takeoff Location detection cube (deviation from historical departure point)
+- Unusual Takeoff Time detection cube (deviation from historical departure time)
+- Origin/Destination Verification cube (historical O/D pattern comparison, extensible)
+- Route statistics (avg flights per route, avg per day-of-week)
 
 ### Out of Scope
 
@@ -90,7 +103,7 @@ Users can build and run custom flight analysis pipelines visually — connecting
 
 ## Context
 
-- **Shipped:** v1.0 on 2026-03-06 (3 days, 111 commits, ~7,200 LOC); v3.0 on 2026-03-27 (4 days, 89 commits, +8,249 LOC)
+- **Shipped:** v1.0 on 2026-03-06 (3 days, 111 commits, ~7,200 LOC); v3.0 on 2026-03-27 (4 days, 89 commits, +8,249 LOC); v4.0 in progress
 - **Tech stack:** FastAPI + SQLAlchemy async (Python), React 18 + TypeScript + Vite (frontend), @xyflow/react v12, Zustand 5, Leaflet + react-leaflet, Docker + nginx, google-genai (Gemini LLM)
 - **Tracer 42 integration:** 12 is a standalone service linked from Tracer 42's UI. It reads from Tracer 42's PostgreSQL database (research schema) but writes only to its own table (public.workflows).
 - **Database:** PostgreSQL on AWS RDS with research.flight_metadata (113K rows), research.normal_tracks (76M rows), research.anomaly_reports (114K rows). Timestamps are bigint epoch format.
@@ -130,5 +143,22 @@ Users can build and run custom flight analysis pipelines visually — connecting
 | Wizard uses option cards only (no free text for cube selection) | Prevents LLM hallucination on analyst input | ✓ Good — reliable cube selection |
 | Results interpreter is one-shot SSE | No session management; follow-up uses results_followup persona via /api/agent/chat | ✓ Good — simple, clean separation |
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-03-27 after v3.0 milestone*
+*Last updated: 2026-03-29 — v4.0 milestone started*
