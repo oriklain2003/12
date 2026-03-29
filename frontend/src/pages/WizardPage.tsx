@@ -7,7 +7,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Toaster, toast } from 'sonner';
-import { streamAgentChat } from '../api/agent';
+import { streamAgentChat, buildFromPreview } from '../api/agent';
 import { WizardChat } from '../components/Wizard/WizardChat';
 import type { WizardChatMessage, WizardOptionsData, IntentPreviewData, GenerateWorkflowResult } from '../types/wizard';
 import './WizardPage.css';
@@ -17,6 +17,7 @@ export function WizardPage() {
   const [messages, setMessages] = useState<WizardChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isBuilding, setIsBuilding] = useState(false);
 
   const showWelcome = messages.length === 0;
 
@@ -58,13 +59,16 @@ export function WizardPage() {
     async (message: string) => {
       if (!message.trim() || isStreaming) return;
 
-      // 1. Add user message
-      addMessage({
-        id: crypto.randomUUID(),
-        role: 'user',
-        content: message,
-        timestamp: Date.now(),
-      });
+      // 1. Add user message (skip for UI command signals)
+      const isCommand = message.startsWith('[') && message.endsWith(']');
+      if (!isCommand) {
+        addMessage({
+          id: crypto.randomUUID(),
+          role: 'user',
+          content: message,
+          timestamp: Date.now(),
+        });
+      }
 
       // 2. Add placeholder streaming agent message
       addMessage({
@@ -136,21 +140,28 @@ export function WizardPage() {
               toolName: toolData.name as string,
             });
           } else if (event.type === 'tool_result') {
-            // Mark last tool_call as done
+            const resultData = event.data as Record<string, unknown>;
+            const toolName = resultData?.name as string | undefined;
+            const toolResult = resultData?.result as Record<string, unknown> | undefined;
+
+            // Mark last matching tool_call as done
             setMessages((prev) => {
               const msgs = [...prev];
               for (let i = msgs.length - 1; i >= 0; i--) {
-                if (msgs[i].type === 'tool_call' && !msgs[i].content) {
-                  msgs[i] = { ...msgs[i], content: 'done' };
+                if (msgs[i].type === 'tool_call' && msgs[i].toolName === toolName && !msgs[i].content) {
+                  const updates: Partial<WizardChatMessage> = { content: 'done' };
+                  // For plan_verification, store the result status for the banner
+                  if (toolName === 'plan_verification' && toolResult) {
+                    updates.verificationResult = (toolResult.status as string) === 'issues_found'
+                      ? 'issues_found'
+                      : 'passed';
+                  }
+                  msgs[i] = { ...msgs[i], ...updates };
                   return msgs;
                 }
               }
               return prev;
             });
-
-            const resultData = event.data as Record<string, unknown>;
-            const toolName = resultData?.name as string | undefined;
-            const toolResult = resultData?.result as Record<string, unknown> | undefined;
 
             if (toolName === 'present_options' && toolResult) {
               addMessage({
@@ -214,12 +225,41 @@ export function WizardPage() {
     [isStreaming, sessionId, addMessage, updateLastAgentMessage, clearStreamingFlag, navigate]
   );
 
-  const handleBuildWorkflow = useCallback(() => {
-    handleSend('Please generate the workflow now');
-  }, [handleSend]);
+  const handleBuildWorkflow = useCallback(async () => {
+    if (!sessionId || isBuilding) return;
+    setIsBuilding(true);
+
+    try {
+      const result = await buildFromPreview(sessionId);
+
+      if (result.status === 'created' && result.workflow_id) {
+        toast.success('Workflow created — loading canvas...');
+        setTimeout(() => {
+          navigate(`/workflow/${result.workflow_id}`);
+        }, 800);
+      } else if (result.status === 'validation_failed') {
+        const errorSummary = result.errors
+          ? result.errors.map((e) => e.message).join('; ')
+          : 'The workflow has connection issues.';
+        addMessage({
+          id: crypto.randomUUID(),
+          role: 'agent',
+          content: `Couldn't generate a valid workflow\n\n${errorSummary}`,
+          timestamp: Date.now(),
+          type: 'error',
+        });
+      } else {
+        toast.error(result.message ?? 'Failed to build workflow');
+      }
+    } catch {
+      toast.error('Failed to build workflow — please try again');
+    } finally {
+      setIsBuilding(false);
+    }
+  }, [sessionId, isBuilding, navigate, addMessage]);
 
   const handleAdjustPlan = useCallback(() => {
-    handleSend('I would like to adjust the plan');
+    handleSend('[ADJUST_PLAN]');
   }, [handleSend]);
 
   return (
@@ -246,6 +286,7 @@ export function WizardPage() {
           messages={messages}
           showWelcome={showWelcome}
           isStreaming={isStreaming}
+          isBuilding={isBuilding}
           onSend={(msg) => { void handleSend(msg); }}
           onBuildWorkflow={handleBuildWorkflow}
           onAdjustPlan={handleAdjustPlan}

@@ -1,0 +1,153 @@
+.verification-banner {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  margin: 4px 80px 4px 0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.4s ease;
+}
+
+/* ── Track — the animated scan line at the top ────────────── */
+
+.verification-banner__track {
+  position: relative;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.verification-banner__scan-line {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(var(--accent-rgb), 0.6) 40%,
+    rgba(var(--accent-rgb), 0.9) 50%,
+    rgba(var(--accent-rgb), 0.6) 60%,
+    transparent 100%
+  );
+  animation: verification-scan 1.5s ease-in-out infinite;
+}
+
+@keyframes verification-scan {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ── Content row ──────────────────────────────────────────── */
+
+.verification-banner__content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+}
+
+/* ── Icon ─────────────────────────────────────────────────── */
+
+.verification-banner__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.verification-banner--checking .verification-banner__icon {
+  color: rgba(var(--accent-rgb), 0.9);
+  background: rgba(var(--accent-rgb), 0.12);
+}
+
+.verification-banner--passed .verification-banner__icon {
+  color: var(--color-success);
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.verification-banner--issues_found .verification-banner__icon {
+  color: var(--color-warning);
+  background: rgba(249, 115, 22, 0.12);
+}
+
+/* ── Animated rays (checking state) ──────────────────────── */
+
+.verification-banner__rays {
+  animation: verification-rotate 2s linear infinite;
+  transform-origin: 8px 8px;
+}
+
+@keyframes verification-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Checkmark draw animation (passed state) ──────────────── */
+
+.verification-banner__check-path {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  animation: verification-check-draw 0.4s ease-out 0.1s forwards;
+}
+
+@keyframes verification-check-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ── Labels ───────────────────────────────────────────────── */
+
+.verification-banner__label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: color 0.3s ease;
+}
+
+.verification-banner--checking .verification-banner__label {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.verification-banner--passed .verification-banner__label {
+  color: var(--color-success);
+}
+
+.verification-banner--issues_found .verification-banner__label {
+  color: var(--color-warning);
+}
+
+.verification-banner__detail {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.35);
+  margin-left: auto;
+}
+
+/* ── State-specific border accents ───────────────────────── */
+
+.verification-banner--checking {
+  border-color: rgba(var(--accent-rgb), 0.15);
+}
+
+.verification-banner--passed {
+  border-color: rgba(34, 197, 94, 0.15);
+  background: rgba(34, 197, 94, 0.03);
+}
+
+.verification-banner--passed .verification-banner__track {
+  background: rgba(34, 197, 94, 0.25);
+  height: 2px;
+}
+
+.verification-banner--issues_found {
+  border-color: rgba(249, 115, 22, 0.15);
+  background: rgba(249, 115, 22, 0.03);
+}
+
+.verification-banner--issues_found .verification-banner__track {
+  background: rgba(249, 115, 22, 0.25);
+  height: 2px;
+}

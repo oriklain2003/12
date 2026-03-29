@@ -31,10 +31,15 @@ export function WelcomeTour() {
   // Track whether user has completed the interactive action
   const nodeCountRef = useRef<number>(0);
 
-  // Auto-launch on first visit after 800ms
+  // Auto-launch on first visit after 800ms (only once per session)
   useEffect(() => {
     if (hasCompleted) return;
+    // Guard: only auto-launch once per browser session to avoid
+    // re-launching when the tour was dismissed without completing.
+    const sessionKey = 'onyx12_tour_auto_launched';
+    if (sessionStorage.getItem(sessionKey)) return;
     const timer = setTimeout(() => {
+      sessionStorage.setItem(sessionKey, '1');
       startTour();
     }, 800);
     return () => clearTimeout(timer);

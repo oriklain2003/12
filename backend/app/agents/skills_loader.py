@@ -26,15 +26,36 @@ def get_skill(name: str) -> str:
     return _skills.get(name, "")
 
 
-def get_system_prompt(persona: str) -> str:
-    """Combine system_brief + persona skill into one system prompt string.
+def get_system_prompt(persona: str, working_memory: dict[str, str] | None = None) -> str:
+    """Combine system_brief + persona skill + working memory into one system prompt.
 
     The system brief (Tracer 42 domain context) is always prepended.
-    Returns just the persona text if system_brief is missing.
+    Working memory (mission, investigation, plan) is appended when present.
     """
     brief = _skills.get("system_brief", "")
     persona_text = _skills.get(persona, "")
-    return f"{brief}\n\n{persona_text}".strip()
+    prompt = f"{brief}\n\n{persona_text}"
+
+    # Inject working memory if any field has content
+    if working_memory:
+        sections = []
+        if working_memory.get("mission"):
+            sections.append(f"### Current Mission\n{working_memory['mission']}")
+        if working_memory.get("investigation"):
+            sections.append(f"### Investigation Log\n{working_memory['investigation']}")
+        if working_memory.get("implementation_plan"):
+            sections.append(f"### Implementation Plan\n{working_memory['implementation_plan']}")
+        if working_memory.get("last_preview"):
+            sections.append(
+                f"### Last Preview (structured JSON from show_intent_preview)\n"
+                f"Use this exact data when generating the workflow. The cubes, connections, "
+                f"and parameters here are what the analyst approved.\n"
+                f"```json\n{working_memory['last_preview']}\n```"
+            )
+        if sections:
+            prompt += "\n\n## Working Memory (from previous turns)\n" + "\n\n".join(sections)
+
+    return prompt.strip()
 
 
 def get_all_personas() -> list[str]:

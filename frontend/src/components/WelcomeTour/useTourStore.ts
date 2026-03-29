@@ -39,9 +39,9 @@ export const useTourStore = create<TourState>((set) => ({
     })),
 
   closeTour: (completed = false) => {
-    if (completed) {
-      localStorage.setItem(STORAGE_KEY, 'true');
-    }
-    set({ isActive: false, currentStep: 0, hasCompleted: completed || localStorage.getItem(STORAGE_KEY) === 'true' });
+    // Always persist completion — dismissing the tour counts as completing it
+    // to prevent it from re-launching and blocking cursor/pointer events.
+    localStorage.setItem(STORAGE_KEY, 'true');
+    set({ isActive: false, currentStep: 0, hasCompleted: true });
   },
 }));

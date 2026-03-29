@@ -19,6 +19,7 @@ export function ChatPanel() {
   const setChatPanelOpen = useFlowStore((s) => s.setChatPanelOpen);
   const clearChat = useFlowStore((s) => s.clearChat);
   const isAgentStreaming = useFlowStore((s) => s.isAgentStreaming);
+  const chatPersona = useFlowStore((s) => s.chatPersona);
 
   const [width, setWidth] = useState(320);
   const isDragging = useRef(false);
@@ -64,7 +65,7 @@ export function ChatPanel() {
 
       <div className="chat-panel__header">
         <span className="chat-panel__title">
-          {useFlowStore((s) => s.chatPersona) === 'results_followup' ? 'RESULTS Q&A' : 'AGENT'}
+          {chatPersona === 'results_followup' ? 'Q&A' : 'AGENT'}
         </span>
         <ModeToggle />
         <button

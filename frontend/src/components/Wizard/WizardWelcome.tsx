@@ -52,7 +52,7 @@ export function WizardWelcome({ onSelect }: WizardWelcomeProps) {
         {MISSION_CARDS.map((card) => (
           <button
             key={card.title}
-            className="wizard-welcome__card glass"
+            className="wizard-welcome__card"
             onClick={() => onSelect(`I want to do: ${card.title} — ${card.description}`)}
             type="button"
           >

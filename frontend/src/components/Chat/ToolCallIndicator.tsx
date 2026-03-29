@@ -13,6 +13,10 @@ const TOOL_LABELS: Record<string, [string, string]> = {
   list_cubes_summary: ['Browsing cube catalog...', 'Browsed cube catalog'],
   find_cubes_for_task: ['Searching for cubes...', 'Searched for cubes'],
   propose_graph_diff: ['Proposing changes...', 'Proposed changes'],
+  plan_verification: ['Verifying plan...', 'Plan verified'],
+  update_mission: ['Updating mission...', 'Updated mission'],
+  update_investigation: ['Updating investigation...', 'Updated investigation'],
+  update_implementation_plan: ['Updating plan...', 'Updated plan'],
 };
 
 interface ToolCallIndicatorProps {

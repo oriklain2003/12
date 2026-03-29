@@ -8,6 +8,8 @@
   overflow: hidden;
   background-color: var(--color-bg);
   color: var(--color-text);
+  /* Fix Safari "sticky cursor" bug — forces compositing layer for cursor tracking */
+  -webkit-transform: translateZ(0);
 }
 
 .app__body {

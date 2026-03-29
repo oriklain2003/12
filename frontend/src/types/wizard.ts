@@ -16,6 +16,7 @@ export interface WizardOptionsData {
 export interface IntentPreviewNode {
   cube_id: string;
   label: string;
+  category?: 'data_source' | 'filter' | 'analysis' | 'aggregation' | 'output';
   key_params?: Record<string, unknown>;
 }
 
@@ -60,4 +61,6 @@ export interface WizardChatMessage {
   toolName?: string;
   streaming?: boolean;
   toolData?: unknown;
+  /** Set on plan_verification tool_call messages after result arrives */
+  verificationResult?: 'passed' | 'issues_found';
 }

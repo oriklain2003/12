@@ -84,8 +84,6 @@ const CATEGORY_ORDER: CubeCategory[] = [
 export function CubeCatalog() {
   const catalog = useFlowStore((s) => s.catalog);
   const catalogLoading = useFlowStore((s) => s.catalogLoading);
-  const setCatalog = useFlowStore((s) => s.setCatalog);
-  const setCatalogLoading = useFlowStore((s) => s.setCatalogLoading);
 
   const [collapsed, setCollapsed] = useState(false);
   const [search, setSearch] = useState('');
@@ -112,11 +110,12 @@ export function CubeCatalog() {
   // Fetch catalog on mount
   useEffect(() => {
     let cancelled = false;
-    setCatalogLoading(true);
+    const store = useFlowStore.getState();
+    store.setCatalogLoading(true);
     getCatalog()
       .then((data) => {
         if (!cancelled) {
-          setCatalog(data);
+          useFlowStore.getState().setCatalog(data);
         }
       })
       .catch((err) => {
@@ -124,13 +123,13 @@ export function CubeCatalog() {
       })
       .finally(() => {
         if (!cancelled) {
-          setCatalogLoading(false);
+          useFlowStore.getState().setCatalogLoading(false);
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [setCatalog, setCatalogLoading]);
+  }, []);
 
   // Filter cubes by search string
   const filteredCatalog = search

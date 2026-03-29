@@ -112,7 +112,7 @@ export function FlowCanvas() {
   const isLoadingWorkflow = useFlowStore((s) => s.isLoadingWorkflow);
   const connectionDrag = useFlowStore((s) => s.connectionDrag);
   const startConnectionDrag = useFlowStore((s) => s.startConnectionDrag);
-  const updateConnectionDragPosition = useFlowStore((s) => s.updateConnectionDragPosition);
+
   const endConnectionDrag = useFlowStore((s) => s.endConnectionDrag);
   const reactFlowInstance = useReactFlow();
   const { screenToFlowPosition } = reactFlowInstance;
@@ -154,12 +154,13 @@ export function FlowCanvas() {
 
   // Track mouse position during connection drag with RAF throttle
   const rafRef = useRef<number>(0);
+  const isDragging = connectionDrag !== null;
   useEffect(() => {
-    if (!connectionDrag) return;
+    if (!isDragging) return;
     const onMouseMove = (e: MouseEvent) => {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(() => {
-        updateConnectionDragPosition(e.clientX, e.clientY);
+        useFlowStore.getState().updateConnectionDragPosition(e.clientX, e.clientY);
       });
     };
     window.addEventListener('mousemove', onMouseMove);
@@ -167,7 +168,7 @@ export function FlowCanvas() {
       window.removeEventListener('mousemove', onMouseMove);
       cancelAnimationFrame(rafRef.current);
     };
-  }, [connectionDrag !== null, updateConnectionDragPosition]);
+  }, [isDragging]);
 
   // ── Snapshot on node drag start (for undo) ──────────────────────────────────
 

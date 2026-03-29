@@ -71,38 +71,62 @@
   color: var(--color-text-secondary);
 }
 
+.results-drawer__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .results-drawer__close {
   background: none;
   border: none;
   color: var(--color-text-muted);
   cursor: pointer;
-  font-size: 11px;
-  padding: 2px 8px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background 0.15s;
 }
 
 .results-drawer__close:hover {
-  color: var(--color-text);
+  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.06);
 }
 
-.results-drawer__interpret-btn {
-  background: var(--accent, #6c63ff);
-  color: white;
-  border: none;
+/* ─── Interpret trigger — subtle ghost button with accent ────────────────── */
+
+.results-drawer__interpret-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(var(--accent-rgb), 0.08);
+  border: 1px solid rgba(var(--accent-rgb), 0.15);
   border-radius: 6px;
-  padding: 4px 14px;
-  font-size: 0.82rem;
+  padding: 3px 10px 3px 8px;
+  color: rgba(var(--accent-rgb), 0.85);
+  font-size: 0.74rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: opacity 0.15s;
-  margin-right: 8px;
+  transition: all 0.2s;
+  letter-spacing: 0.01em;
 }
 
-.results-drawer__interpret-btn:hover:not(:disabled) {
-  opacity: 0.85;
+.results-drawer__interpret-trigger:hover:not(:disabled) {
+  background: rgba(var(--accent-rgb), 0.15);
+  border-color: rgba(var(--accent-rgb), 0.3);
+  color: rgba(var(--accent-rgb), 1);
+  box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.12);
 }
 
-.results-drawer__interpret-btn:disabled {
-  opacity: 0.5;
+.results-drawer__interpret-trigger:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
+}
+
+.results-drawer__interpret-trigger svg {
+  flex-shrink: 0;
 }
 
 /* ─── Content area — flex row for table + map ────────────────────────────── */

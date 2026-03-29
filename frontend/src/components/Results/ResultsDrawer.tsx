@@ -99,14 +99,6 @@ export function ResultsDrawer() {
     })
   );
   const workflowId = useFlowStore((s) => s.workflowId);
-  const allResults = useFlowStore((s) => s.results);
-  const cubeCategory = useFlowStore((s) => {
-    const node = s.nodes.find((n) => n.id === s.selectedResultNodeId);
-    return node?.data.cubeDef.category ?? 'unknown';
-  });
-  const workflowGraph = useFlowStore(
-    useShallow((s) => serializeGraph(s.nodes, s.edges))
-  );
 
   // Derived
   const geoInfo: GeoInfo | null = useMemo(
@@ -128,6 +120,13 @@ export function ResultsDrawer() {
 
   const handleInterpret = useCallback(async () => {
     if (!selectedNodeId || !results) return;
+
+    // Read expensive/unstable values from store snapshot (not selectors)
+    const store = useFlowStore.getState();
+    const allResults = store.results;
+    const workflowGraph = serializeGraph(store.nodes, store.edges);
+    const node = store.nodes.find((n) => n.id === selectedNodeId);
+    const cubeCategory = node?.data.cubeDef.category ?? 'unknown';
 
     // Abort any in-progress interpretation
     abortControllerRef.current?.abort();
@@ -160,7 +159,7 @@ export function ResultsDrawer() {
     } finally {
       setInterpretLoading(false);
     }
-  }, [selectedNodeId, results, workflowId, workflowGraph, allResults, cubeName, cubeCategory]);
+  }, [selectedNodeId, results, workflowId, cubeName]);
 
   const handleDiscuss = useCallback(() => {
     window.dispatchEvent(new CustomEvent('open-results-followup', {
@@ -181,22 +180,32 @@ export function ResultsDrawer() {
       {/* Header */}
       <div className="results-drawer__header">
         <span className="results-drawer__title">{cubeName} Results</span>
-        <button
-          className="results-drawer__interpret-btn"
-          onClick={handleInterpret}
-          disabled={interpretLoading}
-        >
-          {interpretLoading ? 'Interpreting...' : 'Interpret Results'}
-        </button>
-        <button
-          className="results-drawer__close"
-          onClick={() => setSelectedResultNodeId(null)}
-        >
-          Close
-        </button>
+        <div className="results-drawer__header-actions">
+          {!interpretOpen && (
+            <button
+              className="results-drawer__interpret-trigger"
+              onClick={handleInterpret}
+              disabled={interpretLoading}
+              aria-label="Interpret results with AI"
+            >
+              <svg viewBox="0 0 16 16" fill="none" width="13" height="13">
+                <path d="M8 1L10 5.5L15 6.5L11.5 10L12.5 15L8 12.5L3.5 15L4.5 10L1 6.5L6 5.5L8 1Z" fill="currentColor" opacity="0.9"/>
+              </svg>
+              <span>Interpret</span>
+            </button>
+          )}
+          <button
+            className="results-drawer__close"
+            onClick={() => setSelectedResultNodeId(null)}
+          >
+            <svg viewBox="0 0 12 12" fill="none" width="10" height="10">
+              <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
-      {/* Interpretation panel — above table, below header */}
+      {/* Interpretation panel — inline between header and table */}
       {interpretOpen && results && (
         <InterpretPanel
           loading={interpretLoading}

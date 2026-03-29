@@ -76,6 +76,31 @@ async def start_cleanup_task() -> None:
             break  # Clean shutdown
 
 
+def get_working_memory(session_id: str) -> dict[str, str]:
+    """Return the working memory notes for a session.
+
+    Keys: mission, investigation, implementation_plan, last_preview. Each is a string.
+    """
+    if session_id not in _sessions:
+        return {"mission": "", "investigation": "", "implementation_plan": "", "last_preview": ""}
+    mem = _sessions[session_id].get("working_memory", {})
+    return {
+        "mission": mem.get("mission", ""),
+        "investigation": mem.get("investigation", ""),
+        "implementation_plan": mem.get("implementation_plan", ""),
+        "last_preview": mem.get("last_preview", ""),
+    }
+
+
+def update_working_memory(session_id: str, key: str, value: str) -> None:
+    """Update one working memory note for a session."""
+    if session_id not in _sessions:
+        return
+    if "working_memory" not in _sessions[session_id]:
+        _sessions[session_id]["working_memory"] = {}
+    _sessions[session_id]["working_memory"][key] = value
+
+
 def active_session_count() -> int:
     """Return number of active sessions (for monitoring)."""
     return len(_sessions)

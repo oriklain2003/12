@@ -7,8 +7,8 @@
 
 .wizard-chat__content {
   width: 100%;
-  max-width: 720px;
-  padding: 24px 24px 16px;
+  max-width: 860px;
+  padding: 32px 32px 20px;
   display: flex;
   flex-direction: column;
   min-height: 100%;
@@ -17,34 +17,148 @@
 .wizard-chat__messages {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
   flex: 1;
-  padding-bottom: 8px;
+  padding-bottom: 12px;
 }
+
+/* ── Wizard-specific message bubble overrides ──────────────── */
+
+/* Shared: bigger text for the wizard's full-page layout */
+.wizard-chat .message-bubble {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* User messages — right-aligned, solid tinted background */
+.wizard-chat .message-bubble--user {
+  background: rgba(99, 102, 241, 0.10);
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  border-radius: 16px 16px 4px 16px;
+  padding: 12px 18px;
+  margin: 0 0 0 80px;
+  color: rgba(255, 255, 255, 0.95);
+  align-self: flex-end;
+}
+
+/* Agent messages — left-aligned, prominent text, clean border */
+.wizard-chat .message-bubble--agent {
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid rgba(99, 102, 241, 0.5);
+  border-radius: 0 12px 12px 0;
+  padding: 14px 20px 14px 20px;
+  margin: 0 80px 0 0;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+/* Agent markdown overrides for better readability */
+.wizard-chat .message-bubble--agent .md-p {
+  margin: 0 0 10px;
+}
+
+.wizard-chat .message-bubble--agent strong {
+  color: rgba(255, 255, 255, 0.97);
+  font-weight: 600;
+}
+
+.wizard-chat .message-bubble--agent .md-h1 { font-size: 18px; }
+.wizard-chat .message-bubble--agent .md-h2 { font-size: 16px; }
+.wizard-chat .message-bubble--agent .md-h3 { font-size: 15px; }
+
+.wizard-chat .message-bubble--agent .md-list li {
+  padding-left: 16px;
+  margin-bottom: 6px;
+  line-height: 1.55;
+}
+
+.wizard-chat .message-bubble--agent .md-list li::before {
+  background: rgba(99, 102, 241, 0.7);
+  width: 5px;
+  height: 5px;
+  top: 10px;
+}
+
+/* ── Role labels ───────────────────────────────────────────── */
+
+.wizard-chat__message-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wizard-chat__role-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 4px;
+}
+
+.wizard-chat__role-label--user {
+  color: rgba(99, 102, 241, 0.7);
+  text-align: right;
+  padding-right: 4px;
+}
+
+.wizard-chat__role-label--agent {
+  color: rgba(255, 255, 255, 0.35);
+  text-align: left;
+  padding-left: 4px;
+}
+
+/* ── Turn separator for visual breathing room ──────────────── */
+
+.wizard-chat__turn-separator {
+  height: 1px;
+  margin: 12px 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 20%,
+    rgba(255, 255, 255, 0.06) 80%,
+    transparent 100%
+  );
+}
+
+/* ── Thinking indicator ────────────────────────────────────── */
 
 .wizard-chat__thinking {
   font-size: 13px;
   font-weight: 400;
   font-style: italic;
-  color: var(--color-text-dim);
-  padding: 4px 0;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 6px 4px;
 }
 
+/* ── Error block ───────────────────────────────────────────── */
+
 .wizard-chat__error-block {
-  border-left: 2px solid var(--color-error);
-  padding: 8px 12px;
+  border-left: 3px solid var(--color-error);
+  padding: 12px 16px;
   background: rgba(239, 68, 68, 0.08);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-radius: 0 12px 12px 0;
+  margin: 0 80px 0 0;
 }
 
 .wizard-chat__error-text {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 400;
-  line-height: 1.5;
-  color: var(--color-text);
-  margin: 0 0 8px 0;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.88);
+  margin: 0 0 12px 0;
 }
 
 .wizard-chat__retry-btn {
   display: inline-flex;
+}
+
+/* ── Tool call indicator overrides ─────────────────────────── */
+
+.wizard-chat .tool-call-indicator {
+  padding: 8px 4px;
+}
+
+.wizard-chat .tool-call-indicator__label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
 }

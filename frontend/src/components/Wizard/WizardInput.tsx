@@ -72,11 +72,11 @@ export function WizardInput({ onSend, isStreaming, disabled }: WizardInputProps)
         {isStreaming ? (
           <span className="wizard-input__pulse-dot" />
         ) : (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path
-              d="M6 10V2M2 6l4-4 4 4"
+              d="M8 13V3M3 8l5-5 5 5"
               stroke="currentColor"
-              strokeWidth="1.5"
+              strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
             />

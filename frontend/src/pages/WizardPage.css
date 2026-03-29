@@ -3,20 +3,23 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--color-bg);
+  background: #0b0d14;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99, 102, 241, 0.04) 0%, transparent 60%),
+    linear-gradient(180deg, #0b0d14 0%, #080a10 100%);
 }
 
 .wizard-header {
   flex-shrink: 0;
   height: 52px;
-  background: var(--glass-bg);
+  background: rgba(11, 13, 20, 0.8);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 32px;
 }
 
 .wizard-header__brand {

@@ -105,7 +105,7 @@ export function OptionCards({ data, onSelect, disabled }: OptionCardsProps) {
           className="glass-btn option-cards__confirm"
           onClick={handleConfirmMultiSelect}
           type="button"
-          style={{ fontSize: 13, fontWeight: 600, padding: '8px 16px' }}
+          style={{ fontSize: 14, fontWeight: 600, padding: '10px 20px' }}
         >
           Confirm selection
         </button>
@@ -128,9 +128,9 @@ export function OptionCards({ data, onSelect, disabled }: OptionCardsProps) {
           disabled={!freeText.trim() || isLocked}
           type="button"
           aria-label="Send message"
-          style={{ fontSize: 13, fontWeight: 600, padding: '8px 16px' }}
+          style={{ fontSize: 14, fontWeight: 600, padding: '10px 20px' }}
         >
-          Send Message
+          Send
         </button>
       </div>
     </div>

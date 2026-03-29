@@ -121,6 +121,11 @@ async def present_options(
                             "type": "string",
                             "description": "Display label for this node in the preview.",
                         },
+                        "category": {
+                            "type": "string",
+                            "description": "Cube category for color coding.",
+                            "enum": ["data_source", "filter", "analysis", "aggregation", "output"],
+                        },
                         "key_params": {
                             "type": "object",
                             "description": "Key parameter values to display in the preview.",
@@ -166,13 +171,25 @@ async def show_intent_preview(
     nodes: list = None,
     connections: list = None,
 ) -> dict:
-    """Return a structured preview of the planned workflow for frontend rendering."""
-    return {
+    """Return a structured preview of the planned workflow for frontend rendering.
+
+    Also saves the preview data to working memory so it can be reused at generation time.
+    """
+    import json
+    from app.agents.sessions import update_working_memory
+
+    preview = {
         "mission_name": mission_name,
         "mission_description": mission_description,
         "nodes": nodes or [],
         "connections": connections or [],
     }
+
+    # Persist structured preview so BUILD_CONFIRMED can reference exact cube/connection data
+    if ctx.session_id:
+        update_working_memory(ctx.session_id, "last_preview", json.dumps(preview))
+
+    return preview
 
 
 @agent_tool(

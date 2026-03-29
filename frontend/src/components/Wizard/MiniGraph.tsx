@@ -1,11 +1,11 @@
 /**
- * MiniGraph — SVG mini-graph preview from show_intent_preview tool.
- * Renders cube nodes as rounded rectangles connected by directed lines.
- * Layout: topological depth ordering (x = depth × 160px, y = index × 64px).
+ * MiniGraph — mini workflow preview from show_intent_preview tool.
+ * Renders cube nodes styled like the real canvas with category colors,
+ * key params, and directed connection lines between them.
  */
 
-import { useState, useMemo } from 'react';
-import type { IntentPreviewData } from '../../types/wizard';
+import { useMemo } from 'react';
+import type { IntentPreviewData, IntentPreviewNode, IntentPreviewConnection } from '../../types/wizard';
 import './MiniGraph.css';
 
 interface MiniGraphProps {
@@ -13,25 +13,42 @@ interface MiniGraphProps {
   onBuild: () => void;
   onAdjust: () => void;
   disabled?: boolean;
+  building?: boolean;
 }
 
-const NODE_WIDTH = 120;
-const NODE_HEIGHT = 44;
-const COL_GAP = 160;
-const ROW_GAP = 64;
-const PADDING = 20;
-const ARROW_SIZE = 6;
+const CATEGORY_COLORS: Record<string, string> = {
+  data_source: '#6366f1',
+  filter: '#f59e0b',
+  analysis: '#8b5cf6',
+  aggregation: '#06b6d4',
+  output: '#10b981',
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  data_source: 'Source',
+  filter: 'Filter',
+  analysis: 'Analysis',
+  aggregation: 'Aggregation',
+  output: 'Output',
+};
+
+const NODE_WIDTH = 200;
+const NODE_GAP_X = 60;
+const NODE_GAP_Y = 16;
 
 interface LayoutNode {
   id: string;
   label: string;
+  category: string;
+  keyParams: Record<string, unknown>;
   x: number;
   y: number;
+  height: number;
 }
 
 function computeLayout(
-  nodes: IntentPreviewData['nodes'],
-  connections: IntentPreviewData['connections']
+  nodes: IntentPreviewNode[],
+  connections: IntentPreviewConnection[]
 ): LayoutNode[] {
   if (nodes.length === 0) return [];
 
@@ -48,7 +65,7 @@ function computeLayout(
     children.get(conn.from_cube)?.push(conn.to_cube);
   }
 
-  // BFS from roots (nodes with no incoming edges)
+  // BFS from roots
   const hasIncoming = new Set(connections.map((c) => c.to_cube));
   const roots = nodes.filter((n) => !hasIncoming.has(n.cube_id));
   const queue = roots.map((n) => n.cube_id);
@@ -65,33 +82,69 @@ function computeLayout(
     }
   }
 
-  // Group by depth
-  const byDepth = new Map<number, string[]>();
-  for (const [id, depth] of depthMap) {
+  // Estimate node height based on key_params count
+  function nodeHeight(node: IntentPreviewNode): number {
+    const paramCount = Object.keys(node.key_params ?? {}).length;
+    return 36 + Math.max(paramCount, 0) * 22; // header + params
+  }
+
+  // Group by depth and assign positions
+  const byDepth = new Map<number, IntentPreviewNode[]>();
+  for (const node of nodes) {
+    const depth = depthMap.get(node.cube_id) ?? 0;
     if (!byDepth.has(depth)) byDepth.set(depth, []);
-    byDepth.get(depth)!.push(id);
+    byDepth.get(depth)!.push(node);
   }
 
-  // Assign positions
-  const positions = new Map<string, { x: number; y: number }>();
-  for (const [depth, ids] of byDepth) {
-    ids.forEach((id, index) => {
-      positions.set(id, {
-        x: PADDING + depth * COL_GAP,
-        y: PADDING + index * ROW_GAP,
+  const result: LayoutNode[] = [];
+  for (const [depth, depthNodes] of byDepth) {
+    let y = 0;
+    for (const node of depthNodes) {
+      const h = nodeHeight(node);
+      result.push({
+        id: node.cube_id,
+        label: node.label,
+        category: node.category ?? 'filter',
+        keyParams: node.key_params ?? {},
+        x: depth * (NODE_WIDTH + NODE_GAP_X),
+        y,
+        height: h,
       });
-    });
+      y += h + NODE_GAP_Y;
+    }
   }
 
-  return nodes.map((node) => {
-    const pos = positions.get(node.cube_id) ?? { x: PADDING, y: PADDING };
-    return { id: node.cube_id, label: node.label, x: pos.x, y: pos.y };
-  });
+  // Center columns vertically relative to the tallest column
+  const maxColHeight = Math.max(
+    ...Array.from(byDepth.values()).map((depthNodes) => {
+      let total = 0;
+      for (const n of depthNodes) total += nodeHeight(n) + NODE_GAP_Y;
+      return total - NODE_GAP_Y;
+    })
+  );
+
+  for (const [depth, depthNodes] of byDepth) {
+    let colHeight = 0;
+    for (const n of depthNodes) colHeight += nodeHeight(n) + NODE_GAP_Y;
+    colHeight -= NODE_GAP_Y;
+    const offset = (maxColHeight - colHeight) / 2;
+    for (const layoutNode of result) {
+      if (depthMap.get(layoutNode.id) === depth) {
+        layoutNode.y += offset;
+      }
+    }
+  }
+
+  return result;
 }
 
-export function MiniGraph({ data, onBuild, onAdjust, disabled }: MiniGraphProps) {
-  const [building, setBuilding] = useState(false);
+function formatParamValue(value: unknown): string {
+  if (Array.isArray(value)) return value.join(', ');
+  if (typeof value === 'object' && value !== null) return JSON.stringify(value);
+  return String(value);
+}
 
+export function MiniGraph({ data, onBuild, onAdjust, disabled, building }: MiniGraphProps) {
   const layoutNodes = useMemo(
     () => computeLayout(data.nodes, data.connections),
     [data.nodes, data.connections]
@@ -103,102 +156,108 @@ export function MiniGraph({ data, onBuild, onAdjust, disabled }: MiniGraphProps)
     return m;
   }, [layoutNodes]);
 
-  // Compute SVG viewBox from node positions
-  const svgWidth = useMemo(() => {
-    if (layoutNodes.length === 0) return 200;
+  const canvasSize = useMemo(() => {
+    if (layoutNodes.length === 0) return { width: 200, height: 80 };
     const maxX = Math.max(...layoutNodes.map((n) => n.x + NODE_WIDTH));
-    return maxX + PADDING;
-  }, [layoutNodes]);
-
-  const svgHeight = useMemo(() => {
-    if (layoutNodes.length === 0) return 100;
-    const maxY = Math.max(...layoutNodes.map((n) => n.y + NODE_HEIGHT));
-    return maxY + PADDING;
+    const maxY = Math.max(...layoutNodes.map((n) => n.y + n.height));
+    return { width: maxX, height: maxY };
   }, [layoutNodes]);
 
   function handleBuild() {
     if (building || disabled) return;
-    setBuilding(true);
     onBuild();
   }
 
   return (
     <div className="mini-graph glass">
-      <svg
-        className="mini-graph__svg"
-        viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-        xmlns="http://www.w3.org/2000/svg"
-        aria-label="Workflow graph preview"
+      <div
+        className="mini-graph__canvas"
+        style={{ width: canvasSize.width, height: canvasSize.height }}
       >
-        <defs>
-          <marker
-            id="mini-graph-arrow"
-            markerWidth={ARROW_SIZE}
-            markerHeight={ARROW_SIZE}
-            refX={ARROW_SIZE - 1}
-            refY={ARROW_SIZE / 2}
-            orient="auto"
-          >
-            <path
-              d={`M0,0 L0,${ARROW_SIZE} L${ARROW_SIZE},${ARROW_SIZE / 2} z`}
-              fill="rgba(255, 255, 255, 0.25)"
-            />
-          </marker>
-        </defs>
+        {/* Connection lines (SVG overlay) */}
+        <svg className="mini-graph__connections" aria-hidden="true">
+          <defs>
+            <marker
+              id="mini-arrow"
+              markerWidth={6}
+              markerHeight={6}
+              refX={5}
+              refY={3}
+              orient="auto"
+            >
+              <path d="M0,0 L0,6 L6,3 z" fill="rgba(255,255,255,0.3)" />
+            </marker>
+          </defs>
+          {data.connections.map((conn, i) => {
+            const from = posMap.get(conn.from_cube);
+            const to = posMap.get(conn.to_cube);
+            if (!from || !to) return null;
 
-        {/* Connection lines */}
-        {data.connections.map((conn, i) => {
-          const from = posMap.get(conn.from_cube);
-          const to = posMap.get(conn.to_cube);
-          if (!from || !to) return null;
+            const x1 = from.x + NODE_WIDTH;
+            const y1 = from.y + from.height / 2;
+            const x2 = to.x;
+            const y2 = to.y + to.height / 2;
+            const midX = (x1 + x2) / 2;
 
-          const x1 = from.x + NODE_WIDTH;
-          const y1 = from.y + NODE_HEIGHT / 2;
-          const x2 = to.x;
-          const y2 = to.y + NODE_HEIGHT / 2;
+            return (
+              <path
+                key={`conn-${i}`}
+                d={`M${x1},${y1} C${midX},${y1} ${midX},${y2} ${x2},${y2}`}
+                fill="none"
+                stroke="rgba(255,255,255,0.2)"
+                strokeWidth={1.5}
+                markerEnd="url(#mini-arrow)"
+              />
+            );
+          })}
+        </svg>
+
+        {/* Node cards */}
+        {layoutNodes.map((node) => {
+          const color = CATEGORY_COLORS[node.category] ?? '#6366f1';
+          const categoryLabel = CATEGORY_LABELS[node.category] ?? node.category;
+          const params = Object.entries(node.keyParams);
 
           return (
-            <line
-              key={`conn-${i}`}
-              x1={x1}
-              y1={y1}
-              x2={x2 - ARROW_SIZE + 1}
-              y2={y2}
-              stroke="rgba(255, 255, 255, 0.25)"
-              strokeWidth={1.5}
-              markerEnd="url(#mini-graph-arrow)"
-            />
+            <div
+              key={node.id}
+              className="mini-graph__node"
+              style={{
+                left: node.x,
+                top: node.y,
+                width: NODE_WIDTH,
+                borderColor: `${color}33`,
+              }}
+            >
+              <div className="mini-graph__node-header">
+                <span
+                  className="mini-graph__node-dot"
+                  style={{ background: color }}
+                />
+                <span className="mini-graph__node-name">{node.label}</span>
+              </div>
+              {params.length > 0 && (
+                <div className="mini-graph__node-params">
+                  {params.map(([key, value]) => (
+                    <div key={key} className="mini-graph__node-param">
+                      <span className="mini-graph__param-key">{key}</span>
+                      <span className="mini-graph__param-value">
+                        {formatParamValue(value)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div
+                className="mini-graph__node-category"
+                style={{ color }}
+              >
+                {categoryLabel}
+              </div>
+            </div>
           );
         })}
-
-        {/* Node rectangles */}
-        {layoutNodes.map((node) => (
-          <g key={node.id}>
-            <rect
-              x={node.x}
-              y={node.y}
-              width={NODE_WIDTH}
-              height={NODE_HEIGHT}
-              rx={8}
-              fill="var(--color-surface-raised)"
-              stroke="rgba(255, 255, 255, 0.12)"
-              strokeWidth={1}
-            />
-            <text
-              x={node.x + NODE_WIDTH / 2}
-              y={node.y + NODE_HEIGHT / 2}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill="rgba(255, 255, 255, 0.92)"
-              fontSize={12}
-              fontWeight={400}
-              fontFamily="'DM Sans', system-ui, sans-serif"
-            >
-              <tspan>{node.label.length > 14 ? node.label.slice(0, 13) + '…' : node.label}</tspan>
-            </text>
-          </g>
-        ))}
-      </svg>
+      </div>
 
       <div className="mini-graph__info">
         <div className="mini-graph__mission-name">{data.mission_name}</div>
@@ -213,7 +272,6 @@ export function MiniGraph({ data, onBuild, onAdjust, disabled }: MiniGraphProps)
           onClick={onAdjust}
           disabled={building || disabled}
           type="button"
-          style={{ fontSize: 13, fontWeight: 600, padding: '8px 16px' }}
         >
           Adjust Plan
         </button>
@@ -222,12 +280,11 @@ export function MiniGraph({ data, onBuild, onAdjust, disabled }: MiniGraphProps)
           onClick={handleBuild}
           disabled={building || disabled}
           type="button"
-          style={{ fontSize: 13, fontWeight: 600, padding: '8px 16px' }}
         >
           {building ? (
             <>
               <span className="mini-graph__pulse-dot" />
-              Building...
+              Building…
             </>
           ) : (
             'Build This'

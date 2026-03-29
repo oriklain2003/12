@@ -20,6 +20,7 @@ class ToolContext:
     workflow_graph: dict | None = None      # Serialized graph for read_workflow_graph
     execution_errors: dict | None = None    # Errors from last run for read_execution_errors
     execution_results: dict | None = None   # Results summary for read_execution_results
+    session_id: str | None = None           # Session ID for working memory tools
 
 
 def estimate_tokens(history: list) -> int:
