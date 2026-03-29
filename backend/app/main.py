@@ -22,12 +22,15 @@ from app.agents.router import router as agent_router
 async def lifespan(app: FastAPI):
     log = logging.getLogger(__name__)
 
-    # DB pool warm-up
+    # DB pool warm-up (non-fatal — App Runner health checks must pass even if DB is slow)
     from app.database import engine
     from sqlalchemy import text
-    async with engine.connect() as conn:
-        await conn.execute(text("SELECT 1"))
-    log.info("DB connection pool warmed")
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        log.info("DB connection pool warmed")
+    except Exception as exc:
+        log.warning("DB warm-up failed (will retry on first request): %s", exc)
 
     # Coverage baseline pre-warm (non-blocking background task)
     from app.signal.rule_based import start_coverage_baseline_build
