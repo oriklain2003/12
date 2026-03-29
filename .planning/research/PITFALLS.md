@@ -1,193 +1,219 @@
 # Pitfalls Research
 
-**Domain:** AI agent system added to visual dataflow workflow builder (12-flow v3.0)
-**Researched:** 2026-03-22
-**Confidence:** MEDIUM-HIGH (combination of official docs, community research, and production reports)
+**Domain:** Behavioral analysis cubes added to visual dataflow flight workflow builder (12-flow v4.0)
+**Researched:** 2026-03-29
+**Confidence:** HIGH — based on direct inspection of codebase, schema, and execution model
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Generating Workflow Graphs with Invalid Connections
+### Pitfall 1: Epoch Arithmetic Against Bigint Timestamp Columns
 
 **What goes wrong:**
-The Build Agent generates a workflow JSON with connections that reference non-existent parameter names or use wrong parameter types. The LLM "knows" cube names but hallucinates parameter IDs, edge source/target handles, or confuses `output_params` with `input_params`. The generated workflow loads on the canvas but silently produces wrong results or crashes the executor.
+A historical lookback query written as `WHERE timestamp >= NOW() - INTERVAL '90 days'` fails silently or returns zero rows because `timestamp` in `research.normal_tracks` is a bigint (Unix epoch seconds), not a native PostgreSQL timestamp. PostgreSQL does not raise an error — it silently coerces or the condition evaluates against the integer value incorrectly. The query completes in milliseconds with zero rows. The developer assumes there is no historical data for the callsign, not that the filter is broken.
 
 **Why it happens:**
-The LLM knows the cube API at training time but the catalog is custom-built — no training data for it. When prompted with "build a workflow," the model fills in parameter IDs from memory or inference rather than from the actual catalog definition. Parameter handle IDs in this system are like `__full_result__`, `flight_ids`, `flights` — easy to misremember or conflate. Even with function calling, the model may not bother to retrieve parameter definitions before generating edge connections.
+The column is named `timestamp`, which implies a timestamp type. The trap is reinforced by `public.positions` (used by `dark_flight_detector.py`) having a native timestamp column — so the pattern of using `datetime.now()` works there but not in `research.normal_tracks` or `research.flight_metadata`. Developers who write one cube then copy the query pattern to another cube without checking column types will import the wrong approach.
 
 **How to avoid:**
-- The Build Agent must always call the catalog tool before generating any workflow. Make this non-optional via system prompt: "You MUST call get_cube_definition before referencing any cube's parameters."
-- After generating the workflow graph JSON, run it through the existing WorkflowExecutor's validation logic before returning it to the frontend — never deliver an unvalidated graph.
-- Add a dedicated post-generation validation pass: check that every edge's `sourceHandle` and `targetHandle` exist in the respective cube's output/input param lists. Return validation errors back to the agent for correction, not to the user.
-- Consider a Pydantic model that validates the generated workflow against live catalog data at the API layer.
+Always compute epoch cutoffs in Python before passing as parameters. The existing pattern from `all_flights.py` lines 202-205 is the correct reference:
+```python
+import time
+cutoff = int(time.time()) - (lookback_days * 86400)
+# Then: WHERE first_seen_ts >= :cutoff
+```
+Create a shared utility function `epoch_cutoff(days: int) -> int` in the first phase that adds behavioral cubes. Add a comment near the top of every new cube file: `# NOTE: normal_tracks.timestamp and flight_metadata timestamps are bigint epoch seconds.`
 
 **Warning signs:**
-- Agents call get_cubes_catalog (summary) but skip get_cube_definition (full params) before generating edges.
-- Generated workflows have edges with handle names not in the catalog (check against `ParamDefinition.name`).
-- "Works in demo" with hardcoded examples but fails with real catalog data.
+- Query returns 0 rows for a callsign known to have recent history
+- Query runs in < 100ms against `normal_tracks` (should take seconds for a real scan)
+- Cube uses `datetime.now()`, `datetime.utcnow()`, or `timedelta` objects in SQL params
 
-**Phase to address:** Agent infrastructure phase (tool definitions and system prompts) — before any UI is built.
+**Phase to address:**
+First phase implementing any historical lookback cube. Establish the shared `epoch_cutoff()` helper before writing the first behavioral cube.
 
 ---
 
-### Pitfall 2: Tool Catalog Overload Degrades Tool Selection Accuracy
+### Pitfall 2: N+1 Query Pattern — Per-Flight Historical Lookups
 
 **What goes wrong:**
-If the agent is given all 14+ cube definitions as a single tool parameter upfront (or as part of the system prompt), the context fills with cube metadata the agent doesn't need for the current task, tool selection accuracy drops, and the model starts confusing or ignoring cubes. Research shows 5-7 tools is the practical upper bound for consistent accuracy; with 10+ tools, selection errors increase measurably.
+A behavioral cube receives a list of 200+ flight IDs or callsigns from upstream and issues one SQL query per item to check historical patterns. At 200 flights × 1 query each = 200 round-trips to RDS. At 5ms per query that is 1+ seconds minimum, but on a loaded RDS instance with 200ms latency spikes it reaches 40 seconds. The SSE stream stalls, the client timeout fires, and the user sees the cube stuck in "running" state indefinitely.
 
 **Why it happens:**
-This is a fundamental LLM characteristic, not a prompt-writing failure. More tools = more context tokens = higher chance of "lost in the middle" degradation where relevant tools in the middle of a long list are ignored. The planned two-tier catalog design (summaries first, full definitions on demand) is the right instinct but must be enforced architecturally, not just hoped for.
+The natural Python pattern is a loop: `for callsign in callsigns: result = await conn.execute(query, {"callsign": callsign})`. This reads clearly and works fine on small inputs. The failure mode only appears at scale. Behavioral cubes that compare each flight against its own historical record are especially prone to this — each flight has a unique callsign requiring its own statistics query.
 
 **How to avoid:**
-- Implement the two-tier lookup as two separate tools: `browse_catalog()` returns name+category+one-line description for all cubes (small); `get_cube_definition(cube_name)` returns full parameter schema for one cube.
-- Never pass all cube definitions in the system prompt. The system brief should reference the catalog tool, not inline it.
-- Cap the number of tools per agent at 8 or fewer. The Cube Expert sub-agent pattern is correct — it exists specifically to keep the Build Agent's tool count small.
-- Add a planning step before workflow generation: "First call browse_catalog, then call get_cube_definition for each cube you plan to use, then generate the workflow." Make this explicit in the system prompt with numbered steps.
+Use `ANY(:array)` to batch all lookups, then `GROUP BY callsign` to produce per-entity results in one query:
+```sql
+SELECT callsign,
+       MIN(first_seen_ts)  AS earliest_seen,
+       AVG(start_lat)      AS avg_start_lat,
+       AVG(start_lon)      AS avg_start_lon,
+       STDDEV(start_lat)   AS stddev_start_lat,
+       STDDEV(start_lon)   AS stddev_start_lon,
+       COUNT(*)            AS flight_count
+FROM research.flight_metadata
+WHERE callsign = ANY(:callsigns)
+  AND first_seen_ts >= :cutoff
+GROUP BY callsign
+```
+Then join the result dict against the input list in Python. This replaces N queries with 1.
 
 **Warning signs:**
-- Agents return workflows using cubes they didn't call get_cube_definition for.
-- Token counts for a single agent turn exceed 8,000 tokens.
-- Agent selects wrong cube consistently when similar-sounding cubes exist (e.g., GetFlights vs. AllFlights vs. FilterFlights).
+- `for x in input_list:` loop in `execute()` followed by `await conn.execute()`
+- Cube execution time scales linearly with upstream result count
+- SSE stream shows a cube "running" for 30+ seconds with no output
 
-**Phase to address:** Agent infrastructure phase — tool definitions are foundational.
+**Phase to address:**
+Every phase implementing a behavioral analysis cube. Make this a code review requirement: no loop-per-item database queries allowed.
 
 ---
 
-### Pitfall 3: Context Explosion in Multi-Turn Conversations
+### Pitfall 3: Result Explosion From Fetching Raw Track Points for Statistical Baselines
 
 **What goes wrong:**
-The Canvas Agent (chat panel) accumulates full conversation history including tool call results across multiple turns. Cube execution results from large datasets (10,000-row tables) are passed verbatim as tool results. After 5-6 turns, the context exceeds effective limits, the model starts ignoring earlier instructions, and response quality degrades. This isn't gradual — it collapses suddenly.
+A behavioral cube fetches all raw track points from `normal_tracks` for a callsign across a 90-day window to compute departure location statistics in Python. A busy callsign like `SVA123` might have 500 historical flights × ~400 track points each = 200,000 rows fetched into Python memory per cube execution. The 10,000-row *result* cap in the WorkflowExecutor does not protect against this — it limits what the cube *returns*, not what it fetches internally. Memory spikes, the process is killed by Docker's OOM killer, or the query times out.
 
 **Why it happens:**
-Developers assume the 1M-token Gemini context window means "pass everything." Context Rot research (Hong et al., 2025) shows model performance degrades well before the technical limit — the effective high-quality context window is much smaller. Tool results are the worst offender: a single cube returning 10,000 rows of flight data as JSON could be 200,000+ tokens on its own.
+The 10,000-row executor cap creates a false sense of safety. Developers assume "the system already handles large results." They do not distinguish between the output row limit and the intermediate data volume inside `execute()`. The existing `filter_flights.py` demonstrates safe patterns (aggregate query, not raw fetch) but new cube authors may not study it.
 
 **How to avoid:**
-- Never pass raw cube execution results as tool context. Summarize: `{"cube": "GetFlights", "result_count": 8432, "sample": [first 3 rows], "columns": [...]}`.
-- Implement a context budget. When conversation history exceeds 50% of the target window (e.g., 50k tokens), summarize older turns to 2-3 sentences before the next call.
-- The workflow graph itself should be passed as a reference ("current workflow has 4 nodes: ...") not as full JSON on every turn.
-- For the Canvas Agent, maintain a separate "working memory" of what changes have been made in the session, distinct from raw conversation history.
+Push all statistical computation into SQL using aggregate functions. Never `fetchall()` raw track points for the purpose of computing statistics:
+```sql
+-- Correct: compute stats in DB
+SELECT flight_id,
+       FIRST_VALUE(lat) OVER (PARTITION BY flight_id ORDER BY timestamp) AS first_lat,
+       FIRST_VALUE(lon) OVER (PARTITION BY flight_id ORDER BY timestamp) AS first_lon
+FROM research.normal_tracks
+WHERE flight_id = ANY(:flight_ids)
+```
+Or better: use `flight_metadata.start_lat` / `start_lon` columns — these are precomputed takeoff coordinates already stored in the 113K-row metadata table, eliminating the need to touch 76M-row `normal_tracks` at all for departure location analysis.
 
 **Warning signs:**
-- First few turns work well, later turns in the same session become incoherent.
-- Agent "forgets" constraints mentioned in the system prompt mid-conversation.
-- Token usage per turn grows linearly with conversation length rather than staying roughly constant.
+- `fetchall()` on a `normal_tracks` query without a tight `LIMIT` or `GROUP BY`
+- Cube takes 60+ seconds for a single execution
+- Docker container OOM killed during cube execution
+- `EXPLAIN` shows `rows=76000000` for a full-table estimate
 
-**Phase to address:** Agent infrastructure phase (context management design) and Canvas Agent phase (chat panel implementation).
+**Phase to address:**
+Any phase adding a cube that needs departure location, departure time, or route statistics. Verify the query plan before shipping.
 
 ---
 
-### Pitfall 4: Gemini Function Calling Returns Text Instead of Tool Call
+### Pitfall 4: Missing Index Coverage for Callsign-Based Historical Lookups
 
 **What goes wrong:**
-The agent is supposed to call a tool (e.g., get_cube_definition) but instead returns a text response explaining what it "would" do, or returns partial JSON embedded in markdown. The application parses the response expecting a function call object and throws an error or silently skips the tool call, causing the agent to proceed with hallucinated data.
+A new behavioral cube queries `research.normal_tracks` directly by callsign: `WHERE callsign = ANY(:callsigns) AND timestamp >= :cutoff`. If `normal_tracks` lacks a composite index on `(callsign, timestamp)`, this triggers a sequential scan of 76M rows regardless of how tight the time filter is. At the 76M-row scale, a seq scan takes 45-120 seconds — effectively hanging the cube execution.
 
 **Why it happens:**
-Gemini's function calling uses `tool_config` to control calling mode. The default mode (`AUTO`) allows the model to choose between text and function calls. If the system prompt or user message doesn't sufficiently establish that a tool call is required, the model may opt for text. Additionally, if the function schemas are unclear or descriptions are vague, the model may not recognize when to use them.
+Existing cubes always filter `normal_tracks` by `flight_id = ANY(:ids)`, which uses whatever index exists on `flight_id`. New behavioral cubes that query by `callsign` directly (which is stored in `normal_tracks` per the schema) bypass that index. The developer tests against a small dev dataset where a seq scan completes in 0.1s, never seeing the production problem.
 
 **How to avoid:**
-- For tool calls that must happen (e.g., catalog lookup before generation), use `tool_config={"function_calling_config": {"mode": "ANY"}}` to force a function call on that turn.
-- Write tool descriptions as imperatives with clear trigger conditions: "Call this function when you need to look up the parameters of a specific cube. Always call this before referencing a cube's parameter names in a workflow."
-- Validate every response: check for `function_call` in the response parts before assuming text. Never treat a text response as equivalent to a tool call response.
-- Test each tool definition in isolation before integrating into the full agent.
+Avoid querying `normal_tracks` by callsign directly. Use the two-step pattern established in `all_flights.py`:
+1. Query `flight_metadata` (113K rows) by callsign to retrieve `flight_ids`
+2. Query `normal_tracks` with `flight_id = ANY(:ids)` using the existing index
+
+```python
+# Step 1: get flight_ids from the small metadata table
+meta_sql = """
+    SELECT flight_id FROM research.flight_metadata
+    WHERE callsign ILIKE :callsign AND first_seen_ts >= :cutoff
+    LIMIT 5000
+"""
+# Step 2: fetch track aggregates using indexed flight_id lookup
+track_sql = """
+    SELECT flight_id, MIN(lat) AS first_lat, MIN(lon) AS first_lon
+    FROM research.normal_tracks
+    WHERE flight_id = ANY(:flight_ids)
+    GROUP BY flight_id
+"""
+```
+
+Before implementing any new SQL query that touches `normal_tracks`, run `EXPLAIN ANALYZE` against the real database to confirm index usage.
 
 **Warning signs:**
-- Agent returns markdown like "I would call get_cube_definition with..." instead of actually calling it.
-- Response parsing code has to handle both text and function_call branches in the same place but the text branch is never hit in testing.
-- Works in Gemini playground but fails in production code where tool_config isn't set.
+- Any `normal_tracks` query where the `WHERE` clause does not include `flight_id = ANY(:ids)`
+- Cube runs fine on dev fixtures (small DB) but hangs on production
+- `EXPLAIN` output shows `Seq Scan on normal_tracks (cost=0.00..X)` with X in the millions
 
-**Phase to address:** Agent infrastructure phase — this is a foundational Gemini integration detail.
+**Phase to address:**
+Before the first historical lookback cube is written. Add `EXPLAIN ANALYZE` as an explicit checklist item in the phase plan.
 
 ---
 
-### Pitfall 5: Sub-Agent Context Explosion (Cube Expert Pattern)
+### Pitfall 5: Datetime/Lookback Toggle — Silent Fallback on Partial Input
 
 **What goes wrong:**
-The orchestrating Build Agent spawns the Cube Expert sub-agent and passes its entire conversation history as context. The Cube Expert then returns a verbose response. On the next orchestrator turn, the sub-agent's full response is in the history. After 3-4 sub-agent calls, the orchestrator's context is dominated by sub-agent outputs rather than task state.
+A cube implements a datetime/lookback toggle using three optional params: `lookback_days`, `start_time`, and `end_time`. A user connects an upstream cube's `end_time` output to this cube's `end_time` input (so `end_time` is populated by connection) but leaves `start_time` as None (not connected, no manual value). The `connection value override` rule means `end_time` is set from the connection, but the cube's logic checks `if start_time and end_time:` — the condition is False, and it silently falls back to relative mode using `lookback_days`. The connected `end_time` is ignored. The user's intended time filter does nothing.
 
 **Why it happens:**
-The natural implementation serializes the full agent response as a tool result. Multi-agent context explosion is a documented failure mode: each agent in the chain amplifies context size. The multi-agent trap is assuming sub-agents share context efficiently when they actually duplicate it.
+The toggle requires *both* `start_time` and `end_time` to activate absolute mode. Partial connections cause silent fallback. `all_flights.py` lines 192-205 already has this pattern without a guard for partial state. New cube authors copy this pattern. The UI shows no indication that the connected `end_time` is being ignored.
 
 **How to avoid:**
-- Sub-agent responses must be summarized at the call site before being added to the orchestrator's history. The Cube Expert should return a short structured response: `{"recommended_cubes": [...], "rationale": "one sentence"}`, not a full explanation.
-- Never pass the orchestrator's full conversation history to a sub-agent. Pass only the task description and any necessary immediate context.
-- Define a strict response schema for the Cube Expert (Pydantic model + Gemini response_schema) to prevent verbose prose responses.
-- Cap sub-agent turns at 3: if the Cube Expert can't find a suitable cube in 3 tool calls, return `{"status": "not_found", "suggestion": "..."}` rather than continuing to search.
+Add an explicit partial-input guard in every cube with datetime/lookback toggle:
+```python
+has_start = start_time is not None
+has_end = end_time is not None
+if has_start != has_end:
+    raise ValueError(
+        f"Datetime mode requires both start_time and end_time. "
+        f"Received start_time={'set' if has_start else 'None'}, "
+        f"end_time={'set' if has_end else 'None'}. "
+        f"Either connect both or leave both unconnected to use lookback_days."
+    )
+```
+Document the mode toggle in the cube description field so the AI agents can explain the constraint.
 
 **Warning signs:**
-- Each Build Agent turn takes progressively longer.
-- Cube Expert responses are multiple paragraphs rather than structured lists.
-- Token counts spike after each sub-agent invocation.
+- Cube has `start_time`, `end_time`, and `lookback_days` inputs with no validation logic for partial state
+- User reports "my time filter is being ignored"
+- Analyst connects one time param but not the other — the case to test explicitly
 
-**Phase to address:** Agent infrastructure phase (sub-agent design) and Build Agent implementation phase.
+**Phase to address:**
+Every phase adding a cube with datetime/lookback toggle. Extract the validation into a shared helper in the cube utilities module.
 
 ---
 
-### Pitfall 6: Blocking the FastAPI Event Loop with Synchronous Gemini Calls
+### Pitfall 6: Callsign Reuse Contaminates Historical Baselines
 
 **What goes wrong:**
-The agent endpoint makes a synchronous `google.generativeai` call inside an `async def` endpoint without wrapping it in `run_in_executor`. This blocks the entire event loop for the duration of the LLM call (often 3-15 seconds). While one user's agent request is pending, no other requests — including SSE workflow execution streams — can be served.
+Commercial callsigns (e.g., `EK416`, `SVA123`) are reused across different flights, different days, and sometimes different aircraft operated under the same airline code. A 90-day baseline built from `callsign = 'EK416'` aggregates flights from multiple rotations — different destination airports for charter substitutions, different departure times across seasons. The "unusual departure time" or "unusual takeoff location" detection fires excessive false positives because the historical baseline spans legitimately diverse operations under the same callsign.
 
 **Why it happens:**
-The `google.generativeai` Python SDK's `generate_content()` is synchronous by default. Many examples and tutorials use it in synchronous code. Developers copy the examples directly into async FastAPI handlers without realizing the blocking behavior. The existing codebase already uses `run_in_executor` correctly for Kalman filter CPU work (Phase 16 decision) — but a new developer on the agent feature may not connect the pattern.
+Callsigns appear to be identifiers but are actually flight-schedule numbers. The `flight_metadata` table links `callsign` to `flight_id` and `airline_code`, but not to a single airframe. For behavioral baselines, a narrow identity anchor (ICAO24 hex or registration) is more reliable than callsign alone. Developers unfamiliar with aviation data model assume callsign = aircraft.
 
 **How to avoid:**
-- Use the async client (`google.generativeai.GenerativeModel` with `await model.generate_content_async(...)`) or wrap sync calls in `asyncio.get_event_loop().run_in_executor(None, sync_fn)`.
-- Add a linting comment or architectural note in the agent module: "All LLM calls must be async or wrapped in run_in_executor."
-- The existing streaming SSE infrastructure already serves as a model — agent streaming endpoints should follow the same pattern as workflow execution SSE.
+For Unusual Takeoff Location and Unusual Takeoff Time cubes: require `airline_code` as a secondary grouping key alongside callsign when building the baseline. For the O/D Verification cube: group historical queries by `(callsign, airline_code)` not `callsign` alone. Document this constraint prominently in each cube's description. Add a `min_historical_flights` input (default: 10) — if fewer than N historical flights match, return a diagnostic instead of flagging false anomalies.
 
 **Warning signs:**
-- Workflow execution SSE streams freeze or timeout during concurrent agent requests.
-- Event loop warning messages in Uvicorn logs about blocked coroutines.
-- Agent responses work fine in sequential testing but fail under concurrent load.
+- Baseline query for a common airline callsign returns 5+ distinct `origin_airport` values
+- Anomaly rate for known-normal scheduled flights exceeds 30%
+- Anomaly score distribution clusters near 0 (baseline too noisy to distinguish deviations)
 
-**Phase to address:** Agent infrastructure phase (FastAPI endpoint design).
+**Phase to address:**
+Phase implementing Unusual Takeoff Location and Unusual Takeoff Time cubes. Add a "minimum baseline quality" check before computing deviations.
 
 ---
 
-### Pitfall 7: Agent Edits Break Existing Canvas State
+### Pitfall 7: Threshold Defaults That Are Meaningless for Middle East Airspace
 
 **What goes wrong:**
-The Canvas Agent modifies the workflow by adding/removing nodes or edges. The Zustand store's React Flow state gets out of sync with what the agent sent to the backend. On the next render, React Flow shows stale edge handles, orphaned nodes, or broken connections. Or: the agent's edit applies cleanly in the backend but the frontend doesn't re-render because the store update was partial.
+Statistical threshold defaults (e.g., `sensitivity: 2.0` standard deviations, `min_deviation_nm: 5.0`) are set based on generic aviation patterns. Middle East airspace has different characteristics: shorter domestic routes, more military-adjacent airspace, frequent route deviations around conflict zones, and different traffic density patterns. A 2-stddev sensitivity threshold produces constant false positives for normal regional flights, causing analysts to distrust the cube's output entirely.
 
 **Why it happens:**
-The existing Zustand store is designed for user-driven edits via React Flow's `onNodesChange`/`onEdgesChange` callbacks. An agent-driven edit bypasses this path — it patches the workflow directly. If the frontend re-fetches the workflow and attempts to merge it with local state, conflicts arise. React Flow's internal edge validity depends on the handle IDs being present on mounted nodes — if a node is added by the agent before its incoming edge is rendered, the edge appears broken.
+Developers set defaults based on documentation examples or Western-airspace assumptions without calibrating against the actual data in `research.flight_metadata` and `research.normal_tracks`. The first time an analyst runs the cube, they see dozens of "anomalous" flights that are obviously normal.
 
 **How to avoid:**
-- Define a single "agent edit" operation in the Zustand store: `applyAgentWorkflow(newGraph)` that replaces the entire canvas state atomically rather than patching it. This avoids partial-state bugs.
-- After any agent-driven change, the frontend should treat the result as a full workflow replacement (same as loading a saved workflow), not an incremental update.
-- Debounce re-renders: if the agent generates a multi-step edit, batch all changes and apply them in one React state update, not node-by-node.
-- Test agent edits with the same save/load serialization tests that exist for manual edits.
+Before finalizing any threshold default, run the query against the production database to establish baseline distributions for the Middle East routes in the dataset. For departure time anomaly: compute the actual standard deviation of `first_seen_ts % 86400` for common callsigns and pick a default sensitivity that produces a false positive rate below 5% on known-normal flights. Document the calibration in the cube description field. Make thresholds prominent first-class inputs, not buried optional params.
 
 **Warning signs:**
-- "Broken" looking edges after agent edits (dashed where they shouldn't be, or missing entirely).
-- Console errors about missing handles from React Flow after agent operations.
-- Workflow runs correctly after saving/reloading even though it looks broken on canvas.
+- Default threshold values are round numbers (2.0, 5.0, 15) without calibration evidence
+- First demo of the cube produces anomaly flags on obviously normal flights
+- No calibration note in the cube description or parameter documentation
 
-**Phase to address:** Canvas Agent implementation phase (frontend integration).
-
----
-
-### Pitfall 8: Streaming Agent Responses Without Client Disconnect Handling
-
-**What goes wrong:**
-The agent endpoint streams tokens back via SSE. The user closes the chat panel or navigates away mid-response. The Gemini generation continues, consuming tokens and holding a server connection open. With multiple concurrent users, leaked connections accumulate and memory grows unboundedly.
-
-**Why it happens:**
-The project already uses SSE for workflow execution (sse-starlette). The existing workflow SSE does not need disconnect handling because runs complete quickly and automatically. Agent conversations are longer and user-interruptible. A developer naturally copies the workflow SSE pattern without adding disconnect detection.
-
-**How to avoid:**
-- Inject the FastAPI `Request` object into SSE generator functions and check `await request.is_disconnected()` before each `yield`.
-- Wrap the Gemini streaming call in a try/finally block: on generator close (client disconnect), cancel any pending Gemini call if the async client supports it.
-- Set a maximum token budget per agent response (e.g., 2,000 tokens for Build Agent suggestions) and stop generation early if exceeded.
-- Test disconnect handling explicitly: load test with clients that disconnect after 1 second.
-
-**Warning signs:**
-- Server memory grows over time with agent usage.
-- Long-running agent SSE connections visible in `ss -s` or nginx access logs with no corresponding user.
-- Build Agent uses same pattern as workflow SSE but with no disconnect check.
-
-**Phase to address:** Agent infrastructure phase (streaming endpoint design).
+**Phase to address:**
+Every phase implementing a detection/threshold cube. Include a calibration task in the phase plan: "Run default threshold against 30-day dataset; verify false positive rate < 10%."
 
 ---
 
@@ -195,13 +221,11 @@ The project already uses SSE for workflow execution (sse-starlette). The existin
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Inlining all cube definitions in system prompt | Fast to implement | 10k+ token overhead per request, context pollution, hard to update | Never — use two-tier tool instead |
-| Passing raw cube results as tool context | Simple code | Context explosion after 3-4 turns | Never for large result sets |
-| Synchronous Gemini calls in async handlers | Familiar SDK usage | Blocks event loop, breaks concurrent SSE | Never in FastAPI async context |
-| Hard-coding workflow structure examples in system prompt | Reliable output format | Brittle when catalog evolves, must be kept in sync | Only for initial scaffolding, replace with tool-driven approach |
-| Single monolithic agent for all 5 agent types | Less infrastructure | Token waste, poor performance, harder to tune | Never — the planned separation is correct |
-| Passing full conversation history to sub-agents | Easier to implement | Context explosion, sub-agent confusion | Never — always summarize before handoff |
-| Skipping validation after workflow generation | Faster MVP | Silent broken workflows delivered to users | Never — validation is cheap, debugging broken workflows is expensive |
+| Use `first_seen_ts` as departure time proxy | No need to query `normal_tracks` for first track point | `first_seen_ts` reflects ADS-B first pick-up, which may be mid-flight for some sources; produces incorrect departure-time baseline for "No Recorded Takeoff" detection | Never for takeoff detection; acceptable for O/D route analysis |
+| Skip `EXPLAIN ANALYZE` during development | Faster initial iteration | Queries that run in 0.1s against dev fixtures take 60s in production; discovered only after shipping | Never — always EXPLAIN against prod-scale data before marking a phase complete |
+| Python `statistics.stdev()` on fetched rows instead of SQL `STDDEV()` | Simpler Python code | Requires fetching all historical rows into memory; crashes for busy callsigns with 500+ flights | Never for inputs that could exceed 100 rows |
+| Hardcode `lookback_days=90` without input parameter | Simpler cube definition | Analyst cannot tune to shorter windows; every run touches maximum data volume | Never — always expose as a configurable input |
+| Omit LIMIT on `normal_tracks` historical queries | Avoids truncation of statistical sample | Memory exhaustion and timeout for common callsigns | Never — always add a LIMIT reflecting cube's computational budget |
 
 ---
 
@@ -209,13 +233,12 @@ The project already uses SSE for workflow execution (sse-starlette). The existin
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Gemini function calling | Using `AUTO` mode for required tool calls | Set `tool_config` to `ANY` when tool call is mandatory; `AUTO` only for optional enrichment |
-| Gemini streaming | Mixing sync and async SDK usage | Use `generate_content_async()` exclusively in async FastAPI handlers |
-| Gemini response schema | Relying on `response_mime_type: "application/json"` alone | Always combine with `response_schema` (Pydantic model or dict schema) for structured output |
-| React Flow + agent edits | Patching store node-by-node from agent diffs | Use atomic `applyAgentWorkflow(newGraph)` to replace full canvas state |
-| Zustand + agent state | Storing agent conversation history in the same store as canvas state | Separate concerns — agent chat state in its own slice or React state |
-| SSE for agent streaming | Copying workflow SSE pattern without disconnect handling | Add `request.is_disconnected()` check in every agent SSE generator |
-| Cube Expert sub-agent | Passing orchestrator history to sub-agent | Pass only the task; sub-agent has no memory of the broader session |
+| WorkflowExecutor input resolution | New cube reads `inputs.get("flight_ids")` expecting a Python list but connection passes a JSON string from upstream serialization | Always normalize: `if isinstance(raw, str): raw = [s.strip() for s in raw.split(",") if s.strip()]` — see `get_flight_course.py` lines 56-57 |
+| Full Result port | Behavioral cube reads `full_result["flights"]` directly, crashing when upstream is FilterFlights which uses key `filtered_flights` | Always check multiple keys: `full_result.get("flights") or full_result.get("filtered_flights") or []` |
+| Empty `ANY()` array | `WHERE flight_id = ANY(:ids)` with empty Python list causes PostgreSQL type error or silent empty result | Always guard: `if not flight_ids: return early_empty_result` — established pattern in `get_flight_course.py` lines 63-66 |
+| Bigint timestamps in output | Cube returns raw `first_seen_ts` bigint; frontend renders it as a 13-digit integer instead of a date | Always convert in Python: `datetime.utcfromtimestamp(ts).isoformat() + "Z"` before returning |
+| `public.positions` vs `research.normal_tracks` | Developer copies timestamp handling from `dark_flight_detector.py` (which queries `public.positions` with native timestamp) and applies it to `normal_tracks` (bigint) | The two tables use different timestamp formats; never copy timestamp handling across these tables without checking column type |
+| SSE execution timeout | Long historical query (>25s) holds the async event loop; SSE heartbeat misses; client disconnects | Set `SET LOCAL statement_timeout = '20s'` before expensive queries; catch timeout and return partial result with diagnostic message |
 
 ---
 
@@ -223,11 +246,11 @@ The project already uses SSE for workflow execution (sse-starlette). The existin
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Cube catalog loaded on every agent call | Slow first token, 500ms+ overhead per turn | Cache catalog in memory at startup (already done via CubeRegistry) | Immediate |
-| Tool schemas regenerated per request | CPU overhead on every call | Build tool definition list once at app startup, not per request | With 10+ concurrent users |
-| Agent conversation history grows unbounded | Each turn slower than the last | Implement context pruning at 50k tokens | After 10-15 turns |
-| Sub-agent spawned synchronously in orchestrator | Blocks orchestrator turn until sub-agent completes | If sub-agents run in parallel, make them concurrent (asyncio.gather) | With 2+ parallel sub-agents |
-| Gemini call per each cube definition fetch | N calls to get N cube details | Batch cube detail fetches where possible; encourage agent to plan all needed cubes upfront | When agent needs 5+ cubes |
+| Direct callsign query on `normal_tracks` | Seq scan; 45-120s query time | Use two-step: metadata → flight_ids → normal_tracks with `ANY(:ids)` | Immediately on production 76M-row table |
+| `fetchall()` without GROUP BY on historical track query | Memory spike; OOM kill | Push all aggregation into SQL; never fetch raw points for statistical computation | Any callsign with > 200 historical flights in the window |
+| N+1 per-flight queries in execute() | Linear execution time scaling with input count | Batch all lookups with `ANY(:array)` + `GROUP BY` | Input count > 50 flights |
+| Multiple independent connections per cube | Connection pool exhaustion under concurrent workflow runs | Combine related queries within a single `async with engine.connect()` context using CTEs or sequential execution | 4+ behavioral cubes running concurrently in one workflow |
+| Python ray-casting inherited from AllFlights polygon filter | Memory spike when bbox returns 100K+ tracks | Cap candidate track fetch at 50K rows; behavioral cubes should avoid polygon-on-tracks patterns entirely | Any polygon filter over Middle East region with large bbox |
 
 ---
 
@@ -235,10 +258,8 @@ The project already uses SSE for workflow execution (sse-starlette). The existin
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Passing user-supplied text directly into SQL via agent tool | SQL injection via LLM-interpreted user input | All cube parameters flow through existing Pydantic validation + parameterized queries; agent tools must use cube API not raw SQL |
-| Agent system prompt contains database schema or internal architecture details | Prompt leakage if Gemini API is compromised or user extracts via prompt injection | Keep system prompts generic; cube tool provides schema on demand; no DB credentials in prompt |
-| Trusting agent-generated workflow graph without validation | Malformed graph crashes executor or causes unexpected DB queries | Always validate generated graph against catalog schema before execution |
-| No rate limiting on agent endpoints | Cost explosion from runaway agent loops or malicious users | Add per-session token budget; the project is internal (no auth) so rate limit by IP or session ID |
+| String interpolation of callsign input into SQL | SQL injection via analyst-entered callsign | Always use SQLAlchemy `text()` with `:param` placeholders; established throughout codebase |
+| Logging raw SQL with interpolated parameter values at INFO level | Analyst callsigns and flight IDs appear in server logs in plaintext | Log query structure at DEBUG; log parameter keys (not values) at INFO |
 
 ---
 
@@ -246,26 +267,27 @@ The project already uses SSE for workflow execution (sse-starlette). The existin
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Agent makes silent edits to canvas without notification | User doesn't know what changed, can't review before running | Show a diff summary ("Added 2 cubes, modified 1 connection") before applying agent changes; require user confirmation |
-| Build wizard has too many free-form questions | Analysts get frustrated with blank text fields | Use clickable option cards for common choices; free text only as an escape hatch |
-| Canvas Agent responds with verbose explanations | Users want action, not essays | Cap prose to 2-3 sentences; use structured diff format for workflow changes |
-| Agent fails silently when it can't find suitable cubes | User stuck with no feedback | Always return a "best effort" response with what was found and what's missing |
-| Wizard agent starts over if user goes back a step | Frustrating if early choices were wrong | Persist wizard state; allow backwards navigation without resetting all selections |
-| Agent edits trigger immediate re-render with no loading state | Canvas flickers; user sees broken intermediate state | Show "Applying changes..." overlay during canvas state replacement |
+| Toggle mode params all visible simultaneously | Analyst sees `lookback_days`, `start_time`, and `end_time` with no indication of mutual exclusivity | Use `widget_hint` groups or parameter descriptions to clearly indicate "OR: use these two together / OR: use this one" |
+| Threshold params with no units | Analyst sets `sensitivity: 2` thinking it is a percentage; it is standard deviations | Always include units and range in description: "Standard deviations above historical mean. Typical range: 1.5–3.0. Lower = more sensitive." |
+| Cube returns 0 results with no diagnostic | Analyst cannot distinguish "no anomalies found" from "callsign has no historical data" from "query misconfigured" | Return a `diagnostic` output key: `{"callsigns_matched": 0, "historical_flights_found": 0, "reason": "No flights found for callsign in lookback window"}` |
+| Default lookback of 90 days | First run takes 30+ seconds; analyst waits with no feedback | Default to 30 days; document that longer windows are available; let analyst opt into 90 days |
+| Deviation score as raw float only | Analyst does not know if 0.72 is alarming or normal | Expose a `severity` string output (`low / medium / high / critical`) alongside raw score, with documented thresholds in the cube description |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Build Agent generates workflow:** Verify it called get_cube_definition for every cube referenced before generating edges, not just browse_catalog.
-- [ ] **Canvas Agent chat panel:** Verify the conversation history is pruned at a token limit, not just passed raw each turn.
-- [ ] **Cube Expert sub-agent:** Verify it receives only the task description, not the full orchestrator conversation history.
-- [ ] **Agent SSE streaming:** Verify client disconnect handling is in place — kill the Gemini call when the client disconnects.
-- [ ] **Gemini tool_config:** Verify `tool_config` is set to `ANY` for turns where a tool call is required, not left as default `AUTO`.
-- [ ] **Generated workflow validation:** Verify every agent-generated workflow is validated against live catalog data before being sent to the frontend.
-- [ ] **React Flow canvas update:** Verify agent-driven workflow changes go through `applyAgentWorkflow()` (atomic replace) not incremental node patches.
-- [ ] **Async Gemini calls:** Verify all `generate_content` calls in FastAPI handlers are `generate_content_async` or wrapped in `run_in_executor`.
-- [ ] **Results Interpreter:** Verify it receives a result summary (row counts, samples) not raw 10k-row result JSON.
+- [ ] **Epoch arithmetic:** Every time-based filter uses `int(time.time()) - offset` — not `datetime.now()`, `datetime.utcnow()`, or PostgreSQL `NOW()`
+- [ ] **Empty flight_id guard:** Every `ANY(:ids)` query has an early-return before the query when the list is empty
+- [ ] **N+1 check:** No `for item in list: await conn.execute()` pattern anywhere in `execute()` — search for loops containing DB calls
+- [ ] **EXPLAIN verified:** Every new SQL query touching `normal_tracks` or `flight_metadata` has been tested with `EXPLAIN ANALYZE` against the real database before the phase closes
+- [ ] **SQL aggregation:** All statistical computations (mean, stddev, count, percentile) are computed via SQL aggregate functions, not by fetching raw rows into Python
+- [ ] **Output key consistency:** Cube output key names match what downstream cubes expect — verify against `ParamDefinition.name` of the expected downstream inputs
+- [ ] **Bigint-to-ISO conversion:** Every timestamp in cube output is converted to ISO string, not returned as a raw integer
+- [ ] **Full result key fallback:** `full_result` extraction handles multiple possible upstream key names (`flights`, `filtered_flights`, `flight_data`)
+- [ ] **Toggle mode validation:** Cubes with `start_time`/`end_time`/`lookback_days` guard against partial input (one of start/end set, other is None)
+- [ ] **Threshold defaults calibrated:** All threshold defaults have been validated against production data and produce < 10% false positive rate on known-normal flights
+- [ ] **Callsign ambiguity documented:** Any cube using callsign-only historical lookup documents the reuse caveat in its `description` field
 
 ---
 
@@ -273,13 +295,12 @@ The project already uses SSE for workflow execution (sse-starlette). The existin
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Invalid connections generated by agent | LOW | Validation layer catches it before frontend; agent retries with corrected schema; no user impact |
-| Context explosion mid-session | MEDIUM | Clear conversation history and restart agent session; user loses context but workflow is preserved |
-| Event loop blocked by sync Gemini call | HIGH | Requires code change + redeploy; all concurrent requests affected until fixed |
-| Agent edits break canvas state | MEDIUM | User can reload workflow from DB (save is preserved); canvas state regenerates from saved graph |
-| Sub-agent context explosion | MEDIUM | Cap sub-agent turns hard at 3; return best-effort response; agent infrastructure refactor needed for full fix |
-| Streaming connection leak | MEDIUM | Restart server process; add disconnect handling in next deploy |
-| Tool overload degrading cube selection | MEDIUM | Refactor tool definitions to strictly enforce two-tier pattern; system prompt update + redeploy |
+| Epoch arithmetic bug (zero results) | LOW | Replace datetime usage with `int(time.time()) - offset`; add unit test with known fixture epoch; redeploy |
+| Full table scan discovered post-implementation | MEDIUM | Add two-step metadata→normal_tracks query; no schema changes needed; rewrite query logic only |
+| N+1 pattern under load | MEDIUM | Refactor loop into batched `ANY()` query + `GROUP BY`; Python join replaces per-item lookup; test with 500-flight input |
+| Memory exhaustion from raw `fetchall()` | HIGH | Requires rethinking computation model: push aggregation into SQL; test with realistic data volume before re-shipping |
+| False positive rate too high from callsign reuse | MEDIUM | Add `airline_code` as secondary grouping key; OR add hex input; requires UI parameter addition and logic update |
+| Toggle mode silent fallback confusing analysts | LOW | Add partial-input validation guard; raise informative ValueError; manifests as visible error in cube status, not silent wrong output |
 
 ---
 
@@ -287,31 +308,27 @@ The project already uses SSE for workflow execution (sse-starlette). The existin
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Invalid workflow graph connections | Agent infrastructure (tool design + system prompts) | Test: run Build Agent output through WorkflowExecutor validation; expect 0 invalid connections |
-| Tool catalog overload | Agent infrastructure (two-tier catalog tool definition) | Check: count tool call tokens per agent turn; verify get_cube_definition is called before edge generation |
-| Multi-turn context explosion | Agent infrastructure (context management) + Canvas Agent implementation | Test: simulate 20-turn conversation; verify token count stays under 50k per turn |
-| Gemini returning text instead of tool call | Agent infrastructure (tool_config + descriptions) | Test: every agent turn that should call a tool does call a tool in 10/10 test runs |
-| Sub-agent context explosion | Agent infrastructure (sub-agent design) | Test: Cube Expert invocation adds <500 tokens to orchestrator history |
-| Blocking event loop with sync Gemini calls | Agent infrastructure (FastAPI endpoint design) | Test: concurrent workflow SSE + agent request; SSE must not freeze |
-| Canvas state broken by agent edits | Canvas Agent implementation | Test: apply agent-generated workflow; verify React Flow renders all edges without errors |
-| Missing client disconnect handling | Agent infrastructure (streaming endpoints) | Test: disconnect after 500ms; verify server-side Gemini call terminates within 2 seconds |
+| Epoch timestamp arithmetic | Every cube phase touching time-based queries | Unit test: pass known bigint epoch, verify correct result; check query plan shows no date-type coercion |
+| N+1 query pattern | Every behavioral cube phase | Code review: no loops containing `conn.execute()` in execute() methods |
+| Result explosion from raw track fetch | Phases adding historical baseline cubes | EXPLAIN must show index scan not seq scan; memory profile stays under 100MB during execution |
+| Missing index coverage | First phase adding historical lookback — before coding begins | Run EXPLAIN ANALYZE on production DB against real table; confirm index scan |
+| Toggle mode silent fallback | Phases with datetime/lookback toggle | Integration test: provide only `end_time` without `start_time`; verify ValueError is raised |
+| Callsign reuse contaminating baselines | Phases adding unusual-behavior detection | Functional test: run known scheduled-airline callsign through anomaly detection; verify false positive rate < 10% |
+| Threshold defaults uncalibrated | Every phase with detection/threshold cube | Calibration task in phase plan: run defaults against 30-day dataset; document false positive rate |
+| Empty ANY() list crash | Every cube receiving flight_ids from upstream | Unit test: pass empty `flight_ids`; verify early empty return without DB error |
+| Bigint in output | Every cube returning timestamps | Functional test: verify output JSON timestamps are ISO strings, not 10-digit integers |
 
 ---
 
 ## Sources
 
-- Google AI for Developers — Function Calling: https://ai.google.dev/gemini-api/docs/function-calling
-- Context Engineering for AI Agents (2025): https://promptbuilder.cc/blog/context-engineering-agents-guide-2025
-- The Multi-Agent Trap (Towards Data Science): https://towardsdatascience.com/the-multi-agent-trap/
-- Architecting efficient context-aware multi-agent framework (Google Developers Blog): https://developers.googleblog.com/architecting-efficient-context-aware-multi-agent-framework-for-production/
-- AI Tool Overload: Why More Tools Mean Worse Performance (Jenova.ai): https://www.jenova.ai/en/resources/mcp-tool-scalability-problem
-- Why LLM agents break when you give them tools (DEV Community): https://dev.to/terzioglub/why-llm-agents-break-when-you-give-them-tools-and-what-to-do-about-it-f5
-- Streaming AI Agent with FastAPI (DEV Community, 2025-26 Guide): https://dev.to/kasi_viswanath/streaming-ai-agent-with-fastapi-langgraph-2025-26-guide-1nkn
-- Async Streaming Responses in FastAPI (dasroot.net, 2026): https://dasroot.net/posts/2026/03/async-streaming-responses-fastapi-comprehensive-guide/
-- Context Window: What It Is and Why It Matters (Comet.ml): https://www.comet.com/site/blog/context-window/
-- Gemini API Troubleshooting Guide: https://ai.google.dev/gemini-api/docs/troubleshooting
-- Project 12 internal context: .planning/PROJECT.md, .planning/STATE.md
+- Direct code inspection: `backend/app/cubes/all_flights.py`, `filter_flights.py`, `get_flight_course.py`, `dark_flight_detector.py`, `base.py`
+- Schema from `PROJECT.md`: 76M-row `research.normal_tracks` with bigint `timestamp`; 113K-row `research.flight_metadata`; `public.positions` uses native timestamp (contrast case)
+- Execution model from `CLAUDE.md` and `backend/app/engine/` (10,000-row output cap applies to returned results, not internal fetches)
+- Established patterns: two-step flight_metadata → normal_tracks query in `all_flights.py` (polygon branch); empty-list guard in `get_flight_course.py`; `dark_flight_detector.py` timestamp divergence (lines 89 vs 161-165)
+- New cube requirements: `PROJECT.md` v4.0 section (Unusual Takeoff Location, Unusual Takeoff Time, O/D Verification, No Recorded Takeoff)
+- Planned behavioral cube specs: `.planning/new-cubes/02-behavioral-analysis.md`
 
 ---
-*Pitfalls research for: AI agents added to visual dataflow workflow builder (12-flow v3.0)*
-*Researched: 2026-03-22*
+*Pitfalls research for: behavioral analysis cubes — visual flight workflow builder (12-flow v4.0)*
+*Researched: 2026-03-29*

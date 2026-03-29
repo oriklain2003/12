@@ -1,189 +1,202 @@
 # Project Research Summary
 
-**Project:** 12-flow — Visual Dataflow Workflow Builder (AI Agents v3.0 Milestone)
-**Domain:** AI agent system integrated into existing FastAPI + React visual dataflow builder
-**Researched:** 2026-03-22
+**Project:** 12-flow — v4.0 Flight Behavioral Analysis Cubes
+**Domain:** ADS-B flight behavioral analysis and anomaly detection for Tracer 42 intelligence workflows
+**Researched:** 2026-03-29
 **Confidence:** HIGH
 
 ## Executive Summary
 
-12-flow is adding a five-agent AI layer on top of an already-built visual canvas, cube execution engine, and workflow CRUD system. The research covers only the new v3.0 additions: a Build Wizard Agent, Canvas Agent (optimize/fix/general modes), Cube Expert sub-agent, Validation Agent, and Results Interpreter. The existing stack (FastAPI, SQLAlchemy, SSE via sse-starlette, React 18, @xyflow/react, Zustand 5) is proven and unchanged. The only new dependency is `google-genai>=1.68.0` (the GA successor to the deprecated `google-generativeai` SDK). No new backend framework, no LangChain, no frontend chat library — all complexity is in the agent business logic itself.
+The v4.0 milestone extends 12-flow's existing visual dataflow canvas with behavioral analysis cubes that compare current flight patterns against historical baselines from the Tracer 42 PostgreSQL database. The research confirms that **no new dependencies are required**: the existing stack (FastAPI, SQLAlchemy async, asyncpg, scipy 1.17.1, numpy 2.4.2, pandas 3.0.1) already provides everything needed for z-score anomaly detection, circular time-of-day statistics, and Haversine distance calculations. The work is entirely in SQL query design and cube implementation — not in acquiring new libraries or changing any existing infrastructure.
 
-The recommended architecture is a stateless, SSE-streaming agent layer that slots in alongside existing routers with zero modification to existing code. Agents are plain Python classes backed by Gemini 2.5 Flash; conversation history is client-carried in the POST body; tool dispatch uses Gemini's native function calling in manual (non-streaming) mode for tool turns, then streams the final text response. The Build Agent wizard uses clickable option cards (not free text) — a deliberate UX choice to prevent LLM hallucinations from ambiguous analyst input in the flight-analysis domain. Canvas mutations from agents flow through a single new `applyAgentDiff()` Zustand action to preserve undo history.
+The recommended approach follows established patterns already present in the codebase. Five new analysis cubes (`NoRecordedTakeoff`, `UnusualTakeoffLocation`, `UnusualTakeoffTime`, `ODVerifier`, `RouteStats`) plus two aggregation cubes integrate via the existing `BaseCube` drop-in mechanism: place a `.py` file in `backend/app/cubes/`, implement `execute()`, and auto-discovery handles registration. A shared `historical_query.py` utility module should be built first to avoid SQL duplication across the three cubes that need callsign-level historical baselines. All new cubes must accept the `full_result` port to chain naturally after `AllFlights` or `FilterFlights` without explicit wiring.
 
-The critical risk is context explosion across all five agents: the LLM context window degrades well before its technical limit, and tool results from the flight database (76M rows) can be enormous. Every agent must summarize data before injecting it into context. The second major risk is workflow graph validity — the LLM will hallucinate parameter handle IDs if not forced to call `get_cube_definition` before generating edges. Both risks are addressed at the infrastructure layer before any agent-specific features are built.
+The primary risks are data-layer traps rather than architectural challenges. Three critical pitfalls dominate: (1) epoch arithmetic — `research.flight_metadata` and `research.normal_tracks` store timestamps as bigint Unix epoch seconds, not native PostgreSQL timestamps, so any cube using `datetime.now()` or `NOW()` in SQL will silently return zero rows; (2) N+1 query patterns — behavioral cubes that loop per-flight and issue per-callsign historical lookups will time out above 50 input flights; (3) direct callsign queries on the 76M-row `normal_tracks` table without a `flight_id` filter trigger full table scans (45–120 seconds). All three are preventable with established patterns already in the codebase.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing stack requires exactly one new addition: `google-genai>=1.68.0`. This is Google's GA SDK (released May 2025), replacing the deprecated `google-generativeai`. Version 1.67.0 has a known `typing-extensions` bug; 1.68.0 is the minimum safe version. Use `gemini-2.5-flash` for Canvas Agent and Cube Expert (low latency), `gemini-2.5-pro` for Build Agent where reasoning depth matters more. The async client (`client.aio`) is required — synchronous Gemini calls inside async FastAPI handlers will block the event loop and freeze concurrent SSE streams.
-
-Frontend requires zero new packages. The wizard is a `useState`-managed step component (~80 lines); the chat panel streams SSE via `fetch + ReadableStream` using the same pattern already proven for workflow execution. Adding Vercel AI SDK, react-chatbotify, or any chat library would impose UI opinions incompatible with the dark tactical ONYX theme.
+No new backend or frontend dependencies are needed. The existing locked versions (`scipy==1.17.1`, `numpy==2.4.2`) provide `scipy.stats.circmean`/`circstd` for circular time-of-day statistics, z-score computation, and all statistical operations required. Python's `statistics` stdlib covers mean/stdev for small in-memory result sets. The key investment is in SQL query patterns: two-tier queries that pull aggregated baselines from `flight_metadata` (113K rows) rather than raw track points from `normal_tracks` (76M rows).
 
 **Core technologies:**
-- `google-genai>=1.68.0`: Gemini LLM client — GA SDK, async-native, native function calling, already used in tracer-api
-- `sse-starlette` (existing): Agent token streaming — same transport as workflow execution, no new dependencies
-- `@xyflow/react` (existing): Canvas mutations from agents via new `applyAgentDiff()` action
-- `zustand` (existing): New `chatStore` and `wizardStore` slices for agent conversation and wizard state
+- **scipy.stats** (1.17.1, already installed): z-score anomaly detection, circular time-of-day statistics (`circmean`, `circstd`) — use instead of adding `pyod` or `statsmodels`
+- **Python `statistics` stdlib**: in-memory mean/stdev on small SQL result sets — simpler than pandas DataFrames for scalar outputs
+- **SQLAlchemy async + asyncpg** (already installed): shared engine singleton, `text()` with `:param` placeholders — no raw asyncpg bypasses
+- **`asyncio.gather()`** (stdlib): concurrent callsign history fetches — batch instead of per-flight loop
+
+**What NOT to add:** `pyod` (ML overkill), `statsmodels` (regression not needed), PostGIS/geoalchemy2 (not available on read-only RDS), Redis (premature optimization).
 
 ### Expected Features
 
-All P1 features must ship in this milestone. Six feature groups are all table stakes for any AI-assisted workflow builder.
-
-**Must have (table stakes):**
-- Intent preview before canvas modification — confirm before agent rewrites the canvas
-- Clarifying questions before generation — 3 questions max in wizard, 1-2 in chat modes
-- Validation Agent pre-run checks — structural issues explained before execution, not after
-- Actionable error messages — all 5 agents must explain failure paths
-- Mode transparency — visual badge showing which agent mode is active
-- Cancellation / discard — reject agent suggestions without consequence
+**Must have (table stakes) — v4.0 launch:**
+- No Recorded Takeoff cube — first track point altitude check against `normal_tracks`; threshold 300ft; foundational ADS-B dark-flight signal
+- Unusual Takeoff Location cube — Haversine distance vs. historical departure centroid for same callsign/route; threshold 5 NM; uses `flight_metadata.start_lat/start_lon`
+- Unusual Takeoff Time cube — z-score vs. historical departure time distribution using circular statistics; threshold 2.0 stddev; uses `flight_metadata.first_seen_ts`
+- O/D Verification cube — rare/new route flagging; historical O/D frequency for callsign; 180-day lookback; rare threshold 5%
+- Route Statistics cube — SQL GROUP BY aggregation over routes; avg flights per route, total count, min/max duration; 30-day default window
+- Avg Flights Per Day-of-Week cube — 7-element DOW distribution per route; `EXTRACT(DOW FROM to_timestamp(...))` pattern
+- Lookback/datetime toggle — `lookback_days` + `baseline_start`/`baseline_end` + `time_mode` select; same pattern as `AllFlights`; partial-input guard required
 
 **Should have (competitive differentiators):**
-- Build Wizard with clickable option cards — structured choices for non-technical analysts; no free text for cube selection
-- Two-tier cube discovery (browse summary → full definition) — token efficiency + accuracy; prevents catalog overload
-- Mission-scoped result interpretation — Results Interpreter contextualizes findings in Tracer 42 flight-analysis terms
-- Pre-execution validation — Validation Agent is proactive vs. competitors' reactive post-failure errors
-- Domain-aware cube suggestion — system prompt carries Tracer 42 flight/track/anomaly context
+- Deviation scoring (0.0–1.0 normalized float) alongside boolean flags — enables downstream ranking via `FilterFlights`
+- `accepts_full_result=True` port on all new cubes — drop-in after any upstream cube without explicit wiring
+- Extensible O/D check registry — internal `_CHECKS` list pattern allows future checks without interface changes
+- `diagnostic` output key per cube — distinguishes "no anomalies found" from "insufficient history" from "empty input"
+- `severity` string output (`low/medium/high/critical`) alongside raw deviation score
 
 **Defer (v2+):**
-- Natural language to parameter values ("show flights last Tuesday" → auto-fill time range)
-- Wizard history / suggested re-runs (add after usage data confirms analyst re-visit pattern)
-- Agent-generated cube stubs (out of scope — custom cube creation deferred)
-- Cross-workflow insights
+- Unified behavioral scoring bundle cube — single cube running all 4 detection checks; add only when pipeline complexity feedback warrants it
+- Percentile-based thresholds — replace stddev cutoffs with data-driven percentiles; add when false positive feedback arrives
+- Per-registration baseline (individual tail number) — unreliable hex/registration linkage in current schema
+- Cross-callsign meeting detection — requires separate `meeting_detector` cube design from `.planning/new-cubes/02-behavioral-analysis.md`
+- ML anomaly scoring (isolation forest, autoencoder) — requires model lifecycle management out of scope for v4.0
 
 ### Architecture Approach
 
-The agent layer is a one-way addition: new code imports from existing packages (CubeRegistry, WorkflowGraph schema, existing SSE infrastructure) but existing packages never import from agents. The `app/agents/` package is the isolation boundary. Three HTTP endpoints are added to a new `app/routers/agent.py`: `POST /api/agent/chat` (SSE stream for Canvas and Build agents), `POST /api/agent/validate` (synchronous, no streaming), and `POST /api/agent/interpret` (Results Interpreter). All agents are stateless — history is client-carried. The Cube Expert sub-agent is a plain Python object instantiated inside Canvas and Build agents, never exposed as an HTTP endpoint.
+The architecture is additive: drop new cube files into `backend/app/cubes/`, create one shared utility module, and add two duration-filter params to the existing `FilterFlights` cube. No changes to `BaseCube`, `CubeRegistry`, `WorkflowExecutor`, `ParamType` enum, or any frontend components. The shared `historical_query.py` module is the only structural addition — it provides `get_callsign_history()` and `get_route_history()` async functions used by three of the five new cubes. Each analysis cube handles its own historical baseline fetch internally (not as a separate user-facing upstream cube) to keep the canvas clean.
 
 **Major components:**
-1. `app/agents/base_agent.py` — Abstract base: Gemini client init, skill file loading, streaming loop, manual tool dispatch
-2. `app/agents/tools.py` — Pure Python tool functions (list_cubes_summary, get_cube_detail, build_workflow_graph, etc.); testable without LLM
-3. `app/agents/cube_expert.py` — Sub-agent for two-tier catalog lookup; called by Canvas and Build agents as a Python object
-4. `app/agents/canvas_agent.py` — Three modes (optimize/fix/general); receives serialized graph; streams diffs back
-5. `app/agents/build_agent.py` — Wizard mode; accepts step context; generates complete workflow on final step
-6. `app/agents/validation_agent.py` — Structural checks in pure Python; LLM only for human-readable explanations
-7. `app/agents/interpreter_agent.py` — Post-execution result interpretation with mission context from workflow metadata
-8. `src/store/chatStore.ts` + `wizardStore.ts` — New Zustand slices; chatStore owns conversation history
-9. `src/components/Agent/ChatPanel.tsx` — Collapsible sidebar in EditorPage; sibling to canvas, not nested inside ReactFlowProvider
-10. `src/pages/BuildWizardPage.tsx` — New route `/workflow/build`; option card steps
+1. `backend/app/cubes/historical_query.py` — shared async utility; `get_callsign_history()` and `get_route_history()`; returns `list[dict]`; imported directly by analysis cubes
+2. `backend/app/cubes/no_recorded_takeoff.py` — queries `normal_tracks` with `flight_id = ANY(:ids)` for MIN(alt); no historical baseline; validates the output schema pattern
+3. `backend/app/cubes/unusual_takeoff_location.py` — calls `get_callsign_history`; Python Haversine vs. centroid; `asyncio.gather()` batch pattern
+4. `backend/app/cubes/unusual_takeoff_time.py` — calls `get_callsign_history`; `scipy.stats.circmean/circstd` for time-of-day; z-score anomaly detection
+5. `backend/app/cubes/od_verifier.py` — extensible `_CHECKS` registry; calls both `get_callsign_history` and `get_route_history`
+6. `backend/app/cubes/route_stats.py` — pure Python aggregation over input flight list; no additional DB queries; includes DOW breakdown
+7. `filter_flights.py` (modified) — add `min_flight_time_minutes` and `max_flight_time_minutes` params only; no logic restructure
+
+**Key patterns to follow:**
+- Full result input acceptance: `accepts_full_result=True` + fallback key handling (`flights` / `filtered_flights`)
+- Early empty-list guard before any DB call — `if not flight_ids: return empty_result`
+- Batch callsign fetch: `asyncio.gather()` over unique callsigns, then lookup dict for per-flight processing
+- Statistical output schema: `{flight_id, callsign, deviation_type, deviation_score, details, historical_sample_size}`
+- DB connection released before statistics computation — avoid holding pool slot during CPU work
 
 ### Critical Pitfalls
 
-1. **Invalid workflow graph connections from LLM hallucination** — Force `get_cube_definition` calls before any edge generation via system prompt and Gemini `tool_config: ANY`. Validate every generated graph against live catalog data (Pydantic + WorkflowExecutor validation) before delivering to frontend. Never skip validation.
+1. **Epoch arithmetic on bigint timestamp columns** — `research.normal_tracks.timestamp` and `flight_metadata.first_seen_ts` are bigint Unix epoch seconds, not native PostgreSQL timestamps. Using `datetime.now()`, `datetime.utcnow()`, or PostgreSQL `NOW()` in SQL silently returns zero rows. Prevention: always compute epoch cutoffs in Python (`int(time.time()) - lookback_days * 86400`) and pass as integer params. Establish `epoch_cutoff()` shared helper in Phase 1.
 
-2. **Context explosion in multi-turn conversations** — Never pass raw cube execution results as tool context. Summarize to `{cube, result_count, sample[3 rows], columns}`. Prune conversation history at 50k tokens. Pass the workflow graph as a structured reference, not full JSON, on each turn.
+2. **N+1 query pattern — per-flight historical lookups** — A loop issuing one `conn.execute()` per callsign fails above 50 input flights. Prevention: extract unique callsigns first, batch-fetch with `asyncio.gather()`, build lookup dict, then process flights in pure Python. No `await conn.execute()` inside a `for flight in flights` loop.
 
-3. **Tool catalog overload degrades cube selection accuracy** — Enforce two-tier catalog access architecturally: `browse_catalog()` returns summaries only; `get_cube_definition(cube_name)` loads one cube on demand. Never inline all cube definitions in the system prompt. Cap tools per agent at 8 or fewer.
+3. **Direct callsign query on `normal_tracks` (76M rows)** — Querying `normal_tracks` by `callsign` without a `flight_id` filter triggers a full table scan (45–120 seconds). Prevention: always use the two-step pattern — query `flight_metadata` (113K rows) for `flight_ids` first, then query `normal_tracks` with `flight_id = ANY(:ids)`. Run `EXPLAIN ANALYZE` on every new `normal_tracks` query before closing a phase.
 
-4. **Gemini returning text instead of tool call** — Use `tool_config: ANY` when tool calls are mandatory (catalog lookup before generation). Validate every response for `function_call` parts before treating it as text. Test each tool definition in isolation.
+4. **Raw `fetchall()` on track points for statistical baselines** — The 10,000-row executor output cap protects only returned results, not internal memory consumption. A busy callsign with 500 historical flights × 400 track points = 200K rows in Python memory causes OOM. Prevention: push all statistics into SQL `AVG()`, `STDDEV()`, `COUNT()` aggregate functions. Use `flight_metadata.start_lat/start_lon` (precomputed) instead of querying `normal_tracks` for departure location.
 
-5. **Blocking event loop with synchronous Gemini calls** — Use `client.aio.models.generate_content_stream()` exclusively in async FastAPI handlers. This breaks concurrent workflow SSE streams if violated — the failure mode is non-obvious and affects all users, not just the agent requester.
+5. **Datetime toggle silent fallback on partial input** — If `end_time` is wired but `start_time` is None, the `if start_time and end_time:` guard silently falls back to relative mode. Prevention: add explicit partial-input validation guard that raises a descriptive `ValueError` when exactly one of `start_time`/`end_time` is set.
 
-6. **Agent edits breaking canvas state** — Agent-driven canvas mutations must go through atomic `applyAgentDiff()` on flowStore, which calls `pushSnapshot()` first. Never patch nodes incrementally or replace entire canvas state without snapshot.
+6. **Callsign reuse contaminating historical baselines** — Commercial callsigns are flight-schedule numbers reused across different rotations and routes. Grouping historical queries by callsign alone produces noisy baselines and excessive false positives. Prevention: add `airline_code` as secondary grouping key; enforce `min_historical_flights` guard (default 10) before computing deviations.
 
-7. **SSE connection leaks when user disconnects** — Add `await request.is_disconnected()` check before each `yield` in agent SSE generators. The existing workflow SSE pattern does not include this — agent conversations are longer and user-interruptible.
-
-8. **Sub-agent context explosion** — Pass only the task description to Cube Expert, not the orchestrator's full history. Enforce a structured response schema (Pydantic) to prevent verbose prose. Cap sub-agent turns at 3.
+7. **Threshold defaults uncalibrated for Middle East airspace** — Round-number defaults (2.0 stddev, 5 NM) set without production data calibration will fire false positives on normal regional flights. Prevention: run defaults against 30-day production dataset during Phase 3; verify false positive rate < 10% on known-normal flights before marking each cube complete.
 
 ## Implications for Roadmap
 
-Based on research, all pitfalls resolve to a single prerequisite: the agent infrastructure must be built correctly before any agent-specific features. The build order is dependency-driven.
+Based on combined research, a 4-phase build order is recommended. Component dependencies and risk mitigation determine the sequence.
 
-### Phase 1: Agent Infrastructure
-**Rationale:** All 5 agents depend on this. Getting Gemini integration, tool dispatch, context management, and streaming right here prevents every critical pitfall. Building agents on a broken foundation means rework across all subsequent phases.
-**Delivers:** Gemini client (`base_agent.py`), skill file loading, SSE streaming endpoint (`agent.py` router), two-tier catalog tools (`tools.py`), client-carried history pattern, disconnect handling, async-only LLM call enforcement
-**Addresses:** Intent preview, mode transparency, actionable error messages (all table-stakes UX features depend on working infrastructure)
-**Avoids:** Pitfalls 1, 2, 3, 4, 5, 6, 7, 8 — all are infrastructure-layer problems; this phase is where prevention happens
-**Research flag:** Standard patterns — Gemini SDK docs are complete; SSE pattern is proven in codebase. Skip `/gsd:research-phase`.
+### Phase 1: Shared Utility Foundation + Duration Filter Enhancement
 
-### Phase 2: Cube Expert Sub-Agent + Validation Agent
-**Rationale:** Cube Expert is a dependency of both Canvas Agent and Build Agent. Validation Agent is lowest complexity, highest value, and pure Python — fast win that blocks no user on broken pipelines. Both can be built and tested before any frontend work.
-**Delivers:** `cube_expert.py` with two-tier catalog tool dispatch; `validation_agent.py` structural checks; `POST /api/agent/validate` endpoint; inline validation warnings on CubeNode
-**Uses:** `tools.py` from Phase 1; existing CubeRegistry; Pydantic validation against live catalog
-**Implements:** Two-tier catalog pattern; sub-agent boundary (task-only context handoff)
-**Avoids:** Pitfalls 1 (catalog validation), 2 (tool overload), 5 (sub-agent context explosion)
-**Research flag:** Standard patterns. Skip `/gsd:research-phase`.
+**Rationale:** Three of the five new analysis cubes depend on `historical_query.py`. Building this shared module first allows statistical cubes to be written cleanly and tested in isolation. Duration filter params on `FilterFlights` are self-contained with no dependencies — low-effort, high polish value, and a natural warm-up. This phase also establishes the `epoch_cutoff()` shared helper that every subsequent cube must use; solving the epoch arithmetic pitfall once eliminates it from all future phases.
 
-### Phase 3: Canvas Agent Chat Panel
-**Rationale:** Canvas Agent is the primary ongoing interaction surface for users who already know how to build workflows. Requires Phase 1 (infrastructure) and Phase 2 (Cube Expert). The frontend chat panel and `applyAgentDiff()` Zustand action both land here.
-**Delivers:** `canvas_agent.py` (3 modes: optimize/fix/general); `chatStore.ts`; `ChatPanel.tsx` component in EditorPage; `flowStore.applyAgentDiff()` action; `src/api/agent.ts` streaming client
-**Implements:** Canvas Agent Chat Flow data path; AgentDiff atomic application; mode-switching UI
-**Avoids:** Pitfalls 3 (context history pruning in chatStore), 6 (atomic canvas mutations), 7 (disconnect handling)
-**Research flag:** The `applyAgentDiff` / React Flow interaction is worth verifying against React Flow v12+ docs during planning.
+**Delivers:** `historical_query.py` with `get_callsign_history()` and `get_route_history()`; `epoch_cutoff()` utility; `min_flight_time_minutes` and `max_flight_time_minutes` params on `FilterFlights`
 
-### Phase 4: Build Wizard Agent + UI
-**Rationale:** Build Wizard is highest user-facing value for new analysts but has the most moving parts (multi-step UI, Cube Expert integration, workflow generation). Comes after Canvas Agent because the wizard agent reuses the same infrastructure and the canvas it generates will be edited with the Canvas Agent.
-**Delivers:** `build_agent.py`; `wizardStore.ts`; `BuildWizardPage.tsx` at `/workflow/build`; option card components; mission context persistence in workflow metadata; graph generation with full validation pass
-**Addresses:** Build wizard with option cards (differentiator); domain-aware cube suggestion; mission context captured for Results Interpreter
-**Avoids:** Pitfall 1 (mandatory catalog lookup before edge generation); anti-feature of free-text intent capture
-**Research flag:** Multi-step wizard state management with Zustand is standard. Skip `/gsd:research-phase`.
+**Addresses:** Lookback/datetime toggle foundation; duration filter enhancement (P2 feature); establishes shared infrastructure for all P1 analysis cubes
 
-### Phase 5: Results Interpreter
-**Rationale:** Depends on mission context from Build Wizard (Phase 4) and real execution results. Comes last because it requires all prior phases to be exercised to generate meaningful test data.
-**Delivers:** `interpreter_agent.py`; `POST /api/agent/interpret` endpoint; trigger button in results drawer; mission-contextual explanation of execution output
-**Addresses:** Mission-scoped result interpretation (primary differentiator vs. Fabric Copilot and Flowise — neither has post-execution domain-aware explanation)
-**Avoids:** Pitfall 3 (result summarization — pass row counts and samples, not raw result JSON)
-**Research flag:** Standard LLM summarization pattern. Skip `/gsd:research-phase`.
+**Avoids:** Epoch arithmetic pitfall (correct pattern established once, reused everywhere); N+1 pitfall (batch fetch functions built into the utility from the start)
+
+### Phase 2: No Recorded Takeoff Cube
+
+**Rationale:** This cube requires no historical baseline — it checks only whether the first track point of specific input flights is already at altitude. It establishes the full behavioral cube pattern (finding output schema, `full_result` port, `accepts_full_result`, empty guard, `deviation_score`) on the simplest possible case before introducing statistical complexity. The output schema validated here becomes the template for all subsequent cubes.
+
+**Delivers:** `no_recorded_takeoff.py` with `min_altitude_ft` param (default 300ft); finding output schema validated end-to-end; `accepts_full_result=True` pattern proven
+
+**Addresses:** No Recorded Takeoff detection (P1 feature); finding schema standardized for downstream reuse
+
+**Avoids:** Index pitfall — only queries `normal_tracks` with `flight_id = ANY(:ids)`, which uses the existing index; no historical baseline risk
+
+### Phase 3: Statistical Behavioral Analysis Cubes
+
+**Rationale:** Both `UnusualTakeoffLocation` and `UnusualTakeoffTime` depend on `historical_query.py` from Phase 1 and the output pattern from Phase 2. Location is built before time because Haversine distance comparison is simpler to implement and test than circular time-of-day statistics (`scipy.stats.circmean`). Getting location working first validates the batch-callsign fetch pattern (`asyncio.gather()` + lookup dict) before introducing circular arithmetic.
+
+**Delivers:** `unusual_takeoff_location.py` (Haversine vs. historical centroid, 5 NM threshold, 90-day default); `unusual_takeoff_time.py` (circular mean/stddev, 2.0 stddev threshold, 90-day default); both with datetime/lookback toggle and validated partial-input guard; threshold calibration against production data
+
+**Addresses:** Unusual Takeoff Location (P1 feature); Unusual Takeoff Time (P1 feature); configurable thresholds with production calibration
+
+**Avoids:** Callsign reuse pitfall — `airline_code` secondary grouping key and `min_historical_flights` guard built in; epoch arithmetic — inherits `epoch_cutoff()` from Phase 1; N+1 — `asyncio.gather()` batch pattern required
+
+### Phase 4: O/D Verification + Route Statistics + Aggregation Cubes
+
+**Rationale:** O/D Verification uses both `get_callsign_history` and `get_route_history` and introduces the extensible `_CHECKS` registry pattern — building it after simpler cubes validates the extensibility design against a working foundation. Route Statistics and Flights Per Day-of-Week are pure SQL aggregation with no external dependencies. O/D Verifier is built before route stats because it has higher analytical priority and its extensibility pattern needs early validation.
+
+**Delivers:** `od_verifier.py` with extensible check registry (`new_destination`, `unusual_origin`); `route_stats.py` with avg flights per route and total counts; day-of-week distribution (7-element output per route); 180-day lookback for O/D, 30-day default for route stats
+
+**Addresses:** O/D Verification (P1 feature); Route Statistics (P1 feature); Avg Flights Per DOW (P1 feature)
+
+**Avoids:** Historical baseline as separate upstream cube anti-pattern — all baselines remain internal to each analysis cube; result explosion — route_stats uses in-memory aggregation over already-fetched flight list, not raw track queries
 
 ### Phase Ordering Rationale
 
-- Infrastructure-first is mandatory: every pitfall in PITFALLS.md maps to the infrastructure phase. Building Canvas Agent or Build Agent without validated infrastructure leads to rework.
-- Cube Expert and Validation Agent are bundled in Phase 2 because they share the same tool layer and can both be tested independently without frontend.
-- Canvas Agent before Build Wizard reflects architectural dependency (Cube Expert must exist) and practical user impact (existing users benefit from chat before new users benefit from wizard).
-- Results Interpreter is last because it cannot be properly tested without real execution results flowing through a mission-context workflow, which requires the wizard.
+- `historical_query.py` must precede all statistical analysis cubes — it is a hard dependency for three of five new cubes and establishes the epoch arithmetic pattern
+- `NoRecordedTakeoff` before statistical cubes — establishes output schema on the simplest case; no historical baseline risk; a cheap validation of the full-result port pattern
+- Location before time in Phase 3 — Haversine is simpler than circular statistics; same batch-fetch infrastructure validates at lower complexity first
+- O/D Verifier before route stats in Phase 4 — higher analytical priority; extensibility pattern tested before the simpler aggregation cubes
+- Duration filter in Phase 1 — isolated change, unblocks analysts who need duration filtering before behavioral cubes ship
 
 ### Research Flags
 
 Phases likely needing deeper research during planning:
-- **Phase 3 (Canvas Agent):** Verify `applyAgentDiff` interaction with React Flow v12+ handle validation — specifically that adding nodes atomically before edges does not produce broken edge renders.
+
+- **Phase 3 (statistical cubes):** Threshold calibration requires running default values against production data to verify false positive rate < 10% for Middle East airspace traffic patterns. The thresholds (5 NM, 2.0 stddev) are derived from domain reasoning and literature; they must be validated against real `research.flight_metadata` distributions before the phase can be marked complete. Plan an explicit calibration task in the phase ticket.
+- **Phase 4 (O/D Verification):** The extensible check registry pattern needs design validation — specifically, which checks to include in v4.0 vs. what to defer. Review `.planning/new-cubes/02-behavioral-analysis.md` for the full check inventory before committing to the check list.
 
 Phases with standard patterns (skip `/gsd:research-phase`):
-- **Phase 1:** Gemini SDK patterns fully documented; SSE pattern proven in codebase.
-- **Phase 2:** Pydantic validation patterns standard; Cube Expert is a bounded Python component.
-- **Phase 4:** Wizard state machine with Zustand is straightforward; Build Agent uses same base as Canvas Agent.
-- **Phase 5:** LLM result summarization is well-documented.
+
+- **Phase 1 (shared utility):** Well-established async SQLAlchemy pattern; `epoch_cutoff()` is straightforward arithmetic; duration filter is a param addition only.
+- **Phase 2 (No Recorded Takeoff):** Single-step indexed query against `normal_tracks`; no statistical complexity; standard cube pattern.
+- **Phase 4 (Route Statistics / DOW):** Pure SQL `GROUP BY` aggregation; no historical baseline complexity; established DOW extraction pattern documented in STACK.md.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Official SDK docs verified; existing codebase inspected directly; version constraints confirmed from GitHub releases |
-| Features | MEDIUM | Core agent UX patterns verified via Smashing Magazine and Anthropic guides; domain-specific flight analysis nuances are inferred |
-| Architecture | HIGH | Built on direct inspection of existing codebase (registry, executor, schemas, flowStore, EditorPage); Gemini patterns from official SDK |
-| Pitfalls | MEDIUM-HIGH | SDK behavior pitfalls from official docs; context explosion from peer-reviewed research (Hong et al., 2025); React Flow integration from community reports |
+| Stack | HIGH | All findings grounded in direct inspection of `pyproject.toml`, `uv.lock`, and existing cube code. No new dependencies needed — verified by reading existing cube implementations against v4.0 computational requirements. |
+| Features | HIGH | Cube design and thresholds derived from existing codebase patterns and planning docs. MEDIUM confidence on specific threshold values (300ft, 5 NM, 2.0 stddev) — domain-reasoned but not yet calibrated against production data; validation required in Phase 3. |
+| Architecture | HIGH | All architecture findings based on direct codebase inspection of `BaseCube`, `CubeRegistry`, `WorkflowExecutor`, and existing cube implementations. No speculation — every pattern references a specific existing cube file. |
+| Pitfalls | HIGH | Pitfalls identified by direct inspection of schema (bigint vs. native timestamp divergence between `public.positions` and `research.*`), table row counts, and execution model. The epoch arithmetic trap is directly observable from comparing `dark_flight_detector.py` vs. `all_flights.py` timestamp handling. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Gemini `tool_config: ANY` behavior with streaming:** The research confirms that automatic function calling combined with streaming is unreliable. The manual tool dispatch pattern is the safe choice, but the exact token cost of the non-streaming tool turn vs. streaming final turn should be measured in Phase 1 spike testing.
-- **React Flow v12+ handle validation on atomic node+edge insertion:** The `applyAgentDiff` implementation needs to confirm that batch-inserting nodes and edges in a single Zustand update renders correctly. Verify during Phase 3 planning.
-- **Gemini API key in existing tracer-api vs. 12-flow:** `tracer-api/pyproject.toml` has `google-genai>=0.2.0,<1.0.0` (outdated). The 12-flow backend is a separate process — no conflict — but if the two are ever merged, the version constraint needs updating.
-- **Concurrent Gemini rate limits:** The project is internal with expected 1-10 concurrent users. Gemini Flash rate limits are generous at this scale. No action needed for v3.0 but document the threshold (~50 concurrent users) where per-IP queuing becomes necessary.
+- **Threshold calibration:** The specific values for `min_altitude_ft` (300ft), `threshold_nm` (5.0 NM), `threshold_stddev` (2.0), and `rare_route_threshold` (0.05) are derived from domain reasoning and literature citations, not from querying production data. Each Phase 3 implementation task must include an explicit calibration step: run defaults against 30-day production dataset and verify false positive rate < 10% on known-normal flights. Adjust defaults before marking a phase complete.
+
+- **`normal_tracks` index availability:** The research establishes that querying `normal_tracks` by `callsign` (not `flight_id`) triggers a full table scan, but the actual composite index coverage of the table beyond `flight_id` is unconfirmed. Before Phase 2 ships, run `EXPLAIN ANALYZE` against the production RDS instance to confirm the `flight_id` index exists and that the `MIN(alt) GROUP BY flight_id` query plan uses an index scan, not a seq scan.
+
+- **`flight_metadata` column population rates:** `start_lat`, `start_lon`, `callsign`, `origin_airport`, and `destination_airport` are not guaranteed to be populated for all 113K rows (varied ADS-B source quality). The null guard (`f.get("callsign")` pattern) is established as the defensive approach, but the actual null rate for behavioral analysis fields is unknown. If null rates exceed 30% for key fields, the effective coverage of behavioral cubes would be significantly reduced. Worth checking with an exploratory query in Phase 1 before finalizing cube design.
+
+- **Circular time statistics edge case — overnight routes:** `scipy.stats.circmean`/`circstd` correctly handles the 23:50→00:10 wraparound, but the implementation must explicitly convert epoch timestamps to angles in radians (0..2π over 86400 seconds) before passing to scipy. This is documented in STACK.md but easy to implement incorrectly — include explicit unit tests for overnight routes in Phase 3.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [googleapis/python-genai GitHub releases](https://github.com/googleapis/python-genai/releases) — v1.68.0 confirmed stable March 18, 2026
-- [Google Gen AI SDK documentation](https://googleapis.github.io/python-genai/) — async streaming, function calling, chat session patterns
-- [Gemini API function calling guide](https://ai.google.dev/gemini-api/docs/function-calling) — tool_config modes, multi-turn pattern
-- [google-generativeai deprecation notice](https://github.com/google-gemini/deprecated-generative-ai-python) — confirms EOL November 30, 2025
-- Existing 12-flow codebase (direct inspection) — engine/registry.py, engine/executor.py, routers/workflows.py, store/flowStore.ts, pages/EditorPage.tsx, schemas/cube.py, pyproject.toml
+- `backend/app/cubes/all_flights.py` — epoch bigint pattern, datetime toggle, SQL fragment construction
+- `backend/app/cubes/filter_flights.py` — GROUP BY aggregate on `normal_tracks` with `flight_id = ANY(:ids)` batch pattern
+- `backend/app/cubes/dark_flight_detector.py` — airborne altitude threshold (1000ft), contrast case for `public.positions` native timestamp
+- `backend/app/cubes/get_flight_course.py` — `normal_tracks` column schema, empty-list guard pattern
+- `backend/app/cubes/signal_health_analyzer.py` — `asyncio.gather()` batch detection pattern
+- `backend/pyproject.toml` and `uv.lock` — confirmed dependency versions (numpy 2.4.2, scipy 1.17.1, pandas 3.0.1)
+- `backend/app/engine/executor.py`, `registry.py`, `schemas/cube.py`, `database.py` — confirmed execution model and BaseCube contract
+- `.planning/PROJECT.md` — column inventory, table row counts, bigint epoch format, v4.0 feature list
+- `.planning/new-cubes/02-behavioral-analysis.md` — `pattern_of_life` cube spec, baseline_days=90, sensitivity=2.0 stddev defaults
 
 ### Secondary (MEDIUM confidence)
-- [Designing For Agentic AI — Smashing Magazine](https://www.smashingmagazine.com/2026/02/designing-agentic-ai-practical-ux-patterns/) — intent preview, confirmation patterns, clarifying questions UX
-- [Building Effective Agents — Anthropic](https://www.anthropic.com/research/building-effective-agents) — orchestration patterns, tool design, human-in-the-loop
-- [AI-Powered Troubleshooting for Fabric Pipeline Errors — Microsoft Fabric Blog](https://blog.fabric.microsoft.com/en-us/blog/ai-powered-troubleshooting-for-fabric-data-pipeline-error-messages/) — competitor feature comparison
-- [Context Engineering for AI Agents 2025](https://promptbuilder.cc/blog/context-engineering-agents-guide-2025) — context budget management
-- [The Multi-Agent Trap — Towards Data Science](https://towardsdatascience.com/the-multi-agent-trap/) — sub-agent context explosion patterns
-- [Architecting efficient context-aware multi-agent framework — Google Developers Blog](https://developers.googleblog.com/architecting-efficient-context-aware-multi-agent-framework-for-production/) — context management in production
+- [PostgreSQL EXTRACT / to_timestamp docs](https://www.postgresql.org/docs/current/functions-datetime.html) — to_timestamp(bigint), EXTRACT(DOW), epoch conversion
+- [scipy.stats.circmean / circstd](https://docs.scipy.org/doc/scipy/reference/stats.html) — confirmed available in scipy 1.17.1
+- [Bellingcat Turnstone Tool (2026)](https://www.bellingcat.com/resources/2026/03/05/turnstone-flight-tracking-tool/) — confirms manual baseline comparison is current OSINT SOTA; automated deviation scoring is a differentiator
+- [Machine learning anomaly detection in commercial aircraft — PMC 2025](https://pmc.ncbi.nlm.nih.gov/articles/PMC11801582/) — Gaussian statistical model with mean±stddev is standard for aviation departure time anomaly detection
+- [Recent Advances in Anomaly Detection Methods Applied to Aviation — MDPI](https://www.mdpi.com/2226-4310/6/11/117) — statistical baseline approaches; Gaussian model most common
 
 ### Tertiary (LOW confidence)
-- [Multi-agent orchestration patterns — DEV Community](https://dev.to/nebulagg/multi-agent-orchestration-a-guide-to-patterns-that-work-1h81) — pattern validation only
-- [AI Tool Overload — Jenova.ai](https://www.jenova.ai/en/resources/mcp-tool-scalability-problem) — tool count degradation data
-- [LangFlow vs Flowise Comparison — Leanware](https://www.leanware.co/insights/compare-langflow-vs-flowise) — competitor feature comparison
+- Threshold defaults (300ft, 5 NM, 2.0 stddev): derived from domain reasoning and existing code patterns. Must be calibrated against production data before marking Phase 3 complete.
 
 ---
-*Research completed: 2026-03-22*
+*Research completed: 2026-03-29*
 *Ready for roadmap: yes*

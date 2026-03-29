@@ -1,477 +1,483 @@
-# Architecture Research
+# Architecture Patterns
 
-**Domain:** AI Workflow Agents integrated into FastAPI + React visual dataflow builder
-**Researched:** 2026-03-22
-**Confidence:** HIGH (based on direct inspection of existing codebase + verified SDK patterns)
-
----
-
-## Standard Architecture
-
-### System Overview
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           FRONTEND (React 18 + Vite)                         │
-├──────────────────┬──────────────────────────────┬───────────────────────────┤
-│  EditorPage      │  BuildWizardPage (NEW)        │  DashboardPage            │
-│  ─────────────── │  ─────────────────────────── │                           │
-│  FlowCanvas      │  WizardStep components        │  (unchanged)              │
-│  CubeCatalog     │  WizardStore (Zustand, NEW)   │                           │
-│  Toolbar         │                               │                           │
-│  ResultsDrawer   │                               │                           │
-│  ChatPanel (NEW) │                               │                           │
-│  AgentOverlay    │                               │                           │
-│  (NEW)           │                               │                           │
-├──────────────────┴──────────────────────────────┴───────────────────────────┤
-│                      Zustand Stores                                           │
-│   flowStore (existing)   |  chatStore (NEW)  |  wizardStore (NEW)            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                      API Client Layer (existing src/api/)                     │
-│           + src/api/agent.ts (NEW) — SSE streaming chat calls                │
-└─────────────────────────────────────────────────────────────────────────────┘
-                              │ HTTP + SSE
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         FASTAPI BACKEND                                       │
-├────────────────────┬────────────────────────────────────────────────────────┤
-│  Existing Routers  │  NEW: app/routers/agent.py                              │
-│  ─────────────────│  POST /api/agent/chat          → Canvas/Wizard SSE      │
-│  /api/cubes        │  POST /api/agent/validate      → Validation Agent       │
-│  /api/workflows    │  POST /api/agent/interpret     → Results Interpreter    │
-├────────────────────┴────────────────────────────────────────────────────────┤
-│                     NEW: app/agents/ package                                  │
-│  ┌─────────────┐  ┌──────────────┐  ┌─────────────┐  ┌────────────────┐    │
-│  │ base_agent  │  │ canvas_agent │  │ build_agent  │  │ cube_expert    │    │
-│  │ (abstract)  │  │ (optimize/   │  │ (wizard      │  │ (sub-agent,    │    │
-│  │             │  │  fix/general)│  │  workflow    │  │  called by     │    │
-│  │             │  │              │  │  builder)    │  │  others)       │    │
-│  └─────────────┘  └──────────────┘  └─────────────┘  └────────────────┘    │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │  app/agents/tools.py — Internal tool functions (pure Python)        │    │
-│  │  • list_cubes_summary()     • get_cube_detail()                     │    │
-│  │  • validate_workflow()      • add_node()  • remove_node()           │    │
-│  │  • set_param()  • add_edge()  • remove_edge()  • clear_canvas()     │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │  app/agents/skills/ — System prompt files (plain text)              │    │
-│  │  • system_brief.txt  • canvas_agent.txt  • build_agent.txt          │    │
-│  │  • cube_expert.txt   • validation_agent.txt  • interpreter.txt      │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Existing: engine/  cubes/  schemas/  models/  database/  config/            │
-│  (NO changes to existing code — agent layer sits above it)                   │
-└─────────────────────────────────────────────────────────────────────────────┘
-                              │
-                     Google Gemini API
-                     (google-genai SDK, GA as of May 2025)
-```
-
-### Component Responsibilities
-
-| Component | Responsibility | New or Existing |
-|-----------|----------------|-----------------|
-| `app/routers/agent.py` | HTTP entry points for all agent interactions; owns SSE streaming to client | NEW |
-| `app/agents/base_agent.py` | Abstract base: Gemini client init, skill file loading, conversation history management, streaming loop | NEW |
-| `app/agents/canvas_agent.py` | Canvas-mode agent: accepts mode (optimize/fix/general) + serialized graph; calls tools, streams diffs back | NEW |
-| `app/agents/build_agent.py` | Wizard-mode agent: accepts step context; generates complete workflow graph on final step | NEW |
-| `app/agents/cube_expert.py` | Sub-agent: two-tier catalog lookup only; called by canvas/build agents, never directly by router | NEW |
-| `app/agents/tools.py` | Pure Python tool functions; take/return plain dicts; no LLM calls; called by agent tool dispatch | NEW |
-| `app/agents/skills/` | Plain text system prompt files, one per agent persona | NEW |
-| `src/api/agent.ts` | Frontend API client for agent endpoints; handles SSE stream parsing for chat | NEW |
-| `src/store/chatStore.ts` | Zustand: message history, streaming state, active mode for ChatPanel | NEW |
-| `src/store/wizardStore.ts` | Zustand: wizard step, collected answers, pending graph preview | NEW |
-| `src/components/Agent/ChatPanel.tsx` | Collapsible side panel in EditorPage; renders message history + streaming token display | NEW |
-| `src/pages/BuildWizardPage.tsx` | Separate route `/workflow/build`; step-by-step wizard with clickable option cards | NEW |
-| `CubeRegistry` (existing) | Provides catalog data to tool functions via direct import | UNCHANGED |
-| `WorkflowGraph` schema (existing) | Wire format agents produce — already matches what executor and canvas expect | UNCHANGED |
-| `flowStore` (existing) | Receives graph mutations from agent via store actions (addCubeNode, addEdge, etc.) | MODIFIED: add `applyAgentDiff()` action |
+**Domain:** Flight behavioral analysis cubes — v4.0 integration into existing visual dataflow system
+**Researched:** 2026-03-29
+**Confidence:** HIGH (based on direct codebase inspection — all findings grounded in code, not speculation)
 
 ---
 
-## Recommended Project Structure
+## Existing Architecture Summary
 
-```
-backend/app/
-├── agents/                      # NEW package — all AI agent code
-│   ├── __init__.py
-│   ├── base_agent.py            # Abstract base class with Gemini client + streaming
-│   ├── canvas_agent.py          # Canvas-mode agent (optimize / fix / general)
-│   ├── build_agent.py           # Build wizard agent
-│   ├── cube_expert.py           # Sub-agent: catalog lookup only
-│   ├── validation_agent.py      # Structural validation (can be pure Python, LLM optional)
-│   ├── interpreter_agent.py     # Results interpreter
-│   ├── tools.py                 # All internal tool functions (pure Python)
-│   └── skills/                  # System prompt text files
-│       ├── system_brief.txt     # Domain context shared across all agents
-│       ├── canvas_agent.txt
-│       ├── build_agent.txt
-│       ├── cube_expert.txt
-│       ├── validation_agent.txt
-│       └── interpreter_agent.txt
-├── routers/
-│   ├── agent.py                 # NEW: /api/agent/* endpoints
-│   ├── cubes.py                 # UNCHANGED
-│   └── workflows.py             # UNCHANGED
-└── ... (rest unchanged)
+The system is a three-layer stack: React frontend → FastAPI backend → PostgreSQL (Tracer 42 RDS, read-only research schema).
 
-frontend/src/
-├── api/
-│   ├── agent.ts                 # NEW: streaming chat client
-│   └── ... (existing unchanged)
-├── components/
-│   ├── Agent/                   # NEW component group
-│   │   ├── ChatPanel.tsx        # Collapsible chat sidebar
-│   │   ├── ChatPanel.css
-│   │   ├── ChatMessage.tsx      # Single message bubble (user / assistant / tool-call)
-│   │   ├── ChatModeSelector.tsx # optimize / fix / general tabs
-│   │   └── WizardPage/          # Alternatively: top-level pages/
-│   │       ├── WizardStep.tsx
-│   │       └── OptionCard.tsx
-│   └── ... (existing unchanged)
-├── pages/
-│   ├── BuildWizardPage.tsx      # NEW route /workflow/build
-│   ├── EditorPage.tsx           # MODIFIED: add <ChatPanel /> alongside canvas
-│   └── ... (existing unchanged)
-└── store/
-    ├── chatStore.ts             # NEW
-    ├── wizardStore.ts           # NEW
-    ├── flowStore.ts             # MODIFIED: add applyAgentDiff() action
-    └── ... (existing unchanged)
+### Cube Execution Model
+
+Every cube is a Python class inheriting `BaseCube`, placed in `backend/app/cubes/`. Auto-discovery via `CubeRegistry` collects all subclasses at startup. The `WorkflowExecutor` runs cubes in topological order, resolves inputs (connection values override manual params), caps outputs at 10,000 rows, and streams per-cube status via SSE.
+
+The contract is:
+
+```python
+class BaseCube(abc.ABC):
+    cube_id: str
+    name: str
+    category: CubeCategory
+    inputs: list[ParamDefinition]
+    outputs: list[ParamDefinition]
+
+    async def execute(self, **inputs: Any) -> dict[str, Any]: ...
 ```
 
-### Structure Rationale
+To add a cube: drop a `.py` file in `backend/app/cubes/`. No registration step. No router changes. Auto-discovered on next restart.
 
-- **`app/agents/` package:** Isolates all LLM code. The existing `routers/`, `engine/`, `cubes/` packages need zero changes. Agents import from existing packages (registry, schemas) but existing packages never import from agents — one-way dependency.
-- **`skills/` subdirectory:** System prompts as plain `.txt` files (not Python strings) so they can be edited without touching code. Loaded once at agent init.
-- **`tools.py` as a flat module:** All tool functions in one file at first. They call existing engine/registry code directly — no HTTP round-trips. Split into submodules only if the file exceeds ~400 lines.
-- **`src/components/Agent/`:** Keeps agent UI components grouped. ChatPanel is a sibling of the canvas area, not inside FlowCanvas, to avoid React Flow event capture conflicts.
-- **`applyAgentDiff()` on flowStore:** Single new action that takes an `AgentDiff` (list of typed mutations) and applies them atomically. Keeps agent-driven mutations on the same code path as user-driven mutations (pushSnapshot, isDirty, etc.).
+### Parameter System
+
+`ParamDefinition` fields relevant to v4.0:
+- `type: ParamType` — currently STRING, NUMBER, BOOLEAN, LIST_OF_STRINGS, LIST_OF_NUMBERS, JSON_OBJECT
+- `widget_hint: str | None` — drives frontend editor: `"select"`, `"tags"`, `"datetime"`, `"relative_time"`, `"polygon"`
+- `options: list[str] | None` — drives select/tags widget options
+- `accepts_full_result: bool` — marks params that accept the full upstream bundle
+- `default: Any` — shown in editor when not connected
+
+### Database Access Pattern
+
+All cubes query via the shared SQLAlchemy async engine imported from `app.database`:
+
+```python
+from app.database import engine
+
+async with engine.connect() as conn:
+    result = await conn.execute(text(sql), params)
+    rows = result.fetchall()
+```
+
+The engine is a module-level singleton (`pool_size=10, max_overflow=10`). No per-cube connection setup. Timestamps in `research.flight_metadata` are bigint epoch seconds. Key tables: `research.flight_metadata` (113K rows), `research.normal_tracks` (76M rows), `research.anomaly_reports` (114K rows).
 
 ---
 
-## Architectural Patterns
+## New Cube Integration Points
 
-### Pattern 1: Tool Dispatch via Python Dict (not LLM function-calling protocol)
+### What Does NOT Change
 
-**What:** Agents interpret LLM output that contains `<tool>name</tool><args>{...}</args>` XML tags (or a simple JSON envelope), then call the corresponding Python function directly. No LangChain, no framework.
+- `BaseCube` abstract class — no modification needed
+- `CubeRegistry` auto-discovery — new cubes drop into `backend/app/cubes/` and are picked up automatically
+- `WorkflowExecutor` topological sort, input resolution, SSE streaming — no changes
+- `ParamType` enum — existing types cover all v4.0 needs (see datetime/lookback toggle pattern below)
+- `ParamDefinition` schema — `widget_hint` and `options` already handle enum selects
+- Frontend canvas, node rendering, parameter editors — no structural changes required
+- `__full_result__` port — behavioral analysis cubes accept full result from AllFlights/FilterFlights using the existing `accepts_full_result=True` pattern
 
-**When to use:** When you have a small, stable tool set (8-12 functions) and want zero framework overhead. Gemini also supports native function calling declarations — either approach works, but the manual dispatch is simpler to debug.
+### What Needs to Be Added
 
-**Trade-offs:** Pro: explicit, no magic, easy to test. Con: must parse LLM output yourself (but Gemini's function-call response format is clean JSON).
+| Component | Type | Why Needed |
+|-----------|------|------------|
+| `backend/app/cubes/historical_query.py` | New shared utility module | Historical lookback queries used by 3+ analysis cubes; avoids duplication |
+| `backend/app/cubes/no_recorded_takeoff.py` | New cube file | Detects flights where first track point is already at altitude |
+| `backend/app/cubes/unusual_takeoff_location.py` | New cube file | Compares departure lat/lon against historical baseline for same callsign |
+| `backend/app/cubes/unusual_takeoff_time.py` | New cube file | Compares departure time-of-day against historical distribution for same callsign |
+| `backend/app/cubes/od_verifier.py` | New cube file | Compares current O/D pair against historical route frequency; extensible |
+| `backend/app/cubes/route_stats.py` | New cube file | Aggregates flights by route with avg-per-day/week statistics |
+| Duration filter params on `filter_flights.py` | Param additions only — no logic restructure | `min_flight_time_minutes`, `max_flight_time_minutes` using first_seen_ts / last_seen_ts delta |
 
-**Recommended approach:** Use Gemini's native function calling (`tools=` parameter), which returns structured `FunctionCall` objects instead of requiring XML parsing. The agent receives a `FunctionCall`, dispatches to `tools.py`, injects the result back as `FunctionResponse`, then continues the conversation.
+No new `ParamType` values needed. No new routers. No schema migrations. No frontend structural changes.
 
-```python
-# app/agents/tools.py
-def list_cubes_summary() -> list[dict]:
-    """Returns [{cube_id, name, category, description}] for all registered cubes."""
-    return [
-        {"cube_id": c.cube_id, "name": c.name,
-         "category": c.category, "description": c.description}
-        for c in registry.all()
-    ]
+---
 
-def get_cube_detail(cube_id: str) -> dict | None:
-    """Returns full CubeDefinition dict for a specific cube_id."""
-    cube = registry.get(cube_id)
-    return cube.definition.model_dump() if cube else None
+## Component Boundaries
 
-def build_workflow_graph(nodes: list[dict], edges: list[dict]) -> dict:
-    """Validates and returns a WorkflowGraph-compatible dict. Raises on invalid."""
-    graph = WorkflowGraph.model_validate({"nodes": nodes, "edges": edges})
-    return graph.model_dump()
-```
+| Component | Responsibility | Communicates With |
+|-----------|---------------|-------------------|
+| `historical_query.py` | Shared async functions for querying historical flight data by callsign, origin, destination, and time window | Imported directly by analysis cubes: no_recorded_takeoff (not needed), unusual_takeoff_location, unusual_takeoff_time, od_verifier |
+| `no_recorded_takeoff.py` | Detect flights where first track point altitude exceeds a threshold (flight was never observed on ground or in initial climb) | Receives flight_ids from AllFlights/FilterFlights; queries research.normal_tracks |
+| `unusual_takeoff_location.py` | Compare departure lat/lon against historical centroid for same callsign; score distance as deviation | Calls historical_query; receives current flight metadata via full_result |
+| `unusual_takeoff_time.py` | Compare departure timestamp (hour-of-day) against historical distribution for same callsign; detect off-schedule departures | Calls historical_query; receives current flight metadata via full_result |
+| `od_verifier.py` | Compare current origin/destination pair against historical route frequency for same callsign; extensible internal check registry | Calls historical_query; receives flight_ids or full_result |
+| `route_stats.py` | Aggregate input flights by route (origin/destination pair) with avg per day and per day-of-week statistics | Receives flights JSON from AllFlights or FilterFlights; pure Python aggregation |
+| `filter_flights.py` (modified) | Duration filter using first_seen_ts / last_seen_ts delta from flight metadata | Existing cube — param additions only, no logic restructure |
 
-### Pattern 2: Stateless Agent Endpoints with Client-Side History
+---
 
-**What:** Every `/api/agent/chat` request carries the full conversation history in the request body. The backend is stateless — no server-side session. The frontend (chatStore) owns the history.
+## Shared Historical Query Utility
 
-**When to use:** Always for this project. No auth, single user per workflow, history fits in context window (Gemini 1.5 Pro: 1M tokens; typical workflow chat: < 20K tokens).
+**Decision: shared utility module, not per-cube inline queries.**
 
-**Trade-offs:** Pro: no server-side session storage, trivially scalable, simple to implement. Con: request payload grows with conversation length. Mitigate by capping history at last N turns (20 turns recommended) before sending.
+Three of the four new analysis cubes need the same operation: given a callsign, fetch all historical flights for that callsign from `research.flight_metadata` within a lookback window and return aggregated statistics. Duplicating this across cubes creates three divergent SQL queries that will drift. A single `historical_query.py` module with one SQL query serves all callers.
 
-```python
-# app/routers/agent.py
-class ChatRequest(BaseModel):
-    mode: Literal["optimize", "fix", "general", "build"]
-    graph: WorkflowGraph | None = None        # current canvas state
-    history: list[dict]                        # [{role, parts}] — from client
-    message: str                               # latest user message
-    execution_results: dict | None = None      # for interpreter mode
+### Location
 
-@router.post("/api/agent/chat")
-async def chat(body: ChatRequest) -> EventSourceResponse:
-    agent = CanvasAgent(mode=body.mode)
-    return EventSourceResponse(
-        agent.stream(body.message, body.history, body.graph, body.execution_results)
-    )
-```
+`backend/app/cubes/historical_query.py`
 
-### Pattern 3: Sub-Agent as Direct Python Call (not HTTP)
-
-**What:** The CubeExpert sub-agent is instantiated and called as a plain Python object from within CanvasAgent or BuildAgent — not via an HTTP endpoint.
-
-**When to use:** When the sub-agent is always subordinate, never user-facing, and lives in the same process. Avoids latency of an HTTP round-trip and simplifies error handling.
-
-**Trade-offs:** Pro: zero overhead, shared process, simpler stack traces. Con: tight coupling between orchestrator and sub-agent (acceptable here since CubeExpert is a stable, bounded component).
+This is a utility module in the cubes package, not an engine concern. Cube authors import it directly:
 
 ```python
-# app/agents/canvas_agent.py
-class CanvasAgent(BaseAgent):
-    def __init__(self, mode: str):
-        super().__init__(skill_file="canvas_agent.txt")
-        self._cube_expert = CubeExpert()   # instantiated here, not injected
-
-    async def _handle_tool_call(self, fn_call) -> str:
-        if fn_call.name == "find_cubes_for_task":
-            return await self._cube_expert.find(fn_call.args["task"])
-        return await dispatch_tool(fn_call)   # route to tools.py
+from app.cubes.historical_query import get_callsign_history, get_route_history
 ```
 
-### Pattern 4: Agent Diff Applied to Zustand Store
+### Interface
 
-**What:** When an agent wants to modify the canvas, it returns a structured diff (`AgentDiff`) — a list of typed mutations (`add_node`, `remove_node`, `set_param`, `add_edge`). The frontend applies this through a single `applyAgentDiff()` action on the flowStore.
+```python
+async def get_callsign_history(
+    callsign: str,
+    lookback_days: int = 90,
+    max_rows: int = 500,
+) -> list[dict]:
+    """Fetch historical flight_metadata rows for a callsign.
 
-**When to use:** Always for canvas mutations from agents. Never have the agent return a raw WorkflowGraph and replace the entire canvas — this loses undo history and confuses the user.
+    Returns rows from research.flight_metadata ordered by first_seen_ts DESC.
+    Timestamps are bigint epoch seconds. Fields include: flight_id, callsign,
+    first_seen_ts, start_lat, start_lon, origin_airport, destination_airport.
+    """
+    ...
 
-**Trade-offs:** Pro: preserves undo/redo stack, marks isDirty correctly, keeps mutations on the same code path as user interactions. Con: requires defining an AgentDiff type contract.
+async def get_route_history(
+    origin: str,
+    destination: str,
+    lookback_days: int = 90,
+    max_rows: int = 500,
+) -> list[dict]:
+    """Fetch historical metadata for a specific origin-destination route."""
+    ...
+```
 
-```typescript
-// src/store/flowStore.ts — new action
-applyAgentDiff: (diff: AgentDiff) => {
-  get().pushSnapshot();   // enables Ctrl+Z to undo agent changes
-  for (const op of diff.operations) {
-    if (op.type === 'add_node')    get().addCubeNode(op.cube_id, op.position);
-    if (op.type === 'remove_node') get().removeNode(op.node_id);
-    if (op.type === 'set_param')   get().updateNodeParam(op.node_id, op.param, op.value);
-    // ...
-  }
-  set({ isDirty: true });
+Both functions use the shared `engine` from `app.database`. They return plain `list[dict]` — no framework types — keeping them easy to test in isolation.
+
+---
+
+## Data Flow: Current Flight + Historical Context
+
+The typical v4.0 analysis workflow:
+
+```
+AllFlights (callsign filter)
+    │ flight_ids (LIST_OF_STRINGS), flights (JSON_OBJECT)
+    ▼
+[Optional: FilterFlights — with new duration params]
+    │ filtered_flight_ids, filtered_flights
+    ▼
+NoRecordedTakeoff / UnusualTakeoffLocation / UnusualTakeoffTime / ODVerifier
+    │  receives:  current flight metadata (start_lat, start_lon, first_seen_ts,
+    │             callsign, origin_airport, destination_airport)
+    │  queries:   historical baseline via historical_query module
+    │             (separate async DB call inside execute())
+    │  computes:  deviation from baseline (pure Python statistics)
+    ▼
+    anomaly_flights (JSON_OBJECT), flight_ids (LIST_OF_STRINGS), count (NUMBER)
+    ▼
+[Optional: Count By Field, Get Anomalies, or output cubes]
+```
+
+Each analysis cube is responsible for fetching its own historical baseline. The cube receives current flights via `full_result` or direct `flight_ids`, extracts metadata fields, calls `historical_query`, then computes comparison in Python after closing the DB connection.
+
+**Why the historical query is inside the analysis cube, not a separate upstream cube:**
+The historical baseline is specific to the analysis being performed. The `unusual_takeoff_location` cube needs departure lat/lon statistics; the `unusual_takeoff_time` cube needs time-of-day statistics. Making "fetch historical baseline" a separate cube would require the user to wire complex intermediate cubes and would expose internal statistical intermediate results as connection points. The analysis cubes are atomic units of behavioral reasoning — they take current flights and return anomaly findings.
+
+---
+
+## Parameter Pattern: Datetime / Lookback Toggle
+
+The v4.0 cubes need a toggle between "last N days" (relative) and "specific date range" (absolute). The existing `all_flights.py` already implements this exact pattern: `time_range_seconds` (relative) + `start_time` / `end_time` (absolute). No new parameter types are needed.
+
+For behavioral analysis cubes with a historical lookback concept, use this pattern:
+
+```python
+inputs = [
+    ParamDefinition(
+        name="time_mode",
+        type=ParamType.STRING,
+        required=False,
+        default="relative",
+        description='Time range mode: "relative" (last N days) or "absolute" (specific dates).',
+        widget_hint="select",
+        options=["relative", "absolute"],
+    ),
+    ParamDefinition(
+        name="lookback_days",
+        type=ParamType.NUMBER,
+        required=False,
+        default=90,
+        description="Days of history to use as baseline (used when time_mode=relative).",
+    ),
+    ParamDefinition(
+        name="baseline_start",
+        type=ParamType.STRING,
+        required=False,
+        description="Baseline window start as epoch seconds string (used when time_mode=absolute).",
+        widget_hint="datetime",
+    ),
+    ParamDefinition(
+        name="baseline_end",
+        type=ParamType.STRING,
+        required=False,
+        description="Baseline window end as epoch seconds string (used when time_mode=absolute).",
+        widget_hint="datetime",
+    ),
+]
+```
+
+In `execute()`:
+
+```python
+time_mode = inputs.get("time_mode") or "relative"
+if time_mode == "absolute" and inputs.get("baseline_start") and inputs.get("baseline_end"):
+    start_epoch = int(float(inputs["baseline_start"]))
+    end_epoch = int(float(inputs["baseline_end"]))
+else:
+    lookback_days = int(inputs.get("lookback_days") or 90)
+    end_epoch = int(time.time())
+    start_epoch = end_epoch - (lookback_days * 86400)
+```
+
+This is the same pattern `all_flights.py` uses. Frontend already handles `widget_hint="select"` and `widget_hint="datetime"`. No frontend changes needed for this pattern.
+
+**The `time_mode` param acts as the toggle.** The other three params are conditionally relevant based on its value. The frontend editor shows all four params but only the relevant ones have effect. This is already how `all_flights.py` works — users either fill in `start_time`+`end_time` or leave them blank and use `time_range_seconds`.
+
+---
+
+## Extensibility Pattern: O/D Verification Cube
+
+The `od_verifier` cube must be designed so future checks (e.g., "first time this callsign flew to this destination," "destination not in callsign's normal region," "unusual stop count") can be added without changing the cube's input/output interface.
+
+**Pattern: internal check registry as a module-level list of async functions**
+
+```python
+# od_verifier.py
+
+async def _check_new_destination(flight: dict, history: list[dict]) -> dict | None:
+    """Return a finding dict if destination has never appeared in historical O/D pairs, else None."""
+    seen_destinations = {r.get("destination_airport") for r in history if r.get("destination_airport")}
+    dest = flight.get("destination_airport")
+    if dest and dest not in seen_destinations and len(seen_destinations) >= 3:
+        return {
+            "check": "new_destination",
+            "deviation_score": 0.9,
+            "details": {"destination": dest, "historical_destinations": list(seen_destinations)},
+        }
+    return None
+
+async def _check_unusual_origin(flight: dict, history: list[dict]) -> dict | None:
+    """Return a finding if origin airport was never used historically for this callsign."""
+    ...
+
+_CHECKS = [
+    _check_new_destination,
+    _check_unusual_origin,
+    # future checks appended here — no interface change required
+]
+
+class ODVerifierCube(BaseCube):
+    async def execute(self, **inputs: Any) -> dict[str, Any]:
+        # ... extract flights and callsigns ...
+        for callsign, flights_for_callsign in flights_by_callsign.items():
+            history = await get_callsign_history(callsign, lookback_days)
+            for flight in flights_for_callsign:
+                for check_fn in _CHECKS:
+                    result = await check_fn(flight, history)
+                    if result:
+                        findings.append({**result, "flight_id": flight["flight_id"]})
+        return {"findings": findings, "flight_ids": [...], "count": len(findings)}
+```
+
+Each check function: signature `(flight: dict, history: list[dict]) -> dict | None`. Adding a check in a future phase means appending one function to `_CHECKS` and writing its unit test. The cube's input/output interface stays unchanged. This is the simplest extensibility pattern that does not require a plugin system.
+
+---
+
+## Patterns to Follow
+
+### Pattern 1: Full Result Input Acceptance
+
+All v4.0 analysis cubes should accept full result from upstream so users can chain them directly without explicit parameter wiring:
+
+```python
+ParamDefinition(
+    name="full_result",
+    type=ParamType.JSON_OBJECT,
+    required=False,
+    accepts_full_result=True,
+    description="Full result from AllFlights or FilterFlights. Extracts 'flights' and 'flight_ids'.",
+),
+```
+
+In `execute()`:
+
+```python
+full_result = inputs.get("full_result")
+direct_ids = inputs.get("flight_ids")
+
+if full_result and isinstance(full_result, dict):
+    flights = full_result.get("flights") or full_result.get("filtered_flights") or []
+    flight_ids = full_result.get("flight_ids") or full_result.get("filtered_flight_ids") or []
+elif direct_ids:
+    flight_ids = list(direct_ids)
+    flights = []
+else:
+    return {"anomaly_flights": [], "flight_ids": [], "count": 0}
+```
+
+This matches the pattern used by `FilterFlightsCube` and `DarkFlightDetectorCube`.
+
+### Pattern 2: Early Empty-List Guard
+
+Every analysis cube that receives a flight list must guard against empty input before executing any DB queries:
+
+```python
+if not flight_ids:
+    logger.info("CubeName: no flight_ids — returning empty result")
+    return {"anomaly_flights": [], "flight_ids": [], "count": 0}
+```
+
+The executor calls `execute(**inputs)` with no type coercion — an unconnected input param arrives as `None`. Guard against both `None` and `[]`.
+
+### Pattern 3: Statistical Comparison Output Schema
+
+Behavioral analysis cubes that compare against historical baselines should output a consistent finding schema so downstream cubes and the results interpreter can work uniformly across all behavioral analysis outputs:
+
+```python
+{
+    "flight_id": "...",
+    "callsign": "...",
+    "deviation_type": "unusual_takeoff_location",  # or: no_recorded_takeoff, unusual_takeoff_time, new_od_pair
+    "deviation_score": 0.85,   # 0.0-1.0, higher = more anomalous
+    "details": {               # deviation-specific fields
+        "actual_lat": 32.01,
+        "actual_lon": 34.87,
+        "historical_centroid_lat": 31.99,
+        "historical_centroid_lon": 34.85,
+        "distance_km": 2.5,
+    },
+    "historical_sample_size": 47,  # how many historical flights informed the baseline
 }
 ```
 
-### Pattern 5: SSE for Agent Streaming (reuses existing sse-starlette)
+Each cube outputs a list of these finding objects plus `flight_ids` (LIST_OF_STRINGS) and `count` (NUMBER).
 
-**What:** Agent responses stream as SSE events — same mechanism as workflow execution. Text tokens arrive as `data: {"type":"token","content":"..."}` events. Tool calls arrive as `data: {"type":"tool_call","name":"..."}` events. A final `data: {"type":"diff","operations":[...]}` event carries canvas mutations.
+### Pattern 4: Batch History Fetch Per Unique Callsign
 
-**When to use:** All agent chat interactions. The existing `EventSourceResponse` from `sse-starlette` handles this — same import used in `routers/workflows.py`.
+When processing multiple input flights, extract the unique callsigns first, fetch history once per callsign, build a lookup dict, then loop over flights using that dict. Never fetch history inside a per-flight loop.
 
-**Trade-offs:** Pro: reuses infrastructure, nginx-compatible (same `proxy_buffering off` config), no new dependencies. Con: SSE is one-way; the client cannot interrupt mid-stream (acceptable for chat).
+```python
+# Extract unique callsigns from input flights
+unique_callsigns = {f.get("callsign") for f in flights if f.get("callsign")}
+
+# Fetch history for all callsigns concurrently
+histories = await asyncio.gather(*[
+    get_callsign_history(cs, lookback_days) for cs in unique_callsigns
+])
+history_by_callsign = dict(zip(unique_callsigns, histories))
+
+# Now process each flight using pre-fetched history
+for flight in flights:
+    cs = flight.get("callsign")
+    history = history_by_callsign.get(cs, [])
+    # ... compute deviation ...
+```
+
+This mirrors the batch-query pattern used in `SignalHealthAnalyzerCube` which uses `asyncio.gather()` for its batch detection queries.
 
 ---
 
-## Data Flow
+## Anti-Patterns to Avoid
 
-### Canvas Agent Chat Flow
+### Anti-Pattern 1: Per-Cube Historical Query Duplication
 
-```
-User types message in ChatPanel
-    ↓
-chatStore.sendMessage(message, mode)
-    ↓
-api/agent.ts: POST /api/agent/chat (with history + serialized graph)
-    ↓ SSE stream opens
-app/routers/agent.py: ChatRequest validated
-    ↓
-CanvasAgent.stream(message, history, graph)
-    ↓
-Gemini API call (with system prompt + tools declared)
-    ↓
-[token stream] → SSE "token" events → chatStore.appendToken()
-    ↓
-[FunctionCall] → tools.py dispatch → result injected back
-    ↓
-[AgentDiff] → SSE "diff" event → flowStore.applyAgentDiff()
-    ↓ stream closes
-chatStore.finalizeMessage()
-```
+**What:** Each analysis cube has its own inline SQL query for fetching historical flights by callsign.
 
-### Build Wizard Flow
+**Why bad:** The same callsign-history query duplicated in four cubes will drift. Bug fixes apply to one cube. SQL changes (e.g., adjusting date arithmetic or adding a callsign normalization step) require four separate edits.
 
-```
-User lands on /workflow/build
-    ↓
-BuildWizardPage renders Step 1 (mission type)
-    ↓
-User clicks option card → wizardStore.setAnswer(step, answer)
-    ↓ (after each step)
-api/agent.ts: POST /api/agent/chat (mode="build", history of choices)
-    ↓ SSE
-BuildAgent streams next question OR final workflow
-    ↓ (final step)
-SSE "diff" event with complete workflow graph
-    ↓
-flowStore.applyAgentDiff() populates canvas
-    ↓
-React Router navigates to /workflow/new (canvas now pre-populated)
-```
+**Instead:** Use the `historical_query.py` shared module. Each cube calls `await get_callsign_history(callsign, lookback_days)`.
 
-### Validation Agent Flow (synchronous, no streaming)
+### Anti-Pattern 2: Holding DB Connection Open During Statistics Computation
 
-```
-User clicks Run
-    ↓
-Toolbar triggers validation BEFORE calling existing run SSE
-    ↓
-POST /api/agent/validate (graph only, no history)
-    ↓
-validation_agent.py runs structural checks (pure Python, no LLM)
-    ↓
-Returns ValidationResult: {valid: bool, issues: [{node_id, severity, message}]}
-    ↓
-If issues: show inline warnings on CubeNode (existing status indicator mechanism)
-If valid: proceed to existing workflow execution SSE
-```
+**What:** Fetching historical flights and computing statistics (mean, stddev, centroid) while still inside the `async with engine.connect()` block.
 
-### State Management
+**Why bad:** Blocks a connection pool slot during CPU-bound statistics work. The pool has 10 connections; if 10 cubes execute concurrently and each holds a connection while computing in Python, new connections queue.
 
-```
-chatStore
-    ├── messages: ChatMessage[]      (streamed in real-time)
-    ├── isStreaming: boolean
-    ├── activeMode: "optimize"|"fix"|"general"
-    └── sendMessage() → calls api/agent.ts, pipes SSE to store
+**Instead:** Fetch data (await, collect rows), let the `async with` block close the connection, then compute statistics in pure Python on the collected list.
 
-wizardStore
-    ├── currentStep: number
-    ├── answers: Record<step, string>
-    ├── isStreaming: boolean
-    └── submitStep() → calls api/agent.ts, advances step or finalizes
+### Anti-Pattern 3: New ParamType for Toggle State
 
-flowStore (existing + new action)
-    └── applyAgentDiff(diff: AgentDiff) → NEW action
-```
+**What:** Adding `ParamType.ENUM` or `ParamType.TOGGLE` to handle the time_mode / lookback toggle.
+
+**Why bad:** Requires changes to `ParamType` enum (schema change), `ParamDefinition` serialization, frontend editor dispatch, and agent skill files. Cascading change across 5 files for something `ParamType.STRING` + `widget_hint="select"` + `options=["relative","absolute"]` already handles correctly.
+
+**Instead:** Use `ParamType.STRING` with `widget_hint="select"` and `options`. Existing frontend widget handles it today.
+
+### Anti-Pattern 4: Recomputing Baseline Per Flight in a Loop
+
+**What:** The `od_verifier` or `unusual_takeoff_location` cube calls `await get_callsign_history(callsign, ...)` inside a `for flight in flights` loop.
+
+**Why bad:** If the input is 50 flights, all for callsign "ELY317", this runs 50 identical DB queries. With 90-day lookback on a 113K-row table, each query is non-trivial.
+
+**Instead:** Extract unique callsigns first, batch-fetch with `asyncio.gather()`, build a lookup dict, then loop over flights with O(1) baseline access. See Pattern 4 above.
+
+### Anti-Pattern 5: Assuming flight_metadata Columns Are Always Populated
+
+**What:** Behavioral cubes that assume `start_lat`, `start_lon`, `callsign`, `origin_airport`, `destination_airport` are always present.
+
+**Why bad:** `research.flight_metadata` has 113K rows from varied sources; field population varies. Cubes that crash on NULL values will be unreliable in production.
+
+**Instead:** Guard all field extractions with `.get()` and `None` checks. When a required field (e.g., `callsign`) is missing, skip that flight with a log entry rather than crashing the entire cube. Return findings for the flights that had sufficient data.
+
+### Anti-Pattern 6: Making Historical Query a Separate Upstream Cube
+
+**What:** Exposing "Get Historical Baseline" as a user-facing cube that feeds analysis cubes via connections.
+
+**Why bad:** Forces users to wire an additional intermediate cube in every behavioral analysis workflow. The baseline is always parameterized by the current flight being analyzed (same callsign, same route) — it is not a reusable standalone operation. It would also expose intermediate statistical data as connection points, cluttering the canvas.
+
+**Instead:** Historical query is an internal implementation detail of each analysis cube. Users see: AllFlights → UnusualTakeoffLocation. They do not wire a separate baseline cube.
 
 ---
 
-## Integration Points
+## Build Order for v4.0
 
-### New vs. Existing: What Changes
+This order respects dependencies between components and allows each step to be tested before the next builds on it.
 
-| Component | Status | Change Description |
-|-----------|--------|--------------------|
-| `app/routers/agent.py` | NEW | Entirely new file; registered in `main.py` with `app.include_router(agent_router)` |
-| `app/main.py` | MODIFIED | Add `from app.routers.agent import router as agent_router` + `app.include_router(agent_router)` |
-| `app/config.py` | MODIFIED | Add `GEMINI_API_KEY: str` to Settings (load from `.env`) |
-| `pyproject.toml` | MODIFIED | Add `google-genai>=1.0.0` dependency |
-| `app/engine/registry.py` | UNCHANGED | Tool functions import `registry` directly |
-| `app/schemas/workflow.py` | UNCHANGED | `WorkflowGraph` is the wire format agents produce |
-| `frontend/src/main.tsx` | MODIFIED | Add `/workflow/build` route pointing to BuildWizardPage |
-| `frontend/src/pages/EditorPage.tsx` | MODIFIED | Add `<ChatPanel />` alongside the canvas area |
-| `frontend/src/store/flowStore.ts` | MODIFIED | Add `applyAgentDiff()` action and `AgentDiff` type |
-| All other existing files | UNCHANGED | No modifications required |
+### Phase 1: Shared Utility + Duration Filter (no dependencies on new cubes)
 
-### External Services
+1. `historical_query.py` — shared module that all statistical analysis cubes depend on
+2. Duration filter params on `filter_flights.py` — isolated param additions (`min_flight_time_minutes`, `max_flight_time_minutes`), no logic restructure
 
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| Google Gemini API | `google-genai` Python SDK (GA, May 2025). Use `client.aio.models.generate_content_stream()` for async streaming. | Replace deprecated `google-generativeai`; new package is `google-genai`. API key from env. |
-| PostgreSQL (existing) | UNCHANGED | Agents never query the DB directly — they call tool functions which may call existing cube logic |
+**Why first:** The three statistical behavioral cubes in later phases all import from `historical_query`. Getting this right first means the analysis cubes can be written and tested cleanly. FilterFlights duration params are self-contained and have no dependencies.
 
-### Internal Boundaries
+### Phase 2: Simple Behavioral Analysis Cube (validates cube structure without needing historical query)
 
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| `agent.py` router ↔ `canvas_agent.py` | Direct Python instantiation | Agents are not FastAPI dependencies; instantiated per-request |
-| `canvas_agent.py` ↔ `cube_expert.py` | Direct Python instantiation (sub-agent pattern) | CubeExpert is never exposed as an HTTP endpoint |
-| `agents/tools.py` ↔ `engine/registry.py` | Direct import: `from app.engine.registry import registry` | One-way dependency; registry never imports agents |
-| `agents/tools.py` ↔ `schemas/workflow.py` | Direct import for validation | AgentDiff operations validate against existing WorkflowGraph schema |
-| Frontend `chatStore` ↔ `flowStore` | Both are Zustand stores; `chatStore.onDiff()` calls `flowStore.applyAgentDiff()` directly | No React context needed; cross-store calls via `useFlowStore.getState()` |
-| Frontend `ChatPanel` ↔ `FlowCanvas` | No direct coupling | ChatPanel is a sibling in EditorPage layout, not nested inside ReactFlowProvider |
+3. `no_recorded_takeoff.py` — no historical baseline needed; purely checks whether first track point altitude exceeds a threshold. Validates the output schema and full_result input pattern for behavioral cubes.
+
+**Why before statistical cubes:** Establishes the behavioral cube pattern (finding schema, full_result acceptance, empty guard) on the simplest possible case.
+
+### Phase 3: Statistical Behavioral Analysis Cubes (depend on Phase 1 historical_query)
+
+4. `unusual_takeoff_location.py` — uses `get_callsign_history`, compares `start_lat`/`start_lon` against historical centroid using haversine distance
+5. `unusual_takeoff_time.py` — uses `get_callsign_history`, compares `first_seen_ts` hour against historical time-of-day distribution (mean, stddev)
+
+**Why in this order:** Both depend on `historical_query`; location check is simpler (distance comparison) than time-of-day check (circular statistics). Build and test location first.
+
+### Phase 4: Multi-Factor and Aggregation Cubes
+
+6. `od_verifier.py` — uses `get_route_history` and `get_callsign_history`, implements internal check registry extensibility pattern
+7. `route_stats.py` — pure Python aggregation over input flights; no DB query needed beyond what AllFlights already fetched
+
+**Why last:** `od_verifier` uses the internal check registry extensibility pattern — doing it after simpler cubes validates the pattern. `route_stats` has no dependencies and can be built at any point; last simply because it has lower analytical priority than the detection cubes.
 
 ---
 
-## Scaling Considerations
+## Scalability Considerations
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 1-5 concurrent users | Current design: stateless, in-process agents. No changes needed. |
-| 10-50 concurrent users | Gemini API rate limits become relevant. Add per-IP request queuing in the router. Gemini's async client handles concurrent requests well. |
-| 100+ concurrent users | Server-side conversation history storage (Redis) replaces client-carried history. Agent endpoints move to a separate process/service. |
-
-### Scaling Priorities
-
-1. **First bottleneck:** Gemini API rate limits (requests/minute per project). Fix with exponential backoff + optional queue.
-2. **Second bottleneck:** Large conversation histories in request bodies. Fix with server-side session store (Redis) at ~50 concurrent users.
-
----
-
-## Anti-Patterns
-
-### Anti-Pattern 1: Agent Router Calling Workflow Execution
-
-**What people do:** Have the Build Agent trigger `POST /api/workflows/{id}/run` to validate the workflow it created.
-
-**Why it's wrong:** Creates a recursive HTTP call (router calling router within the same process), complicates error handling, and the Validation Agent covers this use case with direct Python calls.
-
-**Do this instead:** The Build Agent calls `tools.validate_workflow(graph)` directly. The router never calls other routers.
-
-### Anti-Pattern 2: Replacing Canvas State Instead of Diffing
-
-**What people do:** Agent returns a complete new WorkflowGraph; frontend does `flowStore.setState({ nodes: newNodes, edges: newEdges })`.
-
-**Why it's wrong:** Destroys the undo/redo history stack, loses user's manual position adjustments, and makes it impossible to undo agent changes. Users lose trust quickly.
-
-**Do this instead:** Agent returns `AgentDiff` (typed mutation list). Frontend applies via `applyAgentDiff()` which calls `pushSnapshot()` first.
-
-### Anti-Pattern 3: Storing Conversation History Server-Side Per Request
-
-**What people do:** Generate a session ID, store history in a dict or Redis, have client send only the session ID.
-
-**Why it's wrong:** Adds stateful infrastructure for a feature that doesn't need it. Histories are small (< 20K tokens for typical chat). Client-carried history is simpler, more debuggable, and trivially scalable.
-
-**Do this instead:** Client sends `history: [{role, parts}]` in every request. Server truncates to last 20 turns before sending to Gemini.
-
-### Anti-Pattern 4: Using `google-generativeai` (Deprecated)
-
-**What people do:** `pip install google-generativeai` (old SDK, familiar from training data).
-
-**Why it's wrong:** Deprecated; support ended November 30, 2025. Will not receive bug fixes or new model support.
-
-**Do this instead:** `pip install google-genai` (new unified SDK, GA May 2025). The async API is `client.aio.models.generate_content_stream(...)`.
-
-### Anti-Pattern 5: Building LangChain/LlamaIndex into This Project
-
-**What people do:** Add a full orchestration framework because "that's how you do agents."
-
-**Why it's wrong:** The tool set is small (< 15 functions), fixed, and internal. Framework overhead (abstraction layers, prompt templates, chain of thought wrappers) adds complexity without benefit. When the LLM misbehaves, you want direct access to the prompt and tool dispatch — not 4 layers of framework abstraction.
-
-**Do this instead:** Direct Gemini SDK calls with Gemini's native function calling. Tool dispatch is a 20-line Python switch. Total agent infrastructure: ~500 lines of clear, debuggable Python.
-
----
-
-## Build Order (Dependency-Aware)
-
-This ordering ensures each step is independently testable before the next builds on it.
-
-| Order | Component | Depends On | Notes |
-|-------|-----------|------------|-------|
-| 1 | `app/agents/skills/` text files + `app/config.py` GEMINI_API_KEY | Nothing | Zero-risk, sets up prerequisites |
-| 2 | `app/agents/tools.py` | Existing registry + schemas | Pure Python, fully testable without LLM |
-| 3 | `app/agents/base_agent.py` | `google-genai` SDK, skills files | Core streaming loop; test with a simple ping prompt |
-| 4 | `app/agents/cube_expert.py` | base_agent + tools | Sub-agent; test independently with catalog queries |
-| 5 | `app/agents/validation_agent.py` | tools.py only (no LLM needed) | Purely structural checks; fastest to ship |
-| 6 | `app/routers/agent.py` + main.py registration | All agents | Wire agents to HTTP; integration test with curl/httpx |
-| 7 | `src/api/agent.ts` + `chatStore.ts` | router/agent endpoint | Frontend SSE client + store |
-| 8 | `src/components/Agent/ChatPanel.tsx` | chatStore, flowStore.applyAgentDiff | UI; wire to EditorPage |
-| 9 | `app/agents/canvas_agent.py` | base_agent + cube_expert + tools | Full canvas agent with tool dispatch |
-| 10 | `flowStore.applyAgentDiff()` | Existing flowStore | New store action; enables canvas mutations from chat |
-| 11 | `app/agents/build_agent.py` | base_agent + cube_expert | Build wizard agent |
-| 12 | `src/store/wizardStore.ts` + `BuildWizardPage.tsx` | build_agent endpoint | Wizard UI and route |
-| 13 | `app/agents/interpreter_agent.py` | base_agent | Results interpreter; needs real execution results to test |
+| Concern | At Current Scale (113K flights) | At 10x Scale (1M+ flights) |
+|---------|----------------------------------|-----------------------------|
+| Historical query per callsign | Single parameterized query with `ILIKE callsign AND first_seen_ts >= :cutoff LIMIT 500` — fast on indexed columns | Add covering index on `(callsign, first_seen_ts)` if not present; LIMIT 500 keeps result set bounded |
+| Multiple analysis cubes in one workflow | Each runs sequentially in topological order via `asyncio.gather` within the cube | No structural change; the 10-connection pool handles concurrent cubes in separate workflow runs |
+| Baseline computation in Python | List statistics (mean, stddev, centroid) over 500 rows — sub-millisecond | Still in-memory; no change needed up to ~50K historical rows per callsign |
+| `route_stats` aggregation | Python-side `groupby` over the `flights` list from AllFlights | Delegate to SQL `GROUP BY` if AllFlights output approaches 10K rows |
+| Callsign batch-fetch in a single cube | `asyncio.gather()` over unique callsigns in the input flight set | For very large input sets (1K+ flights, 500+ unique callsigns), cap concurrency with a semaphore |
 
 ---
 
 ## Sources
 
-- [google-genai Python SDK (GitHub)](https://github.com/googleapis/python-genai) — MEDIUM confidence (official repo, GA May 2025)
-- [Google Gen AI SDK documentation](https://googleapis.github.io/python-genai/) — MEDIUM confidence
-- [google-generativeai deprecation notice](https://github.com/google-gemini/deprecated-generative-ai-python) — HIGH confidence (official deprecation)
-- [Multi-agent orchestration patterns (DEV Community)](https://dev.to/nebulagg/multi-agent-orchestration-a-guide-to-patterns-that-work-1h81) — LOW confidence (community, used for pattern validation only)
-- [LLM tool calling patterns (fast.io)](https://fast.io/resources/llm-tool-calling/) — LOW confidence (used for validation)
-- Existing codebase inspection — HIGH confidence (direct read of `engine/registry.py`, `engine/executor.py`, `routers/workflows.py`, `store/flowStore.ts`, `pages/EditorPage.tsx`, `schemas/cube.py`, `pyproject.toml`)
+- Direct codebase inspection (HIGH confidence): `backend/app/cubes/base.py`, `engine/executor.py`, `engine/registry.py`, `schemas/cube.py`, `database.py`
+- Existing cube implementations reviewed (HIGH confidence): `all_flights.py`, `filter_flights.py`, `dark_flight_detector.py`, `signal_health_analyzer.py`, `get_flight_course.py`, `get_anomalies.py`
+- Planning documents (HIGH confidence): `.planning/PROJECT.md`, `.planning/new-cubes/02-behavioral-analysis.md`, `.planning/new-cubes/00-INDEX.md`
 
 ---
 
-*Architecture research for: AI Workflow Agents integration into 12-flow (FastAPI + React visual dataflow builder)*
-*Researched: 2026-03-22*
+*Architecture research for: v4.0 Flight Behavioral Analysis Cubes — integration into 12-flow*
+*Researched: 2026-03-29*
