@@ -89,7 +89,9 @@ Plans:
   2. Cube accepts a full_result input so it works drop-in after any upstream cube without explicit parameter wiring
   3. Each output row includes a numeric deviation_score (0.0–1.0) alongside the boolean flag
   4. Each output row includes a diagnostic field distinguishing "no anomalies found", "insufficient history", and "empty input" states
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 24-01-PLAN.md — NoRecordedTakeoff cube implementation with TDD tests
 
 ### Phase 25: Statistical Behavioral Analysis
 **Goal**: Users can detect flights with unusual takeoff locations and unusual takeoff times relative to historical baselines
@@ -140,7 +142,7 @@ Plans:
 | 21. Build Wizard Agent | v3.0 | 3/3 | Complete | 2026-03-27 |
 | 22. Results Interpreter | v3.0 | 2/2 | Complete | 2026-03-27 |
 | 23. Shared Utility Foundation | v4.0 | 2/2 | Complete    | 2026-03-29 |
-| 24. No Recorded Takeoff | v4.0 | 0/TBD | Not started | — |
+| 24. No Recorded Takeoff | v4.0 | 0/1 | Planned | — |
 | 25. Statistical Behavioral Analysis | v4.0 | 0/TBD | Not started | — |
 | 26. O/D Verification + Route Stats | v4.0 | 0/TBD | Not started | — |
 
