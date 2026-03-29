@@ -38,7 +38,7 @@ export const useTourStore = create<TourState>((set) => ({
       currentStep: Math.max(0, state.currentStep - 1),
     })),
 
-  closeTour: (completed = false) => {
+  closeTour: (_completed = false) => {
     // Always persist completion — dismissing the tour counts as completing it
     // to prevent it from re-launching and blocking cursor/pointer events.
     localStorage.setItem(STORAGE_KEY, 'true');
